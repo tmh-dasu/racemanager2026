@@ -6,53 +6,53 @@
 
 @layer base {
   :root {
-    --background: 240 33% 14%;
-    --foreground: 0 0% 95%;
+    --background: 0 0% 97%;
+    --foreground: 220 20% 15%;
 
-    --card: 240 30% 18%;
-    --card-foreground: 0 0% 95%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 15%;
 
-    --popover: 240 30% 18%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 15%;
 
     --primary: 0 100% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 25% 22%;
-    --secondary-foreground: 0 0% 90%;
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 220 20% 25%;
 
-    --muted: 240 20% 25%;
-    --muted-foreground: 240 10% 60%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 10% 45%;
 
     --accent: 0 100% 38%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 20% 26%;
-    --input: 240 20% 26%;
+    --border: 220 14% 88%;
+    --input: 220 14% 88%;
     --ring: 0 100% 38%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 240 33% 12%;
-    --sidebar-foreground: 0 0% 90%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 15%;
     --sidebar-primary: 0 100% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 25% 20%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 240 20% 22%;
+    --sidebar-accent: 220 14% 95%;
+    --sidebar-accent-foreground: 220 20% 25%;
+    --sidebar-border: 220 14% 88%;
     --sidebar-ring: 0 100% 38%;
 
     /* Custom tokens */
     --racing-red: 0 100% 38%;
-    --racing-red-glow: 0 100% 45%;
-    --navy-deep: 240 33% 10%;
-    --navy-surface: 240 30% 18%;
-    --gold: 45 100% 50%;
+    --racing-red-glow: 0 100% 48%;
+    --navy-deep: 220 20% 96%;
+    --navy-surface: 0 0% 100%;
+    --gold: 45 100% 45%;
     --gold-foreground: 45 100% 10%;
-    --success: 142 70% 45%;
+    --success: 142 70% 40%;
     --success-foreground: 0 0% 100%;
   }
 }
@@ -83,6 +83,10 @@
 
   .bg-gradient-card {
     background-image: linear-gradient(145deg, hsl(var(--card)), hsl(var(--navy-deep)));
+  }
+
+  .text-gradient-racing {
+    background-image: linear-gradient(135deg, hsl(var(--racing-red)), hsl(var(--racing-red-glow)));
   }
 
   .shadow-racing {

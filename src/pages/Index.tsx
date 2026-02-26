@@ -41,8 +41,11 @@ export default function HomePage() {
     <PageLayout>
       <div className="container py-6 space-y-6">
         {/* Hero */}
-        <div className="relative overflow-hidden rounded-lg border border-glow bg-gradient-card p-6 shadow-card animate-slide-up">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-6 shadow-card animate-slide-up">
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-racing opacity-10 blur-3xl" />
+          <div className="flex items-center gap-4 mb-4">
+            <img src="/images/dsl-logo.png" alt="Danish Supercar League" className="h-14 w-auto" />
+          </div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
             DASU <span className="text-gradient-racing">Race Manager</span>
           </h1>
