@@ -9,6 +9,7 @@ import MyTeam from "./pages/MyTeam";
 import Leaderboard from "./pages/Leaderboard";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
+import Rules from "./pages/Rules";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/rangering" element={<Leaderboard />} />
           <Route path="/resultater" element={<Results />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/regler" element={<Rules />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

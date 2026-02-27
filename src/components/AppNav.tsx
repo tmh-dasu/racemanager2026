@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Trophy, ListOrdered, Flag, Settings } from "lucide-react";
+import { Home, Users, Trophy, ListOrdered, Flag, Settings, BookOpen } from "lucide-react";
 
 const navItems = [
   { to: "/", label: "Hjem", icon: Home },
@@ -7,6 +7,7 @@ const navItems = [
   { to: "/mit-hold", label: "Mit Hold", icon: Trophy },
   { to: "/rangering", label: "Rangering", icon: ListOrdered },
   { to: "/resultater", label: "Resultater", icon: Flag },
+  { to: "/regler", label: "Regler", icon: BookOpen },
   { to: "/admin", label: "Admin", icon: Settings },
 ];
 
