@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { User, DollarSign, Check, AlertTriangle, Smartphone } from "lucide-react";
+import { User, DollarSign, Check, AlertTriangle } from "lucide-react";
 import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByEmail } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { useToast } from "@/hooks/use-toast";
 import PageLayout from "@/components/PageLayout";
 
@@ -22,7 +22,6 @@ export default function PickTeamPage() {
   const [teamName, setTeamName] = useState("");
   const [selectedDriverIds, setSelectedDriverIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   const budgetLimit = settings?.budget_limit ?? 100;
   const registrationOpen = settings?.team_registration_open ?? false;
@@ -50,10 +49,6 @@ export default function PickTeamPage() {
     }
     if (remaining < 0) {
       toast({ title: "Du overskrider budgettet", variant: "destructive" });
-      return;
-    }
-    if (!paymentConfirmed) {
-      toast({ title: "Bekræft at du har betalt via MobilePay", variant: "destructive" });
       return;
     }
 
@@ -167,33 +162,11 @@ export default function PickTeamPage() {
           <p className="text-center text-muted-foreground">Ingen kørere tilgængelige endnu.</p>
         )}
 
-        {/* Payment */}
-        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <Smartphone className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-display font-semibold text-foreground">Betaling: kr. 50,00 via MobilePay</p>
-              <p className="text-sm text-muted-foreground">Send til MobilePay nr. <span className="font-bold text-foreground">29515</span> (DASU)</p>
-              <p className="text-xs text-muted-foreground mt-1">Skriv dit holdnavn i beskedfeltet</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="payment"
-              checked={paymentConfirmed}
-              onCheckedChange={(checked) => setPaymentConfirmed(checked === true)}
-            />
-            <label htmlFor="payment" className="text-sm text-foreground cursor-pointer">
-              Jeg har betalt kr. 50 via MobilePay til nr. 29515
-            </label>
-          </div>
-        </div>
-
         {/* Submit */}
         <div className="flex justify-center">
           <Button
             onClick={handleSubmit}
-            disabled={submitting || selectedDriverIds.length !== 3 || remaining < 0 || !paymentConfirmed}
+            disabled={submitting || selectedDriverIds.length !== 3 || remaining < 0}
             className="bg-gradient-racing px-8 py-3 font-display text-base font-semibold text-primary-foreground shadow-racing hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
           >
             {submitting ? "Opretter..." : "Bekræft hold 🏁"}
