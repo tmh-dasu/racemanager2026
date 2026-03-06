@@ -46,7 +46,7 @@ export default function HomePage() {
             className="absolute inset-0 bg-cover opacity-40"
             style={{ backgroundImage: "url('/images/hero-bg.avif')", backgroundPosition: "85% center" }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-card via-card/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-card via-card/90 to-card/30" />
           <div className="relative z-10">
           <div className="flex items-center gap-4 mb-4">
             <img src="/images/dasu-logo.png" alt="DASU" className="h-12 w-auto" />
