@@ -43,7 +43,7 @@ export default function HomePage() {
         {/* Hero */}
         <div className="relative overflow-hidden rounded-lg border border-border bg-card p-6 shadow-card animate-slide-up">
           <div
-            className="absolute inset-0 bg-cover bg-center opacity-15"
+            className="absolute inset-0 bg-cover bg-center opacity-30"
             style={{ backgroundImage: "url('/images/hero-bg.avif')" }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-card via-card/80 to-transparent" />
