@@ -74,6 +74,7 @@ export default function HomePage() {
               Holdregistrering lukket
             </div>
           )}
+          </div>
         </div>
 
         {/* Next Race */}
