@@ -44,7 +44,7 @@ export default function HomePage() {
         <div className="relative overflow-hidden rounded-lg border border-border bg-card p-6 shadow-card animate-slide-up">
           <div
             className="absolute inset-0 bg-cover opacity-40"
-            style={{ backgroundImage: "url('/images/hero-bg.avif')", backgroundPosition: "70% center" }}
+            style={{ backgroundImage: "url('/images/hero-bg.avif')", backgroundPosition: "85% center" }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-card via-card/80 to-transparent" />
           <div className="relative z-10">
