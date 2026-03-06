@@ -44,36 +44,34 @@ export default function HomePage() {
         <div className="relative overflow-hidden rounded-lg border border-border bg-card p-6 shadow-card animate-slide-up">
           <div
             className="absolute inset-0 bg-cover opacity-40"
-            style={{ backgroundImage: "url('/images/hero-bg.avif')", backgroundPosition: "right center" }}
+            style={{ backgroundImage: "url('/images/hero-bg.avif')", backgroundPosition: "right" }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-card from-20% via-card/60 via-50% to-transparent" />
           <div className="relative z-10">
-          <div className="flex items-center gap-4 mb-4">
-            <img src="/images/dasu-logo.png" alt="DASU" className="h-12 w-auto" />
-            <img src="/images/supergt-logo.png" alt="Super GT Danmark" className="h-12 w-auto" />
-          </div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            DASU <span className="text-gradient-racing">Race Manager</span>
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Super GT Fantasy Racing – Dansk Automobil Sports Union
-          </p>
-
-          {registrationOpen && (
-            <Link
-              to="/vaelg-hold"
-              className="mt-4 inline-flex items-center gap-2 rounded-md bg-gradient-racing px-5 py-2.5 font-display text-sm font-semibold text-primary-foreground shadow-racing transition-transform hover:scale-105"
-            >
-              <Flag className="h-4 w-4" />
-              Vælg dit hold
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          )}
-          {!registrationOpen && (
-            <div className="mt-4 inline-flex items-center gap-2 rounded-md bg-muted px-5 py-2.5 text-sm text-muted-foreground">
-              Holdregistrering lukket
+            <div className="flex items-center gap-4 mb-4">
+              <img src="/images/dasu-logo.png" alt="DASU" className="h-12 w-auto" />
+              <img src="/images/supergt-logo.png" alt="Super GT Danmark" className="h-12 w-auto" />
             </div>
-          )}
+            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              DASU <span className="text-gradient-racing">Race Manager</span>
+            </h1>
+            <p className="mt-2 text-muted-foreground">Super GT Fantasy Racing – Dansk Automobil Sports Union</p>
+
+            {registrationOpen && (
+              <Link
+                to="/vaelg-hold"
+                className="mt-4 inline-flex items-center gap-2 rounded-md bg-gradient-racing px-5 py-2.5 font-display text-sm font-semibold text-primary-foreground shadow-racing transition-transform hover:scale-105"
+              >
+                <Flag className="h-4 w-4" />
+                Vælg dit hold
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            )}
+            {!registrationOpen && (
+              <div className="mt-4 inline-flex items-center gap-2 rounded-md bg-muted px-5 py-2.5 text-sm text-muted-foreground">
+                Holdregistrering lukket
+              </div>
+            )}
           </div>
         </div>
 
@@ -107,14 +105,14 @@ export default function HomePage() {
               Se alle →
             </Link>
           </div>
-          {top5.length === 0 && (
-            <p className="text-sm text-muted-foreground">Ingen hold tilmeldt endnu.</p>
-          )}
+          {top5.length === 0 && <p className="text-sm text-muted-foreground">Ingen hold tilmeldt endnu.</p>}
           <div className="space-y-2">
             {top5.map((m, i) => (
               <div key={m.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
                 <div className="flex items-center gap-3">
-                  <span className={`font-display text-lg font-bold ${i === 0 ? "text-gold" : i === 1 ? "text-muted-foreground" : i === 2 ? "text-racing-red" : "text-muted-foreground"}`}>
+                  <span
+                    className={`font-display text-lg font-bold ${i === 0 ? "text-gold" : i === 1 ? "text-muted-foreground" : i === 2 ? "text-racing-red" : "text-muted-foreground"}`}
+                  >
                     {i + 1}
                   </span>
                   <div>
