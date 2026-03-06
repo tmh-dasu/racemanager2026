@@ -42,7 +42,12 @@ export default function HomePage() {
       <div className="container py-6 space-y-6">
         {/* Hero */}
         <div className="relative overflow-hidden rounded-lg border border-border bg-card p-6 shadow-card animate-slide-up">
-          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-racing opacity-10 blur-3xl" />
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-15"
+            style={{ backgroundImage: "url('/images/hero-bg.avif')" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-card via-card/80 to-transparent" />
+          <div className="relative z-10">
           <div className="flex items-center gap-4 mb-4">
             <img src="/images/dasu-logo.png" alt="DASU" className="h-12 w-auto" />
             <img src="/images/supergt-logo.png" alt="Super GT Danmark" className="h-12 w-auto" />
@@ -69,6 +74,7 @@ export default function HomePage() {
               Holdregistrering lukket
             </div>
           )}
+          </div>
         </div>
 
         {/* Next Race */}
