@@ -19,7 +19,7 @@ export default function AppNav() {
       <div className="container flex items-center justify-between gap-1 py-1 md:py-2">
         <Link to="/" className="hidden items-center gap-3 md:flex">
           <img src="/images/dasu-logo.png" alt="DASU" className="h-9 w-auto" />
-          <img src="/images/dsl-logo.png" alt="Danish Supercar League" className="h-9 w-auto" />
+          <img src="/images/supergt-logo.png" alt="Super GT Danmark" className="h-9 w-auto" />
           <span className="font-display text-lg font-bold tracking-wide text-foreground">
             Race Manager
           </span>
