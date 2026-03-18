@@ -58,6 +58,7 @@ export default function AdminPage() {
           <TabsContent value="drivers"><DriversAdmin /></TabsContent>
           <TabsContent value="races"><RacesAdmin /></TabsContent>
           <TabsContent value="results"><ResultsAdmin /></TabsContent>
+          <TabsContent value="managers"><ManagersAdmin /></TabsContent>
           <TabsContent value="settings"><SettingsAdmin /></TabsContent>
         </Tabs>
       </div>
