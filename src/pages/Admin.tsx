@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Shield, Users, Flag, Settings as SettingsIcon, Plus, Trash2, Save } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Shield, Users, Flag, Settings as SettingsIcon, Plus, Trash2, Save, AlertTriangle } from "lucide-react";
 import { fetchDrivers, fetchRaces, fetchRaceResults, fetchSettings, fetchManagers, fetchManagerDrivers, upsertDriver, deleteDriver, upsertRace, deleteRace, upsertRaceResult, updateSetting, recalculateManagerPoints, deleteManager, type Driver, type Race, type Manager } from "@/lib/api";
 import { formatDKR } from "@/lib/format";
 import { Input } from "@/components/ui/input";
@@ -8,35 +9,46 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import PageLayout from "@/components/PageLayout";
-
-const ADMIN_PASSWORD = "dasu2025";
 
 export default function AdminPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [password, setPassword] = useState("");
-  const [authed, setAuthed] = useState(false);
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, isLoading: adminLoading } = useIsAdmin();
 
-  if (!authed) {
+  if (authLoading || adminLoading) {
     return (
       <PageLayout>
-        <div className="container py-12 max-w-sm space-y-4">
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-racing-red" />
-            <h1 className="font-display text-2xl font-bold text-foreground">Admin</h1>
-          </div>
-          <Input
-            type="password"
-            placeholder="Adgangskode"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && (password === ADMIN_PASSWORD ? setAuthed(true) : toast({ title: "Forkert kode", variant: "destructive" }))}
-            className="bg-secondary border-border"
-          />
-          <Button onClick={() => password === ADMIN_PASSWORD ? setAuthed(true) : toast({ title: "Forkert kode", variant: "destructive" })} className="w-full bg-gradient-racing text-primary-foreground font-display">
-            Log ind
-          </Button>
+        <div className="container py-12 text-center">
+          <p className="text-muted-foreground">Indlæser...</p>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <PageLayout>
+        <div className="container py-12 text-center space-y-4">
+          <AlertTriangle className="mx-auto h-10 w-10 text-gold" />
+          <h1 className="font-display text-2xl font-bold text-foreground">Log ind for at tilgå admin</h1>
+          <Button onClick={() => navigate("/login")} className="bg-gradient-racing text-primary-foreground font-display">Log ind</Button>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <PageLayout>
+        <div className="container py-12 text-center space-y-4">
+          <Shield className="mx-auto h-10 w-10 text-destructive" />
+          <h1 className="font-display text-2xl font-bold text-foreground">Ingen adgang</h1>
+          <p className="text-muted-foreground">Du har ikke admin-rettigheder.</p>
         </div>
       </PageLayout>
     );
