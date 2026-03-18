@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
+import ShareTeamCard from "@/components/ShareTeamCard";
 
 export default function MyTeamPage() {
   const { toast } = useToast();
