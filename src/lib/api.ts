@@ -213,20 +213,16 @@ export async function upsertRaceResult(result: Omit<RaceResult, "id">) {
 export async function recalculateManagerPoints() {
   const managers = await fetchManagers();
   const races = await fetchRaces();
+  const numRounds = races.length;
   for (const mgr of managers) {
     const mds = await fetchManagerDrivers(mgr.id);
     const driverIds = mds.map((md) => md.driver_id);
     if (driverIds.length === 0) continue;
-    const { data: results } = await supabase.from("race_results").select("points, race_id").in("driver_id", driverIds);
+    const { data: results } = await supabase.from("race_results").select("points").in("driver_id", driverIds);
     
-    // Group points by race round for drop-worst
-    const roundPoints: Record<string, number> = {};
-    (results || []).forEach((r: any) => {
-      roundPoints[r.race_id] = (roundPoints[r.race_id] || 0) + (r.points || 0);
-    });
-    
-    const roundTotals = Object.values(roundPoints);
-    const { total } = applyDropWorst(roundTotals);
+    // Collect all individual session points
+    const sessionPoints = (results || []).map((r: any) => r.points || 0);
+    const { total } = applyDropWorst(sessionPoints, numRounds);
     
     await supabase.from("managers").update({ total_points: total }).eq("id", mgr.id);
   }
