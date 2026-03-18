@@ -13,6 +13,7 @@ import Admin from "./pages/Admin";
 import Rules from "./pages/Rules";
 import Payment from "./pages/Payment";
 import Auth from "./pages/Auth";
+import TeamPublic from "./pages/TeamPublic";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
