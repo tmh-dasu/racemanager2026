@@ -25,7 +25,7 @@ export default function AuthPage() {
       if (error) {
         toast({ title: "Login fejlede", description: error.message, variant: "destructive" });
       } else {
-        navigate("/mit-hold");
+        navigate("/vaelg-hold");
       }
     } else {
       if (!name.trim()) {
@@ -44,10 +44,8 @@ export default function AuthPage() {
       if (error) {
         toast({ title: "Oprettelse fejlede", description: error.message, variant: "destructive" });
       } else {
-        toast({
-          title: "Bekræft din email ✉️",
-          description: "Vi har sendt en bekræftelsesmail til " + email + ". Tjek din indbakke.",
-        });
+        toast({ title: "Konto oprettet! 🏁", description: "Du er nu logget ind." });
+        navigate("/vaelg-hold");
       }
     }
     setLoading(false);
