@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Zap, ArrowLeftRight, AlertTriangle, LogOut } from "lucide-react";
+import { Trophy, Zap, ArrowLeftRight, AlertTriangle, LogOut, Share2 } from "lucide-react";
 import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, useJoker, fetchManagerByUserId, type Manager, type Driver } from "@/lib/api";
 import { formatDKR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
+import ShareTeamCard from "@/components/ShareTeamCard";
 
 export default function MyTeamPage() {
   const { toast } = useToast();
@@ -147,6 +148,15 @@ export default function MyTeamPage() {
           </div>
         </div>
 
+        {/* Share */}
+        <ShareTeamCard
+          manager={manager}
+          rank={myRank}
+          totalManagers={allManagers.length}
+          drivers={myDrivers}
+          getDriverPoints={getDriverPoints}
+        />
+
         {/* Transfer Window Status */}
         <div className="flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm">
           <span className={`relative flex h-2.5 w-2.5`}>
@@ -187,7 +197,8 @@ export default function MyTeamPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-display font-semibold text-foreground">{d.name}</p>
-                  <p className="text-xs text-muted-foreground">{d.team}</p>
+                  <p className="text-xs text-muted-foreground">{d.team}{(d as any).club ? ` • ${(d as any).club}` : ""}</p>
+                  {(d as any).quote && <p className="text-xs italic text-muted-foreground mt-0.5">"{(d as any).quote}"</p>}
                 </div>
                 <div className="text-right">
                   <p className="font-display text-xl font-bold text-foreground">{getDriverPoints(d.id)}</p>

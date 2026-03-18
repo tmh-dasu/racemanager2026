@@ -16,30 +16,39 @@ export type Database = {
     Tables: {
       drivers: {
         Row: {
+          bio: string | null
           car_number: number
+          club: string | null
           created_at: string
           id: string
           name: string
           photo_url: string | null
           price: number
+          quote: string | null
           team: string
         }
         Insert: {
+          bio?: string | null
           car_number: number
+          club?: string | null
           created_at?: string
           id?: string
           name: string
           photo_url?: string | null
           price?: number
+          quote?: string | null
           team: string
         }
         Update: {
+          bio?: string | null
           car_number?: number
+          club?: string | null
           created_at?: string
           id?: string
           name?: string
           photo_url?: string | null
           price?: number
+          quote?: string | null
           team?: string
         }
         Relationships: []
@@ -235,6 +244,7 @@ export type Database = {
           id: string
           joker_used: boolean
           name: string
+          slug: string | null
           team_name: string
           total_points: number
           user_id: string | null
@@ -246,6 +256,7 @@ export type Database = {
           id?: string
           joker_used?: boolean
           name: string
+          slug?: string | null
           team_name: string
           total_points?: number
           user_id?: string | null
@@ -257,6 +268,7 @@ export type Database = {
           id?: string
           joker_used?: boolean
           name?: string
+          slug?: string | null
           team_name?: string
           total_points?: number
           user_id?: string | null
@@ -416,6 +428,7 @@ export type Database = {
           id: string | null
           joker_used: boolean | null
           name: string | null
+          slug: string | null
           team_name: string | null
           total_points: number | null
         }
@@ -425,6 +438,7 @@ export type Database = {
           id?: string | null
           joker_used?: boolean | null
           name?: string | null
+          slug?: string | null
           team_name?: string | null
           total_points?: number | null
         }
@@ -434,6 +448,7 @@ export type Database = {
           id?: string | null
           joker_used?: boolean | null
           name?: string | null
+          slug?: string | null
           team_name?: string | null
           total_points?: number | null
         }

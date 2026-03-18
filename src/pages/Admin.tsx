@@ -82,17 +82,28 @@ function DriversAdmin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: drivers = [], refetch } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
-  const [form, setForm] = useState({ name: "", car_number: "", team: "", price: "", photo_url: "" });
+  const [form, setForm] = useState({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "" });
+  const [editId, setEditId] = useState<string | null>(null);
 
-  async function handleAdd() {
+  function startEdit(d: Driver) {
+    setEditId(d.id);
+    setForm({ name: d.name, car_number: String(d.car_number), team: d.team, price: String(d.price), photo_url: d.photo_url || "", bio: d.bio || "", club: d.club || "", quote: d.quote || "" });
+  }
+
+  function resetForm() {
+    setEditId(null);
+    setForm({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "" });
+  }
+
+  async function handleSave() {
     if (!form.name || !form.car_number || !form.team || !form.price) {
-      toast({ title: "Udfyld alle felter", variant: "destructive" }); return;
+      toast({ title: "Udfyld alle påkrævede felter", variant: "destructive" }); return;
     }
     try {
-      await upsertDriver({ name: form.name, car_number: Number(form.car_number), team: form.team, price: Number(form.price), photo_url: form.photo_url || null });
-      setForm({ name: "", car_number: "", team: "", price: "", photo_url: "" });
+      await upsertDriver({ id: editId || undefined, name: form.name, car_number: Number(form.car_number), team: form.team, price: Number(form.price), photo_url: form.photo_url || null, bio: form.bio, club: form.club, quote: form.quote } as any);
+      resetForm();
       refetch();
-      toast({ title: "Kører tilføjet" });
+      toast({ title: editId ? "Kører opdateret" : "Kører tilføjet" });
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
   }
 
@@ -104,18 +115,29 @@ function DriversAdmin() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-2 sm:grid-cols-5">
-        <Input placeholder="Navn" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-secondary border-border" />
-        <Input placeholder="Bil #" type="number" value={form.car_number} onChange={(e) => setForm({ ...form, car_number: e.target.value })} className="bg-secondary border-border" />
-        <Input placeholder="Team" value={form.team} onChange={(e) => setForm({ ...form, team: e.target.value })} className="bg-secondary border-border" />
-        <Input placeholder="Pris" type="number" step="0.1" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="bg-secondary border-border" />
-        <Button onClick={handleAdd} className="bg-gradient-racing text-primary-foreground font-display"><Plus className="h-4 w-4 mr-1" />Tilføj</Button>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <Input placeholder="Navn *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-secondary border-border" />
+        <Input placeholder="Bil # *" type="number" value={form.car_number} onChange={(e) => setForm({ ...form, car_number: e.target.value })} className="bg-secondary border-border" />
+        <Input placeholder="Team *" value={form.team} onChange={(e) => setForm({ ...form, team: e.target.value })} className="bg-secondary border-border" />
+        <Input placeholder="Pris *" type="number" step="0.1" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="bg-secondary border-border" />
+        <Input placeholder="Klub" value={form.club} onChange={(e) => setForm({ ...form, club: e.target.value })} className="bg-secondary border-border" />
+        <Input placeholder="Citat" value={form.quote} onChange={(e) => setForm({ ...form, quote: e.target.value })} className="bg-secondary border-border" />
+        <Input placeholder="Bio (maks 100 tegn)" maxLength={100} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} className="bg-secondary border-border sm:col-span-2" />
+      </div>
+      <div className="flex gap-2">
+        <Button onClick={handleSave} className="bg-gradient-racing text-primary-foreground font-display">
+          {editId ? <><Save className="h-4 w-4 mr-1" />Gem</> : <><Plus className="h-4 w-4 mr-1" />Tilføj</>}
+        </Button>
+        {editId && <Button variant="outline" onClick={resetForm}>Annuller</Button>}
       </div>
       <div className="space-y-1">
         {drivers.map((d) => (
           <div key={d.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
-            <span className="text-foreground">#{d.car_number} {d.name} – {d.team} – {Number(d.price).toLocaleString("da-DK")} DKR</span>
-            <button onClick={() => handleDelete(d.id)} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
+            <button onClick={() => startEdit(d)} className="text-left flex-1 min-w-0">
+              <span className="text-foreground">#{d.car_number} {d.name} – {d.team} – {Number(d.price).toLocaleString("da-DK")} DKR</span>
+              {d.club && <span className="text-muted-foreground ml-2">• {d.club}</span>}
+            </button>
+            <button onClick={() => handleDelete(d.id)} className="text-destructive hover:text-destructive/80 ml-2"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
       </div>

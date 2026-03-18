@@ -7,6 +7,9 @@ export interface Driver {
   team: string;
   price: number;
   photo_url: string | null;
+  bio: string;
+  club: string;
+  quote: string;
 }
 
 export interface Race {
@@ -37,6 +40,7 @@ export interface Manager {
   budget_remaining: number;
   joker_used: boolean;
   total_points: number;
+  slug?: string;
 }
 
 export interface ManagerDriver {
@@ -119,8 +123,13 @@ export async function fetchRaceResults(raceId?: string): Promise<RaceResult[]> {
 }
 
 export async function fetchManagers(): Promise<Manager[]> {
-  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at").order("total_points", { ascending: false });
+  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at, slug").order("total_points", { ascending: false });
   return (data || []) as Manager[];
+}
+
+export async function fetchManagerBySlug(slug: string): Promise<Manager | null> {
+  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at, slug").eq("slug", slug).maybeSingle();
+  return data as Manager | null;
 }
 
 export async function fetchManagerByEmail(email: string): Promise<Manager | null> {
@@ -138,8 +147,15 @@ export async function fetchManagerDrivers(managerId: string): Promise<ManagerDri
   return (data || []) as ManagerDriver[];
 }
 
+export function generateSlug(teamName: string): string {
+  return teamName.toLowerCase()
+    .replace(/æ/g, 'ae').replace(/ø/g, 'oe').replace(/å/g, 'aa')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 export async function createManager(name: string, email: string, teamName: string, budgetRemaining: number, userId?: string) {
-  const insertData: any = { name, email, team_name: teamName, budget_remaining: budgetRemaining };
+  const slug = generateSlug(teamName);
+  const insertData: any = { name, email, team_name: teamName, budget_remaining: budgetRemaining, slug };
   if (userId) insertData.user_id = userId;
   const { data, error } = await supabase.from("managers").insert(insertData).select().single();
   if (error) throw error;
