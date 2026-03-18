@@ -1,33 +1,31 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { User, DollarSign, Check, AlertTriangle } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { DollarSign, Check, AlertTriangle } from "lucide-react";
 import { formatDKR } from "@/lib/format";
-import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByEmail } from "@/lib/api";
+import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByUserId } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 
 export default function PickTeamPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
-
-  // Gate: redirect to payment page if not paid
-  useEffect(() => {
-    if (searchParams.get("paid") !== "true") {
-      navigate("/betal", { replace: true });
-    }
-  }, [searchParams, navigate]);
+  const { user, loading: authLoading } = useAuth();
 
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  // Check if user already has a team
+  const { data: existingManager } = useQuery({
+    queryKey: ["manager", user?.id],
+    queryFn: () => fetchManagerByUserId(user!.id),
+    enabled: !!user,
+  });
+
   const [teamName, setTeamName] = useState("");
   const [selectedDriverIds, setSelectedDriverIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -39,6 +37,13 @@ export default function PickTeamPage() {
     .reduce((sum, d) => sum + d.price, 0);
   const remaining = budgetLimit - spent;
 
+  // Redirect if already has a team
+  useEffect(() => {
+    if (existingManager) {
+      navigate("/mit-hold", { replace: true });
+    }
+  }, [existingManager, navigate]);
+
   function toggleDriver(id: string) {
     setSelectedDriverIds((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
@@ -48,8 +53,12 @@ export default function PickTeamPage() {
   }
 
   async function handleSubmit() {
-    if (!name || !email || !teamName) {
-      toast({ title: "Udfyld alle felter", variant: "destructive" });
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (!teamName) {
+      toast({ title: "Udfyld holdnavn", variant: "destructive" });
       return;
     }
     if (selectedDriverIds.length !== 3) {
@@ -63,23 +72,44 @@ export default function PickTeamPage() {
 
     setSubmitting(true);
     try {
-      const existing = await fetchManagerByEmail(email);
-      if (existing) {
-        toast({ title: "Denne email er allerede brugt", variant: "destructive" });
-        setSubmitting(false);
-        return;
-      }
-      const manager = await createManager(name, email, teamName, remaining);
+      const name = user.user_metadata?.full_name || user.email || "Ukendt";
+      const email = user.email || "";
+      const manager = await createManager(name, email, teamName, remaining, user.id);
       for (const dId of selectedDriverIds) {
         await addManagerDriver(manager.id, dId);
       }
       queryClient.invalidateQueries({ queryKey: ["managers"] });
       toast({ title: "Hold oprettet! 🏁" });
-      navigate("/mit-hold?email=" + encodeURIComponent(email));
+      navigate("/mit-hold");
     } catch (err: any) {
       toast({ title: "Fejl: " + err.message, variant: "destructive" });
     }
     setSubmitting(false);
+  }
+
+  if (authLoading) {
+    return (
+      <PageLayout>
+        <div className="container py-12 text-center">
+          <p className="text-muted-foreground">Indlæser...</p>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <PageLayout>
+        <div className="container py-12 text-center space-y-4">
+          <AlertTriangle className="mx-auto h-10 w-10 text-gold" />
+          <h1 className="font-display text-2xl font-bold text-foreground">Log ind først</h1>
+          <p className="text-muted-foreground">Du skal være logget ind for at oprette et hold.</p>
+          <Button onClick={() => navigate("/login")} className="bg-gradient-racing text-primary-foreground font-display">
+            Log ind
+          </Button>
+        </div>
+      </PageLayout>
+    );
   }
 
   if (!registrationOpen) {
@@ -102,10 +132,8 @@ export default function PickTeamPage() {
           <p className="text-sm text-muted-foreground">Vælg 3 kørere inden for budgettet</p>
         </div>
 
-        {/* Form Fields */}
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Input placeholder="Dit navn" value={name} onChange={(e) => setName(e.target.value)} className="bg-secondary border-border" />
-          <Input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-secondary border-border" />
+        {/* Team Name */}
+        <div className="max-w-md">
           <Input placeholder="Holdnavn" value={teamName} onChange={(e) => setTeamName(e.target.value)} className="bg-secondary border-border" />
         </div>
 

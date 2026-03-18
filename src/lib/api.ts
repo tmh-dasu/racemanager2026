@@ -100,6 +100,11 @@ export async function fetchManagerByEmail(email: string): Promise<Manager | null
   return data as Manager | null;
 }
 
+export async function fetchManagerByUserId(userId: string): Promise<Manager | null> {
+  const { data } = await supabase.from("managers").select("*").eq("user_id", userId).maybeSingle();
+  return data as Manager | null;
+}
+
 export async function fetchManagerDrivers(managerId: string): Promise<ManagerDriver[]> {
   const { data } = await supabase.from("manager_drivers").select("*").eq("manager_id", managerId);
   return (data || []) as ManagerDriver[];
