@@ -42,7 +42,9 @@ export default function ResultsPage() {
       entry.allSession.push(r.points);
     });
 
-    const numRounds = races.length;
+    // Use number of rounds that actually have results, not total rounds in calendar
+    const racesWithResults = new Set(allResults.map(r => r.race_id));
+    const completedRounds = racesWithResults.size;
 
     return Array.from(pointsByDriver.entries())
       .map(([driverId, { perRound, allSession }]) => {
