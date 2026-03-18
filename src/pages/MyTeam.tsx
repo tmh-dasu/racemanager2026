@@ -148,6 +148,15 @@ export default function MyTeamPage() {
           </div>
         </div>
 
+        {/* Share */}
+        <ShareTeamCard
+          manager={manager}
+          rank={myRank}
+          totalManagers={allManagers.length}
+          drivers={myDrivers}
+          getDriverPoints={getDriverPoints}
+        />
+
         {/* Transfer Window Status */}
         <div className="flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm">
           <span className={`relative flex h-2.5 w-2.5`}>
