@@ -59,7 +59,7 @@ export default function HomePage() {
 
             {registrationOpen && (
               <Link
-                to="/vaelg-hold"
+                to="/betal"
                 className="mt-4 inline-flex items-center gap-2 rounded-md bg-gradient-racing px-5 py-2.5 font-display text-sm font-semibold text-primary-foreground shadow-racing transition-transform hover:scale-105"
               >
                 <Flag className="h-4 w-4" />
