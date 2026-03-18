@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Shield, Users, Flag, Settings as SettingsIcon, Plus, Trash2, Save } from "lucide-react";
-import { fetchDrivers, fetchRaces, fetchRaceResults, fetchSettings, upsertDriver, deleteDriver, upsertRace, upsertRaceResult, updateSetting, recalculateManagerPoints, type Driver, type Race } from "@/lib/api";
+import { fetchDrivers, fetchRaces, fetchRaceResults, fetchSettings, fetchManagers, fetchManagerDrivers, upsertDriver, deleteDriver, upsertRace, deleteRace, upsertRaceResult, updateSetting, recalculateManagerPoints, deleteManager, type Driver, type Race, type Manager } from "@/lib/api";
+import { formatDKR } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
