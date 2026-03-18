@@ -71,21 +71,19 @@ export function calculatePoints(position: number | null, dnf: boolean): number {
   return POINTS_MAP[position || 0] || 0;
 }
 
-/** Drop worst round totals based on number of rounds (§2.7) */
-export function applyDropWorst(roundTotals: number[]): { total: number; dropped: number[] } {
-  const n = roundTotals.length;
+/** Drop worst individual session results based on number of rounds (§2.7) */
+export function applyDropWorst(sessionPoints: number[], numRounds: number): { total: number; dropCount: number } {
   let dropCount: number;
-  if (n >= 7) dropCount = 4;
-  else if (n >= 6) dropCount = 3;
-  else if (n >= 4) dropCount = 2;
-  else dropCount = Math.max(0, n - 1); // at least keep 1
+  if (numRounds >= 7) dropCount = 4;
+  else if (numRounds >= 6) dropCount = 3;
+  else if (numRounds >= 4) dropCount = 2;
+  else dropCount = Math.max(0, numRounds - 1);
 
-  // Sort ascending to find worst
-  const indexed = roundTotals.map((pts, i) => ({ pts, i }));
-  indexed.sort((a, b) => a.pts - b.pts);
-  const droppedIndices = indexed.slice(0, dropCount).map((x) => x.i);
-  const total = indexed.slice(dropCount).reduce((sum, x) => sum + x.pts, 0);
-  return { total, dropped: droppedIndices };
+  // Sort ascending to find worst individual results
+  const sorted = [...sessionPoints].sort((a, b) => a - b);
+  const kept = sorted.slice(dropCount);
+  const total = kept.reduce((sum, pts) => sum + pts, 0);
+  return { total, dropCount };
 }
 
 export async function fetchSettings(): Promise<Settings> {
@@ -215,20 +213,16 @@ export async function upsertRaceResult(result: Omit<RaceResult, "id">) {
 export async function recalculateManagerPoints() {
   const managers = await fetchManagers();
   const races = await fetchRaces();
+  const numRounds = races.length;
   for (const mgr of managers) {
     const mds = await fetchManagerDrivers(mgr.id);
     const driverIds = mds.map((md) => md.driver_id);
     if (driverIds.length === 0) continue;
-    const { data: results } = await supabase.from("race_results").select("points, race_id").in("driver_id", driverIds);
+    const { data: results } = await supabase.from("race_results").select("points").in("driver_id", driverIds);
     
-    // Group points by race round for drop-worst
-    const roundPoints: Record<string, number> = {};
-    (results || []).forEach((r: any) => {
-      roundPoints[r.race_id] = (roundPoints[r.race_id] || 0) + (r.points || 0);
-    });
-    
-    const roundTotals = Object.values(roundPoints);
-    const { total } = applyDropWorst(roundTotals);
+    // Collect all individual session points
+    const sessionPoints = (results || []).map((r: any) => r.points || 0);
+    const { total } = applyDropWorst(sessionPoints, numRounds);
     
     await supabase.from("managers").update({ total_points: total }).eq("id", mgr.id);
   }
