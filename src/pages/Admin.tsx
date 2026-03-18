@@ -283,3 +283,36 @@ function SettingsAdmin() {
     </div>
   );
 }
+
+function ManagersAdmin() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: managers = [], refetch } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Er du sikker på at du vil slette "${name}"? Alle holddata slettes permanent.`)) return;
+    try {
+      await deleteManager(id);
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["managers"] });
+      toast({ title: `Manager "${name}" slettet` });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-muted-foreground">{managers.length} hold tilmeldt</p>
+      {managers.map((m) => (
+        <div key={m.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
+          <div className="flex-1 min-w-0">
+            <span className="font-medium text-foreground">{m.team_name}</span>
+            <span className="text-muted-foreground ml-2">({m.name} – {m.email})</span>
+            <span className="text-muted-foreground ml-2">• {m.total_points} point • Budget: {formatDKR(Number(m.budget_remaining))}</span>
+            {m.joker_used && <span className="text-muted-foreground ml-2">• Joker brugt</span>}
+          </div>
+          <button onClick={() => handleDelete(m.id, m.team_name)} className="text-destructive hover:text-destructive/80 shrink-0 ml-2"><Trash2 className="h-4 w-4" /></button>
+        </div>
+      ))}
+    </div>
+  );
+}
