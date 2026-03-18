@@ -1,25 +1,25 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, Zap, ChevronDown, ChevronUp } from "lucide-react";
-import { fetchManagers, fetchManagerDrivers, fetchDrivers, type Manager, type Driver } from "@/lib/api";
+import { Link } from "react-router-dom";
+import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, type Manager, type Driver } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 
-function ExpandableTeam({ manager, rank }: { manager: Manager; rank: number }) {
+function ExpandableTeam({ manager, rank, allResults, allDrivers }: { manager: Manager; rank: number; allResults: any[]; allDrivers: Driver[] }) {
   const [open, setOpen] = useState(false);
   const { data: managerDrivers } = useQuery({
     queryKey: ["manager_drivers", manager.id],
     queryFn: () => fetchManagerDrivers(manager.id),
     enabled: open,
   });
-  const { data: drivers = [] } = useQuery({
-    queryKey: ["drivers"],
-    queryFn: fetchDrivers,
-    enabled: open && !!managerDrivers && managerDrivers.length > 0,
-  });
 
   const teamDrivers = managerDrivers
-    ? drivers.filter((d) => managerDrivers.some((md) => md.driver_id === d.id))
+    ? allDrivers.filter((d) => managerDrivers.some((md) => md.driver_id === d.id))
     : [];
+
+  function getDriverPoints(driverId: string) {
+    return allResults.filter((r) => r.driver_id === driverId).reduce((s, r) => s + r.points, 0);
+  }
 
   return (
     <div>
@@ -35,7 +35,9 @@ function ExpandableTeam({ manager, rank }: { manager: Manager; rank: number }) {
           {rank + 1}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="font-display font-semibold text-foreground truncate">{manager.team_name}</p>
+          <Link to={`/hold/${manager.slug}`} className="hover:underline">
+            <p className="font-display font-semibold text-foreground truncate">{manager.team_name}</p>
+          </Link>
           <p className="text-xs text-muted-foreground truncate">{manager.name}</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
@@ -53,7 +55,8 @@ function ExpandableTeam({ manager, rank }: { manager: Manager; rank: number }) {
           {teamDrivers.length > 0 ? teamDrivers.map((d) => (
             <div key={d.id} className="flex items-center gap-2 rounded bg-secondary/50 px-3 py-1.5 text-sm">
               <span className="font-display font-bold text-muted-foreground">#{d.car_number}</span>
-              <span className="text-foreground">{d.name}</span>
+              <span className="text-foreground flex-1">{d.name}</span>
+              <span className="font-display font-bold text-foreground">{getDriverPoints(d.id)} pts</span>
             </div>
           )) : (
             <div className="rounded bg-secondary/50 px-3 py-1.5 text-sm text-muted-foreground">Henter kørere…</div>
@@ -66,11 +69,13 @@ function ExpandableTeam({ manager, rank }: { manager: Manager; rank: number }) {
 
 export default function LeaderboardPage() {
   const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+  const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
+  const { data: allDrivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
 
   return (
     <PageLayout>
       <div className="container py-6 space-y-4">
-        <h1 className="font-display text-2xl font-bold text-foreground">Rangering</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">Leaderboard</h1>
 
         {managers.length === 0 && (
           <p className="text-muted-foreground">Ingen hold tilmeldt endnu.</p>
@@ -78,7 +83,7 @@ export default function LeaderboardPage() {
 
         <div className="space-y-2">
           {managers.map((m, i) => (
-            <ExpandableTeam key={m.id} manager={m} rank={i} />
+            <ExpandableTeam key={m.id} manager={m} rank={i} allResults={allResults} allDrivers={allDrivers} />
           ))}
         </div>
       </div>

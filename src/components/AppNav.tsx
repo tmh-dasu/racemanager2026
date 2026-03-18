@@ -6,7 +6,7 @@ const navItems = [
   { to: "/", label: "Hjem", icon: Home },
   { to: "/vaelg-hold", label: "Vælg Hold", icon: Users },
   { to: "/mit-hold", label: "Mit Hold", icon: Trophy },
-  { to: "/rangering", label: "Rangering", icon: ListOrdered },
+  { to: "/rangering", label: "Leaderboard", icon: ListOrdered },
   { to: "/resultater", label: "Resultater", icon: Flag },
   { to: "/regler", label: "Regler", icon: BookOpen },
   { to: "/admin", label: "Admin", icon: Settings },
