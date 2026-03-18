@@ -10,6 +10,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
 import Rules from "./pages/Rules";
+import Payment from "./pages/Payment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/betal" element={<Payment />} />
           <Route path="/vaelg-hold" element={<PickTeam />} />
           <Route path="/mit-hold" element={<MyTeam />} />
           <Route path="/rangering" element={<Leaderboard />} />

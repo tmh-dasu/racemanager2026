@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { User, DollarSign, Check, AlertTriangle } from "lucide-react";
 import { formatDKR } from "@/lib/format";
 import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByEmail } from "@/lib/api";
@@ -13,7 +13,15 @@ import PageLayout from "@/components/PageLayout";
 export default function PickTeamPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+
+  // Gate: redirect to payment page if not paid
+  useEffect(() => {
+    if (searchParams.get("paid") !== "true") {
+      navigate("/betal", { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
