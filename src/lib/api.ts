@@ -31,7 +31,7 @@ export interface RaceResult {
 export interface Manager {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   team_name: string;
   budget_remaining: number;
   joker_used: boolean;
@@ -91,7 +91,7 @@ export async function fetchRaceResults(raceId?: string): Promise<RaceResult[]> {
 }
 
 export async function fetchManagers(): Promise<Manager[]> {
-  const { data } = await supabase.from("managers").select("*").order("total_points", { ascending: false });
+  const { data } = await supabase.from("managers").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at").order("total_points", { ascending: false });
   return (data || []) as Manager[];
 }
 

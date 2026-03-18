@@ -18,35 +18,20 @@ Deno.serve(async (req) => {
     )
   }
 
-  // Authenticate: allow service_role or verified user session
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+  // Only allow service_role access — no user-session path
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const authHeader = req.headers.get('Authorization')
   const apiKeyHeader = req.headers.get('apikey')
 
-  // Service-role access (via apikey header or Authorization bearer)
   const isServiceRole =
     apiKeyHeader === supabaseServiceKey ||
     (authHeader && authHeader.replace('Bearer ', '') === supabaseServiceKey)
 
   if (!isServiceRole) {
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    })
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    return new Response(
+      JSON.stringify({ error: 'Forbidden' }),
+      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
 
   try {
@@ -91,7 +76,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Send email error:', error)
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: 'An error occurred while sending the email' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
