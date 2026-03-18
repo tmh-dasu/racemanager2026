@@ -25,7 +25,7 @@ export default function AuthPage() {
       if (error) {
         toast({ title: "Login fejlede", description: error.message, variant: "destructive" });
       } else {
-        navigate("/mit-hold");
+        navigate("/vaelg-hold");
       }
     } else {
       if (!name.trim()) {
