@@ -42,7 +42,7 @@ export default function ResultsPage() {
       entry.allSession.push(r.points);
     });
 
-    // Use number of rounds that actually have results, not total rounds in calendar
+    // Count only rounds that actually have results (not total calendar rounds)
     const racesWithResults = new Set(allResults.map(r => r.race_id));
     const completedRounds = racesWithResults.size;
 
