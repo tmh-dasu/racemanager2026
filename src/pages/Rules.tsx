@@ -21,10 +21,10 @@ const races = [
 ];
 
 const dropRules = [
-  { rounds: "7 afdelinger", drop: "4 dårligste resultater" },
-  { rounds: "6 afdelinger", drop: "3 dårligste resultater" },
-  { rounds: "4–5 afdelinger", drop: "2 dårligste resultater" },
-  { rounds: "Under 4 afdelinger", drop: "1 dårligste resultat" },
+  { rounds: "7+ afdelinger gennemført", drop: "4 dårligste resultater" },
+  { rounds: "6 afdelinger gennemført", drop: "3 dårligste resultater" },
+  { rounds: "4–5 afdelinger gennemført", drop: "2 dårligste resultater" },
+  { rounds: "Under 4 afdelinger gennemført", drop: "Ingen fratræk" },
 ];
 
 export default function RulesPage() {
