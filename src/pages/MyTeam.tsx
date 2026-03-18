@@ -31,6 +31,9 @@ export default function MyTeamPage() {
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
+  const { data: allManagers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+
+  const myRank = manager ? allManagers.findIndex((m) => m.id === manager.id) + 1 : null;
 
   const [jokerOpen, setJokerOpen] = useState(false);
   const [swapOutId, setSwapOutId] = useState<string | null>(null);
