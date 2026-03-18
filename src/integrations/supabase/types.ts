@@ -437,7 +437,7 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           joker_used?: boolean | null
-          name?: string | null
+          name?: never
           slug?: string | null
           team_name?: string | null
           total_points?: number | null
@@ -447,7 +447,7 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           joker_used?: boolean | null
-          name?: string | null
+          name?: never
           slug?: string | null
           team_name?: string | null
           total_points?: number | null
