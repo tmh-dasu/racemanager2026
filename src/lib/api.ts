@@ -79,6 +79,9 @@ export function applyDropWorst(sessionPoints: number[], numRounds: number): { to
   else if (numRounds >= 4) dropCount = 2;
   else dropCount = Math.max(0, numRounds - 1);
 
+  // Never drop more results than available (keep at least 1)
+  dropCount = Math.min(dropCount, Math.max(0, sessionPoints.length - 1));
+
   // Sort ascending to find worst individual results
   const sorted = [...sessionPoints].sort((a, b) => a - b);
   const kept = sorted.slice(dropCount);
