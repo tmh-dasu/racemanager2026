@@ -1,0 +1,1 @@
+ALTER TABLE public.managers DROP CONSTRAINT IF EXISTS managers_email_key;
