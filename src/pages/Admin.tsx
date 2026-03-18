@@ -51,6 +51,7 @@ export default function AdminPage() {
             <TabsTrigger value="drivers" className="font-display">Kørere</TabsTrigger>
             <TabsTrigger value="races" className="font-display">Løb</TabsTrigger>
             <TabsTrigger value="results" className="font-display">Resultater</TabsTrigger>
+            <TabsTrigger value="managers" className="font-display">Managers</TabsTrigger>
             <TabsTrigger value="settings" className="font-display">Indstillinger</TabsTrigger>
           </TabsList>
 
