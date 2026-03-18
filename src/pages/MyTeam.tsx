@@ -1,26 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
-import { Trophy, Zap, ArrowLeftRight, AlertTriangle } from "lucide-react";
-import { fetchManagerByEmail, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, useJoker, type Manager, type Driver } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
+import { Trophy, Zap, ArrowLeftRight, AlertTriangle, LogOut } from "lucide-react";
+import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, useJoker, fetchManagerByUserId, type Manager, type Driver } from "@/lib/api";
 import { formatDKR } from "@/lib/format";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 
 export default function MyTeamPage() {
   const { toast } = useToast();
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
-  const [email, setEmail] = useState(searchParams.get("email") || "");
-  const [lookupEmail, setLookupEmail] = useState(searchParams.get("email") || "");
 
   const { data: manager, refetch: refetchManager } = useQuery({
-    queryKey: ["manager", lookupEmail],
-    queryFn: () => fetchManagerByEmail(lookupEmail),
-    enabled: !!lookupEmail,
+    queryKey: ["manager", user?.id],
+    queryFn: () => fetchManagerByUserId(user!.id),
+    enabled: !!user,
   });
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const { data: managerDrivers = [] } = useQuery({
@@ -67,7 +66,7 @@ export default function MyTeamPage() {
 
     try {
       await useJoker(manager.id, swapOutId, swapInId, newBudget);
-      queryClient.invalidateQueries({ queryKey: ["manager", lookupEmail] });
+      queryClient.invalidateQueries({ queryKey: ["manager", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["manager_drivers", manager.id] });
       setJokerOpen(false);
       setSwapOutId(null);
@@ -79,18 +78,26 @@ export default function MyTeamPage() {
     }
   }
 
-  if (!lookupEmail) {
+  if (loading) {
     return (
       <PageLayout>
-        <div className="container py-12 space-y-4">
-          <h1 className="font-display text-2xl font-bold text-foreground">Mit Hold</h1>
-          <p className="text-muted-foreground">Indtast din email for at se dit hold</p>
-          <div className="flex gap-2 max-w-md">
-            <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-secondary border-border" />
-            <Button onClick={() => setLookupEmail(email)} className="bg-gradient-racing text-primary-foreground font-display">
-              Find hold
-            </Button>
-          </div>
+        <div className="container py-12 text-center">
+          <p className="text-muted-foreground">Indlæser...</p>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <PageLayout>
+        <div className="container py-12 text-center space-y-4">
+          <AlertTriangle className="mx-auto h-10 w-10 text-gold" />
+          <h1 className="font-display text-2xl font-bold text-foreground">Log ind for at se dit hold</h1>
+          <p className="text-muted-foreground">Du skal være logget ind for at se dit hold.</p>
+          <Button onClick={() => navigate("/login")} className="bg-gradient-racing text-primary-foreground font-display">
+            Log ind
+          </Button>
         </div>
       </PageLayout>
     );
@@ -102,8 +109,16 @@ export default function MyTeamPage() {
         <div className="container py-12 text-center space-y-4">
           <AlertTriangle className="mx-auto h-10 w-10 text-gold" />
           <h1 className="font-display text-2xl font-bold text-foreground">Intet hold fundet</h1>
-          <p className="text-muted-foreground">Ingen hold fundet med email: {lookupEmail}</p>
-          <Button onClick={() => { setLookupEmail(""); setEmail(""); }} variant="outline">Prøv igen</Button>
+          <p className="text-muted-foreground">Du har ikke oprettet et hold endnu.</p>
+          <div className="flex gap-3 justify-center">
+            <Button onClick={() => navigate("/vaelg-hold")} className="bg-gradient-racing text-primary-foreground font-display">
+              Opret hold
+            </Button>
+            <Button onClick={signOut} variant="outline">
+              <LogOut className="mr-2 h-4 w-4" />
+              Log ud
+            </Button>
+          </div>
         </div>
       </PageLayout>
     );
@@ -118,12 +133,17 @@ export default function MyTeamPage() {
             <h1 className="font-display text-2xl font-bold text-foreground">{manager.team_name}</h1>
             <p className="text-sm text-muted-foreground">{manager.name}</p>
           </div>
-          <div className="text-right">
-            <p className="font-display text-3xl font-bold text-foreground">{manager.total_points}</p>
-            <p className="text-xs text-muted-foreground">point i alt</p>
-            {myRank && myRank > 0 && (
-              <p className="text-xs text-muted-foreground">#{myRank} af {allManagers.length}</p>
-            )}
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="font-display text-3xl font-bold text-foreground">{manager.total_points}</p>
+              <p className="text-xs text-muted-foreground">point i alt</p>
+              {myRank && myRank > 0 && (
+                <p className="text-xs text-muted-foreground">#{myRank} af {allManagers.length}</p>
+              )}
+            </div>
+            <Button onClick={signOut} variant="ghost" size="icon" title="Log ud">
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
