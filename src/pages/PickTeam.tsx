@@ -108,7 +108,7 @@ export default function PickTeamPage() {
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Budget</span>
               <span className={`font-display font-bold ${remaining < 0 ? "text-destructive" : "text-foreground"}`}>
-                {remaining.toFixed(1)} / {budgetLimit}
+                {formatDKR(remaining)} / {formatDKR(budgetLimit)}
               </span>
             </div>
             <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
