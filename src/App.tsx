@@ -10,6 +10,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
 import Rules from "./pages/Rules";
+import Payment from "./pages/Payment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
