@@ -137,7 +137,7 @@ export default function MyTeamPage() {
               Joker brugt
             </div>
           )}
-          <span className="text-xs text-muted-foreground">Budget: {Number(manager.budget_remaining).toFixed(1)} mio</span>
+          <span className="text-xs text-muted-foreground">Budget: {formatDKR(Number(manager.budget_remaining))}</span>
         </div>
 
         {/* Drivers */}
