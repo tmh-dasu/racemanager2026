@@ -1,17 +1,14 @@
 import PageLayout from "@/components/PageLayout";
-import { Trophy, Zap, Target, Calendar, ArrowRightLeft, AlertTriangle } from "lucide-react";
+import { Trophy, Zap, Target, Calendar, ArrowRightLeft, AlertTriangle, ListMinus } from "lucide-react";
 
 const pointsTable = [
-  { pos: "1.", pts: 25 },
-  { pos: "2.", pts: 18 },
-  { pos: "3.", pts: 15 },
-  { pos: "4.", pts: 12 },
-  { pos: "5.", pts: 10 },
-  { pos: "6.", pts: 8 },
-  { pos: "7.", pts: 6 },
-  { pos: "8.", pts: 4 },
-  { pos: "9.", pts: 2 },
-  { pos: "10.", pts: 1 },
+  { pos: "1.", pts: 25 }, { pos: "2.", pts: 22 }, { pos: "3.", pts: 20 },
+  { pos: "4.", pts: 18 }, { pos: "5.", pts: 16 }, { pos: "6.", pts: 15 },
+  { pos: "7.", pts: 14 }, { pos: "8.", pts: 13 }, { pos: "9.", pts: 12 },
+  { pos: "10.", pts: 11 }, { pos: "11.", pts: 10 }, { pos: "12.", pts: 9 },
+  { pos: "13.", pts: 8 }, { pos: "14.", pts: 7 }, { pos: "15.", pts: 6 },
+  { pos: "16.", pts: 5 }, { pos: "17.", pts: 4 }, { pos: "18.", pts: 3 },
+  { pos: "19.", pts: 2 }, { pos: "20.", pts: 1 },
 ];
 
 const races = [
@@ -21,6 +18,13 @@ const races = [
   { round: 4, name: "Jyllandsringen – Grand Prix Danmark", location: "Silkeborg", date: "22. august" },
   { round: 5, name: "Padborg Park – Night Race", location: "Padborg", date: "4. september" },
   { round: 6, name: "Padborg Park – Finaleløbet", location: "Padborg", date: "3. oktober" },
+];
+
+const dropRules = [
+  { rounds: "7 afdelinger", drop: "4 dårligste resultater" },
+  { rounds: "6 afdelinger", drop: "3 dårligste resultater" },
+  { rounds: "4–5 afdelinger", drop: "2 dårligste resultater" },
+  { rounds: "Under 4 afdelinger", drop: "1 dårligste resultat" },
 ];
 
 export default function RulesPage() {
@@ -59,45 +63,61 @@ export default function RulesPage() {
 
         {/* Points system */}
         <Section icon={<Trophy className="h-5 w-5 text-accent" />} title="Pointsystem">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="py-1.5 text-left font-medium text-muted-foreground">Placering</th>
-                    <th className="py-1.5 text-right font-medium text-muted-foreground">Point</th>
+          <p className="text-sm text-muted-foreground mb-3">
+            Der gives point for <strong className="text-foreground">tidtagning/Super Pole</strong> og hvert af de <strong className="text-foreground">3 heats</strong> per afdeling – i alt 4 resultater per runde.
+          </p>
+          <div className="grid grid-cols-2 gap-x-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="py-1.5 text-left font-medium text-muted-foreground">Placering</th>
+                  <th className="py-1.5 text-right font-medium text-muted-foreground">Point</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pointsTable.slice(0, 10).map((r) => (
+                  <tr key={r.pos} className="border-b border-border/50">
+                    <td className="py-1 text-foreground">{r.pos} plads</td>
+                    <td className="py-1 text-right font-display font-bold text-foreground">{r.pts}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {pointsTable.map((r) => (
-                    <tr key={r.pos} className="border-b border-border/50">
-                      <td className="py-1.5 text-foreground">{r.pos} plads</td>
-                      <td className="py-1.5 text-right font-display font-bold text-foreground">{r.pts}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-foreground">Bonuspoint</h4>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
-                  <span>⚡</span>
-                  <span>Hurtigste omgang: <strong className="text-foreground">+3 point</strong></span>
-                </div>
-                <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
-                  <span>🏎️</span>
-                  <span>Pole position: <strong className="text-foreground">+3 point</strong></span>
-                </div>
-                <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
-                  <span>❌</span>
-                  <span>DNF (udgået): <strong className="text-foreground">0 point</strong></span>
-                </div>
+                ))}
+              </tbody>
+            </table>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="py-1.5 text-left font-medium text-muted-foreground">Placering</th>
+                  <th className="py-1.5 text-right font-medium text-muted-foreground">Point</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pointsTable.slice(10, 20).map((r) => (
+                  <tr key={r.pos} className="border-b border-border/50">
+                    <td className="py-1 text-foreground">{r.pos} plads</td>
+                    <td className="py-1 text-right font-display font-bold text-foreground">{r.pts}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-3 flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
+            <span>❌</span>
+            <span className="text-sm text-muted-foreground">DNF (udgået): <strong className="text-foreground">0 point</strong></span>
+          </div>
+        </Section>
+
+        {/* Drop worst */}
+        <Section icon={<ListMinus className="h-5 w-5 text-accent" />} title="Fratrækning af dårligste resultater">
+          <p className="text-sm text-muted-foreground mb-3">
+            Inden finaleafdelingen fratrækkes de dårligste <strong className="text-foreground">rundetotaler</strong> (sum af tidtagning + 3 heats). Point fra finaleafdelingen kan ikke fratrækkes.
+          </p>
+          <div className="space-y-1">
+            {dropRules.map((r) => (
+              <div key={r.rounds} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2 text-sm">
+                <span className="text-foreground">{r.rounds}</span>
+                <span className="font-display font-bold text-foreground">{r.drop}</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Dine samlede point er summen af dine 3 køreres point over alle løb.
-              </p>
-            </div>
+            ))}
           </div>
         </Section>
 
@@ -138,7 +158,7 @@ export default function RulesPage() {
         <div className="rounded-lg border border-border bg-card p-5 shadow-card text-center">
           <Trophy className="h-8 w-8 text-gold mx-auto mb-2" />
           <p className="font-display text-lg font-bold text-foreground">
-            Manageren med flest point efter 6 runder vinder! 🏆
+            Manageren med flest point efter fratrækning vinder! 🏆
           </p>
         </div>
       </div>
