@@ -7,6 +7,9 @@ export interface Driver {
   team: string;
   price: number;
   photo_url: string | null;
+  bio: string;
+  club: string;
+  quote: string;
 }
 
 export interface Race {
