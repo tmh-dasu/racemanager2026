@@ -49,7 +49,7 @@ export default function ResultsPage() {
     return Array.from(pointsByDriver.entries())
       .map(([driverId, { perRound, allSession }]) => {
         const grossTotal = allSession.reduce((s, p) => s + p, 0);
-        const { total: netTotal, dropCount } = applyDropWorst(allSession, numRounds);
+        const { total: netTotal, dropCount } = applyDropWorst(allSession, completedRounds);
         return { driverId, grossTotal, netTotal, dropCount, perRound };
       })
       .sort((a, b) => b.netTotal - a.netTotal);
