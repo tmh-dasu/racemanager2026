@@ -228,7 +228,7 @@ export async function recalculateManagerPoints() {
     
     // Collect all individual session points
     const sessionPoints = (results || []).map((r: any) => r.points || 0);
-    const { total } = applyDropWorst(sessionPoints, numRounds);
+    const { total } = applyDropWorst(sessionPoints, completedRounds);
     
     await supabase.from("managers").update({ total_points: total }).eq("id", mgr.id);
   }
