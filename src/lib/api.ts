@@ -110,8 +110,10 @@ export async function fetchManagerDrivers(managerId: string): Promise<ManagerDri
   return (data || []) as ManagerDriver[];
 }
 
-export async function createManager(name: string, email: string, teamName: string, budgetRemaining: number) {
-  const { data, error } = await supabase.from("managers").insert({ name, email, team_name: teamName, budget_remaining: budgetRemaining }).select().single();
+export async function createManager(name: string, email: string, teamName: string, budgetRemaining: number, userId?: string) {
+  const insertData: any = { name, email, team_name: teamName, budget_remaining: budgetRemaining };
+  if (userId) insertData.user_id = userId;
+  const { data, error } = await supabase.from("managers").insert(insertData).select().single();
   if (error) throw error;
   return data as Manager;
 }
