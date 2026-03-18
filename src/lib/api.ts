@@ -217,7 +217,9 @@ export async function upsertRaceResult(result: Omit<RaceResult, "id">) {
 export async function recalculateManagerPoints() {
   const managers = await fetchManagers();
   const races = await fetchRaces();
-  const numRounds = races.length;
+  // Count only rounds that have actual results
+  const { data: resultRaces } = await supabase.from("race_results").select("race_id");
+  const completedRounds = new Set((resultRaces || []).map((r: any) => r.race_id)).size;
   for (const mgr of managers) {
     const mds = await fetchManagerDrivers(mgr.id);
     const driverIds = mds.map((md) => md.driver_id);
