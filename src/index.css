@@ -52,6 +52,10 @@
     --navy-surface: 0 0% 100%;
     --gold: 45 100% 45%;
     --gold-foreground: 45 100% 10%;
+    --silver: 220 10% 70%;
+    --silver-foreground: 220 20% 15%;
+    --bronze: 30 60% 45%;
+    --bronze-foreground: 30 60% 10%;
     --success: 142 70% 40%;
     --success-foreground: 0 0% 100%;
   }
