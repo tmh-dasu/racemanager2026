@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Trophy, Zap, ArrowLeftRight, AlertTriangle } from "lucide-react";
-import { fetchManagerByEmail, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, useJoker, type Manager, type Driver } from "@/lib/api";
+import { fetchManagerByEmail, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, useJoker, type Manager, type Driver } from "@/lib/api";
 import { formatDKR } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
