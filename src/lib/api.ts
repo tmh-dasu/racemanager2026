@@ -147,8 +147,15 @@ export async function fetchManagerDrivers(managerId: string): Promise<ManagerDri
   return (data || []) as ManagerDriver[];
 }
 
+export function generateSlug(teamName: string): string {
+  return teamName.toLowerCase()
+    .replace(/æ/g, 'ae').replace(/ø/g, 'oe').replace(/å/g, 'aa')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 export async function createManager(name: string, email: string, teamName: string, budgetRemaining: number, userId?: string) {
-  const insertData: any = { name, email, team_name: teamName, budget_remaining: budgetRemaining };
+  const slug = generateSlug(teamName);
+  const insertData: any = { name, email, team_name: teamName, budget_remaining: budgetRemaining, slug };
   if (userId) insertData.user_id = userId;
   const { data, error } = await supabase.from("managers").insert(insertData).select().single();
   if (error) throw error;
