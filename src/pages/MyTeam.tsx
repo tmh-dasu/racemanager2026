@@ -197,7 +197,8 @@ export default function MyTeamPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-display font-semibold text-foreground">{d.name}</p>
-                  <p className="text-xs text-muted-foreground">{d.team}</p>
+                  <p className="text-xs text-muted-foreground">{d.team}{(d as any).club ? ` • ${(d as any).club}` : ""}</p>
+                  {(d as any).quote && <p className="text-xs italic text-muted-foreground mt-0.5">"{(d as any).quote}"</p>}
                 </div>
                 <div className="text-right">
                   <p className="font-display text-xl font-bold text-foreground">{getDriverPoints(d.id)}</p>

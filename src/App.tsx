@@ -35,6 +35,7 @@ const App = () => (
             <Route path="/resultater" element={<Results />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/regler" element={<Rules />} />
+            <Route path="/hold/:slug" element={<TeamPublic />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
