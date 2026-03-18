@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { User, DollarSign, Check, AlertTriangle } from "lucide-react";
 import { formatDKR } from "@/lib/format";
 import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByEmail } from "@/lib/api";
