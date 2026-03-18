@@ -146,6 +146,22 @@ export async function deleteDriver(id: string) {
   if (error) throw error;
 }
 
+export async function deleteRace(id: string) {
+  // Delete associated results first
+  const { error: resErr } = await supabase.from("race_results").delete().eq("race_id", id);
+  if (resErr) throw resErr;
+  const { error } = await supabase.from("races").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteManager(id: string) {
+  // Delete associated driver picks and joker transfers first
+  await supabase.from("manager_drivers").delete().eq("manager_id", id);
+  await supabase.from("joker_transfers").delete().eq("manager_id", id);
+  const { error } = await supabase.from("managers").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function upsertRace(race: Partial<Race> & { round_number: number; name: string }) {
   if (race.id) {
     const { error } = await supabase.from("races").update(race).eq("id", race.id);
