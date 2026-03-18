@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { User, DollarSign, Check, AlertTriangle } from "lucide-react";
+import { formatDKR } from "@/lib/format";
 import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByEmail } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,7 @@ export default function PickTeamPage() {
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Budget</span>
               <span className={`font-display font-bold ${remaining < 0 ? "text-destructive" : "text-foreground"}`}>
-                {remaining.toFixed(1)} / {budgetLimit}
+                {formatDKR(remaining)} / {formatDKR(budgetLimit)}
               </span>
             </div>
             <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -145,8 +146,7 @@ export default function PickTeamPage() {
                   <p className="text-xs text-muted-foreground truncate">{d.team}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="font-display text-lg font-bold text-gold">{d.price}</span>
-                  <p className="text-xs text-muted-foreground">mio</p>
+                  <span className="font-display text-sm font-bold text-gold">{formatDKR(d.price)}</span>
                 </div>
                 {selected && (
                   <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-racing">

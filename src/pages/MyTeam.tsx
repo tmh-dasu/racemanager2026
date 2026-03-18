@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Trophy, Zap, ArrowLeftRight, AlertTriangle } from "lucide-react";
 import { fetchManagerByEmail, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, useJoker, type Manager, type Driver } from "@/lib/api";
+import { formatDKR } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -136,7 +137,7 @@ export default function MyTeamPage() {
               Joker brugt
             </div>
           )}
-          <span className="text-xs text-muted-foreground">Budget: {Number(manager.budget_remaining).toFixed(1)} mio</span>
+          <span className="text-xs text-muted-foreground">Budget: {formatDKR(Number(manager.budget_remaining))}</span>
         </div>
 
         {/* Drivers */}
@@ -189,7 +190,7 @@ export default function MyTeamPage() {
                   >
                     <span className="font-display font-bold text-foreground">#{d.car_number}</span>
                     <span className="text-sm text-foreground">{d.name}</span>
-                    <span className="ml-auto text-sm text-gold">{d.price} mio</span>
+                    <span className="ml-auto text-sm text-gold">{formatDKR(d.price)}</span>
                   </button>
                 ))}
               </div>
@@ -213,7 +214,7 @@ export default function MyTeamPage() {
                       >
                         <span className="font-display font-bold text-foreground">#{d.car_number}</span>
                         <span className="text-sm text-foreground">{d.name}</span>
-                        <span className="ml-auto text-sm text-gold">{d.price} mio</span>
+                        <span className="ml-auto text-sm text-gold">{formatDKR(d.price)}</span>
                         {!canAfford && <span className="text-xs text-destructive">For dyr</span>}
                       </button>
                     );

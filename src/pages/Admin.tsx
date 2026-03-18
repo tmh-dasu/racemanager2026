@@ -99,7 +99,7 @@ function DriversAdmin() {
       <div className="space-y-1">
         {drivers.map((d) => (
           <div key={d.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
-            <span className="text-foreground">#{d.car_number} {d.name} – {d.team} – {d.price} mio</span>
+            <span className="text-foreground">#{d.car_number} {d.name} – {d.team} – {Number(d.price).toLocaleString("da-DK")} DKR</span>
             <button onClick={() => handleDelete(d.id)} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
