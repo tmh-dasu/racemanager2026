@@ -100,13 +100,20 @@ export async function fetchManagerByEmail(email: string): Promise<Manager | null
   return data as Manager | null;
 }
 
+export async function fetchManagerByUserId(userId: string): Promise<Manager | null> {
+  const { data } = await supabase.from("managers").select("*").eq("user_id", userId).maybeSingle();
+  return data as Manager | null;
+}
+
 export async function fetchManagerDrivers(managerId: string): Promise<ManagerDriver[]> {
   const { data } = await supabase.from("manager_drivers").select("*").eq("manager_id", managerId);
   return (data || []) as ManagerDriver[];
 }
 
-export async function createManager(name: string, email: string, teamName: string, budgetRemaining: number) {
-  const { data, error } = await supabase.from("managers").insert({ name, email, team_name: teamName, budget_remaining: budgetRemaining }).select().single();
+export async function createManager(name: string, email: string, teamName: string, budgetRemaining: number, userId?: string) {
+  const insertData: any = { name, email, team_name: teamName, budget_remaining: budgetRemaining };
+  if (userId) insertData.user_id = userId;
+  const { data, error } = await supabase.from("managers").insert(insertData).select().single();
   if (error) throw error;
   return data as Manager;
 }

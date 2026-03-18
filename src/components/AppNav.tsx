@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Trophy, ListOrdered, Flag, Settings, BookOpen } from "lucide-react";
+import { Home, Users, Trophy, ListOrdered, Flag, Settings, BookOpen, LogIn, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { to: "/", label: "Hjem", icon: Home },
@@ -13,6 +14,7 @@ const navItems = [
 
 export default function AppNav() {
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md md:relative md:border-b md:border-t-0">
@@ -42,6 +44,27 @@ export default function AppNav() {
               </Link>
             );
           })}
+          {user ? (
+            <button
+              onClick={signOut}
+              className="flex flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors md:flex-row md:gap-1.5 md:px-3 md:py-2 md:text-sm"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="font-medium">Log ud</span>
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className={`flex flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-xs transition-colors md:flex-row md:gap-1.5 md:px-3 md:py-2 md:text-sm ${
+                location.pathname === "/login"
+                  ? "text-accent-foreground bg-accent/20"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <LogIn className="h-4 w-4" />
+              <span className="font-medium">Log ind</span>
+            </Link>
+          )}
         </div>
       </div>
     </nav>
