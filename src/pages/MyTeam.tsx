@@ -121,6 +121,9 @@ export default function MyTeamPage() {
           <div className="text-right">
             <p className="font-display text-3xl font-bold text-foreground">{manager.total_points}</p>
             <p className="text-xs text-muted-foreground">point i alt</p>
+            {myRank && myRank > 0 && (
+              <p className="text-xs text-muted-foreground">#{myRank} af {allManagers.length}</p>
+            )}
           </div>
         </div>
 
