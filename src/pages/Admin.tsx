@@ -151,10 +151,23 @@ function ResultsAdmin() {
   const [selectedRace, setSelectedRace] = useState("");
   const [results, setResults] = useState<Record<string, { position: string; fastest_lap: boolean; pole_position: boolean; dnf: boolean }>>({});
 
-  function initResults(raceId: string) {
+  async function initResults(raceId: string) {
     setSelectedRace(raceId);
     const init: typeof results = {};
     drivers.forEach((d) => { init[d.id] = { position: "", fastest_lap: false, pole_position: false, dnf: false }; });
+    
+    // Fetch existing results for this race
+    const existing = await fetchRaceResults(raceId);
+    existing.forEach((r) => {
+      if (init[r.driver_id]) {
+        init[r.driver_id] = {
+          position: r.position !== null ? String(r.position) : "",
+          fastest_lap: r.fastest_lap,
+          pole_position: r.pole_position,
+          dnf: r.dnf,
+        };
+      }
+    });
     setResults(init);
   }
 
