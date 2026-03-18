@@ -223,6 +223,7 @@ export type Database = {
           name: string
           team_name: string
           total_points: number
+          user_id: string | null
         }
         Insert: {
           budget_remaining?: number
@@ -233,6 +234,7 @@ export type Database = {
           name: string
           team_name: string
           total_points?: number
+          user_id?: string | null
         }
         Update: {
           budget_remaining?: number
@@ -243,6 +245,7 @@ export type Database = {
           name?: string
           team_name?: string
           total_points?: number
+          user_id?: string | null
         }
         Relationships: []
       }
