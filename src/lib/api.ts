@@ -71,21 +71,19 @@ export function calculatePoints(position: number | null, dnf: boolean): number {
   return POINTS_MAP[position || 0] || 0;
 }
 
-/** Drop worst round totals based on number of rounds (§2.7) */
-export function applyDropWorst(roundTotals: number[]): { total: number; dropped: number[] } {
-  const n = roundTotals.length;
+/** Drop worst individual session results based on number of rounds (§2.7) */
+export function applyDropWorst(sessionPoints: number[], numRounds: number): { total: number; dropCount: number } {
   let dropCount: number;
-  if (n >= 7) dropCount = 4;
-  else if (n >= 6) dropCount = 3;
-  else if (n >= 4) dropCount = 2;
-  else dropCount = Math.max(0, n - 1); // at least keep 1
+  if (numRounds >= 7) dropCount = 4;
+  else if (numRounds >= 6) dropCount = 3;
+  else if (numRounds >= 4) dropCount = 2;
+  else dropCount = Math.max(0, numRounds - 1);
 
-  // Sort ascending to find worst
-  const indexed = roundTotals.map((pts, i) => ({ pts, i }));
-  indexed.sort((a, b) => a.pts - b.pts);
-  const droppedIndices = indexed.slice(0, dropCount).map((x) => x.i);
-  const total = indexed.slice(dropCount).reduce((sum, x) => sum + x.pts, 0);
-  return { total, dropped: droppedIndices };
+  // Sort ascending to find worst individual results
+  const sorted = [...sessionPoints].sort((a, b) => a - b);
+  const kept = sorted.slice(dropCount);
+  const total = kept.reduce((sum, pts) => sum + pts, 0);
+  return { total, dropCount };
 }
 
 export async function fetchSettings(): Promise<Settings> {
