@@ -71,13 +71,14 @@ export function calculatePoints(position: number | null, dnf: boolean): number {
   return POINTS_MAP[position || 0] || 0;
 }
 
-/** Drop worst individual session results based on number of rounds (§2.7) */
-export function applyDropWorst(sessionPoints: number[], numRounds: number): { total: number; dropCount: number } {
+/** Drop worst individual session results based on number of completed rounds (§2.7)
+ *  Drop-worst only activates from round 4 onwards. */
+export function applyDropWorst(sessionPoints: number[], completedRounds: number): { total: number; dropCount: number } {
   let dropCount: number;
-  if (numRounds >= 7) dropCount = 4;
-  else if (numRounds >= 6) dropCount = 3;
-  else if (numRounds >= 4) dropCount = 2;
-  else dropCount = Math.max(0, numRounds - 1);
+  if (completedRounds >= 7) dropCount = 4;
+  else if (completedRounds >= 6) dropCount = 3;
+  else if (completedRounds >= 4) dropCount = 2;
+  else dropCount = 0; // No drops before round 4
 
   // Never drop more results than available (keep at least 1)
   dropCount = Math.min(dropCount, Math.max(0, sessionPoints.length - 1));
@@ -216,7 +217,9 @@ export async function upsertRaceResult(result: Omit<RaceResult, "id">) {
 export async function recalculateManagerPoints() {
   const managers = await fetchManagers();
   const races = await fetchRaces();
-  const numRounds = races.length;
+  // Count only rounds that have actual results
+  const { data: resultRaces } = await supabase.from("race_results").select("race_id");
+  const completedRounds = new Set((resultRaces || []).map((r: any) => r.race_id)).size;
   for (const mgr of managers) {
     const mds = await fetchManagerDrivers(mgr.id);
     const driverIds = mds.map((md) => md.driver_id);
@@ -225,7 +228,7 @@ export async function recalculateManagerPoints() {
     
     // Collect all individual session points
     const sessionPoints = (results || []).map((r: any) => r.points || 0);
-    const { total } = applyDropWorst(sessionPoints, numRounds);
+    const { total } = applyDropWorst(sessionPoints, completedRounds);
     
     await supabase.from("managers").update({ total_points: total }).eq("id", mgr.id);
   }
