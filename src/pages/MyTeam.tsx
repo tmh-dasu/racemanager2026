@@ -214,7 +214,7 @@ export default function MyTeamPage() {
                       >
                         <span className="font-display font-bold text-foreground">#{d.car_number}</span>
                         <span className="text-sm text-foreground">{d.name}</span>
-                        <span className="ml-auto text-sm text-gold">{d.price} mio</span>
+                        <span className="ml-auto text-sm text-gold">{formatDKR(d.price)}</span>
                         {!canAfford && <span className="text-xs text-destructive">For dyr</span>}
                       </button>
                     );
