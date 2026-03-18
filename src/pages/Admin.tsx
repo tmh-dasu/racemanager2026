@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Shield, Users, Flag, Settings as SettingsIcon, Plus, Trash2, Save } from "lucide-react";
-import { fetchDrivers, fetchRaces, fetchRaceResults, fetchSettings, upsertDriver, deleteDriver, upsertRace, upsertRaceResult, updateSetting, recalculateManagerPoints, type Driver, type Race } from "@/lib/api";
+import { fetchDrivers, fetchRaces, fetchRaceResults, fetchSettings, fetchManagers, fetchManagerDrivers, upsertDriver, deleteDriver, upsertRace, deleteRace, upsertRaceResult, updateSetting, recalculateManagerPoints, deleteManager, type Driver, type Race, type Manager } from "@/lib/api";
+import { formatDKR } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -50,12 +51,14 @@ export default function AdminPage() {
             <TabsTrigger value="drivers" className="font-display">Kørere</TabsTrigger>
             <TabsTrigger value="races" className="font-display">Løb</TabsTrigger>
             <TabsTrigger value="results" className="font-display">Resultater</TabsTrigger>
+            <TabsTrigger value="managers" className="font-display">Managers</TabsTrigger>
             <TabsTrigger value="settings" className="font-display">Indstillinger</TabsTrigger>
           </TabsList>
 
           <TabsContent value="drivers"><DriversAdmin /></TabsContent>
           <TabsContent value="races"><RacesAdmin /></TabsContent>
           <TabsContent value="results"><ResultsAdmin /></TabsContent>
+          <TabsContent value="managers"><ManagersAdmin /></TabsContent>
           <TabsContent value="settings"><SettingsAdmin /></TabsContent>
         </Tabs>
       </div>
@@ -134,8 +137,9 @@ function RacesAdmin() {
       <Button onClick={handleAdd} className="bg-gradient-racing text-primary-foreground font-display"><Plus className="h-4 w-4 mr-1" />Tilføj løb</Button>
       <div className="space-y-1">
         {races.map((r) => (
-          <div key={r.id} className="rounded bg-secondary/50 px-3 py-2 text-sm text-foreground">
-            Runde {r.round_number}: {r.name} {r.location && `– ${r.location}`}
+          <div key={r.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm text-foreground">
+            <span>Runde {r.round_number}: {r.name} {r.location && `– ${r.location}`}</span>
+            <button onClick={async () => { await deleteRace(r.id); refetch(); toast({ title: "Løb slettet" }); }} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
       </div>
@@ -276,6 +280,39 @@ function SettingsAdmin() {
           onBlur={(e) => updateBudget(e.target.value)}
         />
       </div>
+    </div>
+  );
+}
+
+function ManagersAdmin() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: managers = [], refetch } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Er du sikker på at du vil slette "${name}"? Alle holddata slettes permanent.`)) return;
+    try {
+      await deleteManager(id);
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["managers"] });
+      toast({ title: `Manager "${name}" slettet` });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-muted-foreground">{managers.length} hold tilmeldt</p>
+      {managers.map((m) => (
+        <div key={m.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
+          <div className="flex-1 min-w-0">
+            <span className="font-medium text-foreground">{m.team_name}</span>
+            <span className="text-muted-foreground ml-2">({m.name} – {m.email})</span>
+            <span className="text-muted-foreground ml-2">• {m.total_points} point • Budget: {formatDKR(Number(m.budget_remaining))}</span>
+            {m.joker_used && <span className="text-muted-foreground ml-2">• Joker brugt</span>}
+          </div>
+          <button onClick={() => handleDelete(m.id, m.team_name)} className="text-destructive hover:text-destructive/80 shrink-0 ml-2"><Trash2 className="h-4 w-4" /></button>
+        </div>
+      ))}
     </div>
   );
 }
