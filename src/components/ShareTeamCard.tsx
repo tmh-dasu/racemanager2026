@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Share2, Download, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Manager, Driver } from "@/lib/api";
 
 interface Props {
@@ -25,42 +25,37 @@ export default function ShareTeamCard({ manager, rank, totalManagers, drivers, g
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
-    const w = 600, h = 420;
+    const w = 600;
+    const h = 420;
     canvas.width = w * 2;
     canvas.height = h * 2;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(2, 2);
 
-    // Background
     const grad = ctx.createLinearGradient(0, 0, w, h);
     grad.addColorStop(0, "#0f1923");
     grad.addColorStop(1, "#1a2a3a");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    // Top accent stripe
     const stripe = ctx.createLinearGradient(0, 0, w, 0);
     stripe.addColorStop(0, "#e63946");
     stripe.addColorStop(1, "#ff6b35");
     ctx.fillStyle = stripe;
     ctx.fillRect(0, 0, w, 5);
 
-    // Game title
     ctx.fillStyle = "#556677";
     ctx.font = "bold 10px system-ui, -apple-system, sans-serif";
-    ctx.letterSpacing = "2px";
     ctx.fillText(GAME_TITLE.toUpperCase(), 32, 28);
 
-    // Team name
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 26px system-ui, -apple-system, sans-serif";
     ctx.fillText(manager.team_name, 32, 60);
 
-    // Manager name
     ctx.fillStyle = "#8899aa";
     ctx.font = "14px system-ui, -apple-system, sans-serif";
     ctx.fillText(`Manager: ${manager.name}`, 32, 82);
 
-    // Points & rank (right side)
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 56px system-ui, -apple-system, sans-serif";
     ctx.textAlign = "right";
@@ -73,15 +68,12 @@ export default function ShareTeamCard({ manager, rank, totalManagers, drivers, g
     }
     ctx.textAlign = "left";
 
-    // Divider
     ctx.fillStyle = "#2a3a4a";
     ctx.fillRect(32, 110, w - 64, 1);
 
-    // Drivers
     drivers.forEach((d, i) => {
       const y = 130 + i * 52;
 
-      // Number badge
       ctx.fillStyle = "#1e2d3d";
       ctx.beginPath();
       ctx.roundRect(32, y, 44, 36, 6);
@@ -90,7 +82,6 @@ export default function ShareTeamCard({ manager, rank, totalManagers, drivers, g
       ctx.font = "bold 14px system-ui, -apple-system, sans-serif";
       ctx.fillText(`#${d.car_number}`, 38, y + 24);
 
-      // Name & team
       ctx.fillStyle = "#ffffff";
       ctx.font = "600 16px system-ui, -apple-system, sans-serif";
       ctx.fillText(d.name, 88, y + 18);
@@ -98,7 +89,6 @@ export default function ShareTeamCard({ manager, rank, totalManagers, drivers, g
       ctx.font = "12px system-ui, -apple-system, sans-serif";
       ctx.fillText(d.team, 88, y + 34);
 
-      // Points
       const pts = getDriverPoints(d.id);
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 20px system-ui, -apple-system, sans-serif";
@@ -110,7 +100,6 @@ export default function ShareTeamCard({ manager, rank, totalManagers, drivers, g
       ctx.textAlign = "left";
     });
 
-    // Footer
     ctx.fillStyle = "#2a3a4a";
     ctx.fillRect(32, h - 36, w - 64, 1);
     ctx.fillStyle = "#445566";
@@ -123,14 +112,18 @@ export default function ShareTeamCard({ manager, rank, totalManagers, drivers, g
     return canvas;
   }
 
-  // Re-render canvas when dialog opens
   useEffect(() => {
-    if (open) {
-      // Wait for dialog animation to complete and canvas to mount
-      const timer = setTimeout(() => generateCard(), 150);
-      return () => clearTimeout(timer);
-    }
+    if (!open) return;
+    const timer = setTimeout(() => generateCard(), 150);
+    return () => clearTimeout(timer);
   }, [open, manager, drivers]);
+
+  async function copyShareLink() {
+    const url = `${window.location.origin}/hold/${manager.slug}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   async function handleDownload() {
     const canvas = generateCard();
@@ -144,24 +137,29 @@ export default function ShareTeamCard({ manager, rank, totalManagers, drivers, g
   async function handleShare() {
     const canvas = generateCard();
     if (!canvas) return;
+
+    const isEmbedded = window.self !== window.top;
+    if (isEmbedded || typeof navigator.share !== "function") {
+      await copyShareLink();
+      return;
+    }
+
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) {
+      await copyShareLink();
+      return;
+    }
+
+    const file = new File([blob], "team-card.png", { type: "image/png" });
+
     try {
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        if (navigator.share) {
-          const file = new File([blob], "team-card.png", { type: "image/png" });
-          await navigator.share({ files: [file], title: manager.team_name });
-        } else {
-          const url = `${window.location.origin}/hold/${manager.slug}`;
-          await navigator.clipboard.writeText(url);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        }
-      });
+      if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: manager.team_name, text: GAME_TITLE });
+        return;
+      }
+      await navigator.share({ title: manager.team_name, text: GAME_TITLE, url: `${window.location.origin}/hold/${manager.slug}` });
     } catch {
-      const url = `${window.location.origin}/hold/${manager.slug}`;
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await copyShareLink();
     }
   }
 
@@ -174,6 +172,9 @@ export default function ShareTeamCard({ manager, rank, totalManagers, drivers, g
         <DialogContent className="bg-card border-border max-w-xl">
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">Del dit hold</DialogTitle>
+            <DialogDescription>
+              Download billedkortet eller del det offentlige link til dit hold.
+            </DialogDescription>
           </DialogHeader>
           <canvas ref={canvasRef} className="w-full rounded-lg" style={{ aspectRatio: "600/420" }} />
           <div className="flex gap-2">
