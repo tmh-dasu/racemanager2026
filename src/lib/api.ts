@@ -31,7 +31,7 @@ export interface RaceResult {
 export interface Manager {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   team_name: string;
   budget_remaining: number;
   joker_used: boolean;
