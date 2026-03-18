@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Shield, Users, Flag, Settings as SettingsIcon, Plus, Trash2, Save, AlertTriangle } from "lucide-react";
-import { fetchDrivers, fetchRaces, fetchRaceResults, fetchSettings, fetchManagers, fetchManagerDrivers, upsertDriver, deleteDriver, upsertRace, deleteRace, upsertRaceResult, updateSetting, recalculateManagerPoints, deleteManager, type Driver, type Race, type Manager } from "@/lib/api";
+import { fetchDrivers, fetchRaces, fetchRaceResults, fetchSettings, fetchManagers, fetchManagerDrivers, upsertDriver, deleteDriver, upsertRace, deleteRace, upsertRaceResult, updateSetting, recalculateManagerPoints, deleteManager, SESSION_TYPES, SESSION_LABELS, type Driver, type Race, type Manager } from "@/lib/api";
 import { formatDKR } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -165,21 +165,20 @@ function ResultsAdmin() {
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const [selectedRace, setSelectedRace] = useState("");
-  const [results, setResults] = useState<Record<string, { position: string; fastest_lap: boolean; pole_position: boolean; dnf: boolean }>>({});
+  const [selectedSession, setSelectedSession] = useState<string>("qualifying");
+  const [results, setResults] = useState<Record<string, { position: string; dnf: boolean }>>({});
 
-  async function initResults(raceId: string) {
+  async function initResults(raceId: string, session: string) {
     setSelectedRace(raceId);
+    setSelectedSession(session);
     const init: typeof results = {};
-    drivers.forEach((d) => { init[d.id] = { position: "", fastest_lap: false, pole_position: false, dnf: false }; });
+    drivers.forEach((d) => { init[d.id] = { position: "", dnf: false }; });
     
-    // Fetch existing results for this race
     const existing = await fetchRaceResults(raceId);
-    existing.forEach((r) => {
+    existing.filter((r) => r.session_type === session).forEach((r) => {
       if (init[r.driver_id]) {
         init[r.driver_id] = {
           position: r.position !== null ? String(r.position) : "",
-          fastest_lap: r.fastest_lap,
-          pole_position: r.pole_position,
           dnf: r.dnf,
         };
       }
@@ -194,9 +193,10 @@ function ResultsAdmin() {
         await upsertRaceResult({
           race_id: selectedRace,
           driver_id: driverId,
+          session_type: selectedSession,
           position: r.dnf ? null : Number(r.position) || null,
-          fastest_lap: r.fastest_lap,
-          pole_position: r.pole_position,
+          fastest_lap: false,
+          pole_position: false,
           dnf: r.dnf,
           points: 0,
         });
@@ -204,21 +204,37 @@ function ResultsAdmin() {
       await recalculateManagerPoints();
       queryClient.invalidateQueries({ queryKey: ["race_results"] });
       queryClient.invalidateQueries({ queryKey: ["managers"] });
-      toast({ title: "Resultater gemt og point opdateret ✅" });
+      toast({ title: `${SESSION_LABELS[selectedSession]} resultater gemt ✅` });
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
   }
 
   return (
     <div className="space-y-4">
+      {/* Race selection */}
       <div className="flex gap-2 flex-wrap">
         {races.map((r) => (
-          <Button key={r.id} variant={selectedRace === r.id ? "default" : "outline"} onClick={() => initResults(r.id)} className="font-display">
+          <Button key={r.id} variant={selectedRace === r.id ? "default" : "outline"} onClick={() => initResults(r.id, selectedSession)} className="font-display">
             R{r.round_number}
           </Button>
         ))}
       </div>
+
+      {/* Session selection */}
+      {selectedRace && (
+        <div className="flex gap-2 flex-wrap">
+          {SESSION_TYPES.map((s) => (
+            <Button key={s} variant={selectedSession === s ? "default" : "outline"} size="sm" onClick={() => initResults(selectedRace, s)} className="font-display text-xs">
+              {SESSION_LABELS[s]}
+            </Button>
+          ))}
+        </div>
+      )}
+
       {selectedRace && (
         <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">
+            {SESSION_LABELS[selectedSession]} – Runde {races.find((r) => r.id === selectedRace)?.round_number}
+          </p>
           {drivers.map((d) => (
             <div key={d.id} className="flex items-center gap-2 rounded bg-secondary/50 px-3 py-2">
               <span className="w-32 text-sm font-medium text-foreground truncate">#{d.car_number} {d.name}</span>
@@ -230,14 +246,6 @@ function ResultsAdmin() {
                 onChange={(e) => setResults({ ...results, [d.id]: { ...results[d.id], position: e.target.value } })}
                 disabled={results[d.id]?.dnf}
               />
-              <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                <input type="checkbox" checked={results[d.id]?.fastest_lap || false} onChange={(e) => setResults({ ...results, [d.id]: { ...results[d.id], fastest_lap: e.target.checked } })} />
-                FL
-              </label>
-              <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                <input type="checkbox" checked={results[d.id]?.pole_position || false} onChange={(e) => setResults({ ...results, [d.id]: { ...results[d.id], pole_position: e.target.checked } })} />
-                Pole
-              </label>
               <label className="flex items-center gap-1 text-xs text-destructive">
                 <input type="checkbox" checked={results[d.id]?.dnf || false} onChange={(e) => setResults({ ...results, [d.id]: { ...results[d.id], dnf: e.target.checked, position: "" } })} />
                 DNF
@@ -245,7 +253,7 @@ function ResultsAdmin() {
             </div>
           ))}
           <Button onClick={handleSave} className="bg-gradient-racing text-primary-foreground font-display">
-            <Save className="h-4 w-4 mr-1" />Gem resultater
+            <Save className="h-4 w-4 mr-1" />Gem {SESSION_LABELS[selectedSession]}
           </Button>
         </div>
       )}
@@ -318,7 +326,7 @@ function ManagersAdmin() {
         <div key={m.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
           <div className="flex-1 min-w-0">
             <span className="font-medium text-foreground">{m.team_name}</span>
-            <span className="text-muted-foreground ml-2">({m.name} – {m.email})</span>
+            <span className="text-muted-foreground ml-2">({m.name})</span>
             <span className="text-muted-foreground ml-2">• {m.total_points} point • Budget: {formatDKR(Number(m.budget_remaining))}</span>
             {m.joker_used && <span className="text-muted-foreground ml-2">• Joker brugt</span>}
           </div>

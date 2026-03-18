@@ -21,6 +21,7 @@ export interface RaceResult {
   id: string;
   race_id: string;
   driver_id: string;
+  session_type: string;
   position: number | null;
   fastest_lap: boolean;
   pole_position: boolean;
@@ -50,16 +51,41 @@ export interface Settings {
   team_registration_open: boolean;
 }
 
-const POINTS_MAP: Record<number, number> = {
-  1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1,
+export const SESSION_TYPES = ["qualifying", "heat1", "heat2", "heat3"] as const;
+export const SESSION_LABELS: Record<string, string> = {
+  qualifying: "Tidtagning",
+  heat1: "Heat 1",
+  heat2: "Heat 2",
+  heat3: "Heat 3",
 };
 
-export function calculatePoints(position: number | null, fastestLap: boolean, pole: boolean, dnf: boolean): number {
+// SuperGT points scale: positions 1-20
+const POINTS_MAP: Record<number, number> = {
+  1: 25, 2: 22, 3: 20, 4: 18, 5: 16, 6: 15, 7: 14, 8: 13,
+  9: 12, 10: 11, 11: 10, 12: 9, 13: 8, 14: 7, 15: 6, 16: 5,
+  17: 4, 18: 3, 19: 2, 20: 1,
+};
+
+export function calculatePoints(position: number | null, dnf: boolean): number {
   if (dnf) return 0;
-  let pts = POINTS_MAP[position || 0] || 0;
-  if (fastestLap) pts += 3;
-  if (pole) pts += 3;
-  return pts;
+  return POINTS_MAP[position || 0] || 0;
+}
+
+/** Drop worst round totals based on number of rounds (§2.7) */
+export function applyDropWorst(roundTotals: number[]): { total: number; dropped: number[] } {
+  const n = roundTotals.length;
+  let dropCount: number;
+  if (n >= 7) dropCount = 4;
+  else if (n >= 6) dropCount = 3;
+  else if (n >= 4) dropCount = 2;
+  else dropCount = Math.max(0, n - 1); // at least keep 1
+
+  // Sort ascending to find worst
+  const indexed = roundTotals.map((pts, i) => ({ pts, i }));
+  indexed.sort((a, b) => a.pts - b.pts);
+  const droppedIndices = indexed.slice(0, dropCount).map((x) => x.i);
+  const total = indexed.slice(dropCount).reduce((sum, x) => sum + x.pts, 0);
+  return { total, dropped: droppedIndices };
 }
 
 export async function fetchSettings(): Promise<Settings> {
@@ -154,7 +180,6 @@ export async function deleteDriver(id: string) {
 }
 
 export async function deleteRace(id: string) {
-  // Delete associated results first
   const { error: resErr } = await supabase.from("race_results").delete().eq("race_id", id);
   if (resErr) throw resErr;
   const { error } = await supabase.from("races").delete().eq("id", id);
@@ -162,7 +187,6 @@ export async function deleteRace(id: string) {
 }
 
 export async function deleteManager(id: string) {
-  // Delete associated driver picks and joker transfers first
   await supabase.from("manager_drivers").delete().eq("manager_id", id);
   await supabase.from("joker_transfers").delete().eq("manager_id", id);
   const { error } = await supabase.from("managers").delete().eq("id", id);
@@ -180,22 +204,32 @@ export async function upsertRace(race: Partial<Race> & { round_number: number; n
 }
 
 export async function upsertRaceResult(result: Omit<RaceResult, "id">) {
-  const points = calculatePoints(result.position, result.fastest_lap, result.pole_position, result.dnf);
+  const points = calculatePoints(result.position, result.dnf);
   const { error } = await supabase.from("race_results").upsert(
     { ...result, points },
-    { onConflict: "race_id,driver_id" }
+    { onConflict: "race_id,driver_id,session_type" }
   );
   if (error) throw error;
 }
 
 export async function recalculateManagerPoints() {
   const managers = await fetchManagers();
+  const races = await fetchRaces();
   for (const mgr of managers) {
     const mds = await fetchManagerDrivers(mgr.id);
     const driverIds = mds.map((md) => md.driver_id);
     if (driverIds.length === 0) continue;
-    const { data: results } = await supabase.from("race_results").select("points").in("driver_id", driverIds);
-    const total = (results || []).reduce((sum: number, r: any) => sum + (r.points || 0), 0);
+    const { data: results } = await supabase.from("race_results").select("points, race_id").in("driver_id", driverIds);
+    
+    // Group points by race round for drop-worst
+    const roundPoints: Record<string, number> = {};
+    (results || []).forEach((r: any) => {
+      roundPoints[r.race_id] = (roundPoints[r.race_id] || 0) + (r.points || 0);
+    });
+    
+    const roundTotals = Object.values(roundPoints);
+    const { total } = applyDropWorst(roundTotals);
+    
     await supabase.from("managers").update({ total_points: total }).eq("id", mgr.id);
   }
 }
