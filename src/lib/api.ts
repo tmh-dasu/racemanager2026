@@ -231,21 +231,28 @@ export async function upsertRaceResult(result: Omit<RaceResult, "id">) {
 }
 
 export async function recalculateManagerPoints() {
-  const managers = await fetchManagers();
-  const races = await fetchRaces();
-  // Count only rounds that have actual results
+  // Read managers directly (admin-only operation)
+  const { data: managerRows } = await supabase.from("managers").select("id");
+  if (!managerRows || managerRows.length === 0) return;
+
+  // Count completed rounds from results
   const { data: resultRaces } = await supabase.from("race_results").select("race_id");
   const completedRounds = new Set((resultRaces || []).map((r: any) => r.race_id)).size;
-  for (const mgr of managers) {
-    const mds = await fetchManagerDrivers(mgr.id);
-    const driverIds = mds.map((md) => md.driver_id);
-    if (driverIds.length === 0) continue;
-    const { data: results } = await supabase.from("race_results").select("points").in("driver_id", driverIds);
-    
-    // Collect all individual session points
-    const sessionPoints = (results || []).map((r: any) => r.points || 0);
+
+  // Fetch all results and manager_drivers in bulk
+  const { data: allResults } = await supabase.from("race_results").select("driver_id, points");
+  const { data: allMDs } = await supabase.from("manager_drivers").select("manager_id, driver_id");
+
+  for (const mgr of managerRows) {
+    const driverIds = (allMDs || []).filter((md: any) => md.manager_id === mgr.id).map((md: any) => md.driver_id);
+    if (driverIds.length === 0) {
+      await supabase.from("managers").update({ total_points: 0 }).eq("id", mgr.id);
+      continue;
+    }
+    const sessionPoints = (allResults || [])
+      .filter((r: any) => driverIds.includes(r.driver_id))
+      .map((r: any) => r.points || 0);
     const { total } = applyDropWorst(sessionPoints, completedRounds);
-    
     await supabase.from("managers").update({ total_points: total }).eq("id", mgr.id);
   }
 }
