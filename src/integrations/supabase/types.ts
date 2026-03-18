@@ -274,6 +274,7 @@ export type Database = {
           pole_position: boolean
           position: number | null
           race_id: string
+          session_type: string
         }
         Insert: {
           created_at?: string
@@ -285,6 +286,7 @@ export type Database = {
           pole_position?: boolean
           position?: number | null
           race_id: string
+          session_type?: string
         }
         Update: {
           created_at?: string
@@ -296,6 +298,7 @@ export type Database = {
           pole_position?: boolean
           position?: number | null
           race_id?: string
+          session_type?: string
         }
         Relationships: [
           {
