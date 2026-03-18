@@ -127,6 +127,17 @@ export default function MyTeamPage() {
           </div>
         </div>
 
+        {/* Transfer Window Status */}
+        <div className="flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm">
+          <span className={`relative flex h-2.5 w-2.5`}>
+            <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${settings?.transfer_window_open ? "bg-success animate-ping" : "bg-muted-foreground"}`}></span>
+            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${settings?.transfer_window_open ? "bg-success" : "bg-muted-foreground"}`}></span>
+          </span>
+          <span className="text-muted-foreground">
+            {settings?.transfer_window_open ? "Transfervinduet er åbent" : "Transfervinduet er lukket"}
+          </span>
+        </div>
+
         {/* Joker Status */}
         <div className="flex items-center gap-3">
           {!manager.joker_used ? (
