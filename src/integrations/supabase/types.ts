@@ -162,6 +162,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "joker_transfers_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "joker_transfers_new_driver_id_fkey"
             columns: ["new_driver_id"]
             isOneToOne: false
@@ -209,6 +216,13 @@ export type Database = {
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manager_drivers_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers_public"
             referencedColumns: ["id"]
           },
         ]
@@ -392,7 +406,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      managers_public: {
+        Row: {
+          budget_remaining: number | null
+          created_at: string | null
+          id: string | null
+          joker_used: boolean | null
+          name: string | null
+          team_name: string | null
+          total_points: number | null
+        }
+        Insert: {
+          budget_remaining?: number | null
+          created_at?: string | null
+          id?: string | null
+          joker_used?: boolean | null
+          name?: string | null
+          team_name?: string | null
+          total_points?: number | null
+        }
+        Update: {
+          budget_remaining?: number | null
+          created_at?: string | null
+          id?: string | null
+          joker_used?: boolean | null
+          name?: string | null
+          team_name?: string | null
+          total_points?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_email: {
