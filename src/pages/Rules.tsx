@@ -52,7 +52,7 @@ export default function RulesPage() {
         <Section icon={<Zap className="h-5 w-5 text-accent" />} title="Sådan deltager du">
           <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
             <li>Opret dit hold med et holdnavn, dit navn og din e-mail</li>
-            <li>Vælg <strong className="text-foreground">3 kørere</strong> inden for budgettet på <strong className="text-foreground">100 mio.</strong></li>
+            <li>Vælg <strong className="text-foreground">3 kørere</strong> inden for budgettet på <strong className="text-foreground">1.000.000 DKR</strong></li>
             <li>Når holdet er valgt, er det låst for resten af sæsonen – med én undtagelse (se Joker nedenfor)</li>
           </ol>
         </Section>
