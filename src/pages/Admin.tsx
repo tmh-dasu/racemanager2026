@@ -137,8 +137,9 @@ function RacesAdmin() {
       <Button onClick={handleAdd} className="bg-gradient-racing text-primary-foreground font-display"><Plus className="h-4 w-4 mr-1" />Tilføj løb</Button>
       <div className="space-y-1">
         {races.map((r) => (
-          <div key={r.id} className="rounded bg-secondary/50 px-3 py-2 text-sm text-foreground">
-            Runde {r.round_number}: {r.name} {r.location && `– ${r.location}`}
+          <div key={r.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm text-foreground">
+            <span>Runde {r.round_number}: {r.name} {r.location && `– ${r.location}`}</span>
+            <button onClick={async () => { await deleteRace(r.id); refetch(); toast({ title: "Løb slettet" }); }} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
       </div>
