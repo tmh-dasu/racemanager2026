@@ -40,6 +40,7 @@ export interface Manager {
   budget_remaining: number;
   joker_used: boolean;
   total_points: number;
+  slug?: string;
 }
 
 export interface ManagerDriver {
