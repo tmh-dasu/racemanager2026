@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Trophy, Zap, ArrowLeftRight, AlertTriangle } from "lucide-react";
-import { fetchManagerByEmail, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, useJoker, type Manager, type Driver } from "@/lib/api";
+import { fetchManagerByEmail, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, useJoker, type Manager, type Driver } from "@/lib/api";
 import { formatDKR } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,9 @@ export default function MyTeamPage() {
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
+  const { data: allManagers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+
+  const myRank = manager ? allManagers.findIndex((m) => m.id === manager.id) + 1 : null;
 
   const [jokerOpen, setJokerOpen] = useState(false);
   const [swapOutId, setSwapOutId] = useState<string | null>(null);
@@ -118,7 +121,21 @@ export default function MyTeamPage() {
           <div className="text-right">
             <p className="font-display text-3xl font-bold text-foreground">{manager.total_points}</p>
             <p className="text-xs text-muted-foreground">point i alt</p>
+            {myRank && myRank > 0 && (
+              <p className="text-xs text-muted-foreground">#{myRank} af {allManagers.length}</p>
+            )}
           </div>
+        </div>
+
+        {/* Transfer Window Status */}
+        <div className="flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm">
+          <span className={`relative flex h-2.5 w-2.5`}>
+            <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${settings?.transfer_window_open ? "bg-success animate-ping" : "bg-muted-foreground"}`}></span>
+            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${settings?.transfer_window_open ? "bg-success" : "bg-muted-foreground"}`}></span>
+          </span>
+          <span className="text-muted-foreground">
+            {settings?.transfer_window_open ? "Transfervinduet er åbent" : "Transfervinduet er lukket"}
+          </span>
         </div>
 
         {/* Joker Status */}
