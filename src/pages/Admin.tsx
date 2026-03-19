@@ -60,11 +60,12 @@ export default function AdminPage() {
       <div className="container py-6">
         <h1 className="font-display text-2xl font-bold text-foreground mb-4">Admin Panel</h1>
         <Tabs defaultValue="drivers">
-          <TabsList className="bg-secondary border-border mb-4">
+          <TabsList className="bg-secondary border-border mb-4 flex-wrap">
             <TabsTrigger value="drivers" className="font-display">Kørere</TabsTrigger>
             <TabsTrigger value="races" className="font-display">Løb</TabsTrigger>
             <TabsTrigger value="results" className="font-display">Resultater</TabsTrigger>
             <TabsTrigger value="managers" className="font-display">Managers</TabsTrigger>
+            <TabsTrigger value="vouchers" className="font-display">Vouchers</TabsTrigger>
             <TabsTrigger value="settings" className="font-display">Indstillinger</TabsTrigger>
           </TabsList>
 
