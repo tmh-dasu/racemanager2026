@@ -14,6 +14,8 @@ export default function PickTeamPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const hasPaid = searchParams.get("paid") === "true";
   const { user, loading: authLoading } = useAuth();
 
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
