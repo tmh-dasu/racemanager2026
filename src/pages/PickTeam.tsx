@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DollarSign, Check, AlertTriangle } from "lucide-react";
 import { formatDKR } from "@/lib/format";
 import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByUserId } from "@/lib/api";
@@ -14,6 +14,8 @@ export default function PickTeamPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const hasPaid = searchParams.get("paid") === "true";
   const { user, loading: authLoading } = useAuth();
 
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
@@ -106,6 +108,21 @@ export default function PickTeamPage() {
           <p className="text-muted-foreground">Du skal være logget ind for at oprette et hold.</p>
           <Button onClick={() => navigate("/login")} className="bg-gradient-racing text-primary-foreground font-display">
             Log ind
+          </Button>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!hasPaid) {
+    return (
+      <PageLayout>
+        <div className="container py-12 text-center space-y-4">
+          <AlertTriangle className="mx-auto h-10 w-10 text-gold" />
+          <h1 className="font-display text-2xl font-bold text-foreground">Betaling påkrævet</h1>
+          <p className="text-muted-foreground">Du skal betale tilmeldingsgebyret før du kan vælge dit hold.</p>
+          <Button onClick={() => navigate("/betal")} className="bg-gradient-racing text-primary-foreground font-display">
+            Gå til betaling
           </Button>
         </div>
       </PageLayout>
