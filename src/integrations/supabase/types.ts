@@ -419,6 +419,30 @@ export type Database = {
         }
         Relationships: []
       }
+      voucher_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       managers_public: {
