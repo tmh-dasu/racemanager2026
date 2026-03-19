@@ -49,9 +49,10 @@ Deno.serve(async (req) => {
 
     const trimmedCode = code.trim().toUpperCase();
 
+    // Look up the voucher
     const { data: voucher, error: fetchError } = await adminClient
       .from("voucher_codes")
-      .select("*")
+      .select("id, used_by")
       .eq("code", trimmedCode)
       .maybeSingle();
 
@@ -69,15 +70,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Claim the voucher
-    const { error: updateError } = await adminClient
+    // Atomic claim: only succeeds if used_by is still null (prevents race condition)
+    const { data: claimed, error: updateError } = await adminClient
       .from("voucher_codes")
       .update({ used_by: user.id, used_at: new Date().toISOString() })
-      .eq("id", voucher.id);
+      .eq("id", voucher.id)
+      .is("used_by", null)
+      .select()
+      .maybeSingle();
 
-    if (updateError) {
-      return new Response(JSON.stringify({ error: "Kunne ikke indløse koden" }), {
-        status: 500,
+    if (updateError || !claimed) {
+      return new Response(JSON.stringify({ error: "Denne kode er allerede brugt" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
