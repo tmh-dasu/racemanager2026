@@ -262,3 +262,144 @@ function ManagersAdmin() {
     </div>
   );
 }
+
+function VouchersAdmin() {
+  const { toast } = useToast();
+  const [newCode, setNewCode] = useState("");
+  const [bulkCount, setBulkCount] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const { data: vouchers = [], refetch } = useQuery({
+    queryKey: ["vouchers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("voucher_codes").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as { id: string; code: string; used_by: string | null; used_at: string | null; created_at: string }[];
+    },
+  });
+
+  function generateCode(): string {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "DASU-";
+    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  }
+
+  async function handleAddSingle() {
+    const code = newCode.trim().toUpperCase();
+    if (!code) { toast({ title: "Indtast en kode", variant: "destructive" }); return; }
+    setAdding(true);
+    try {
+      const { error } = await supabase.from("voucher_codes").insert({ code });
+      if (error) throw error;
+      setNewCode("");
+      refetch();
+      toast({ title: `Voucher "${code}" oprettet` });
+    } catch (err: any) {
+      toast({ title: err.message?.includes("duplicate") ? "Koden findes allerede" : err.message, variant: "destructive" });
+    }
+    setAdding(false);
+  }
+
+  async function handleGenerateBulk() {
+    const count = Math.min(Math.max(1, Number(bulkCount) || 0), 50);
+    if (count === 0) { toast({ title: "Angiv antal (1-50)", variant: "destructive" }); return; }
+    setAdding(true);
+    try {
+      const codes = Array.from({ length: count }, () => ({ code: generateCode() }));
+      const { error } = await supabase.from("voucher_codes").insert(codes);
+      if (error) throw error;
+      setBulkCount("");
+      refetch();
+      toast({ title: `${count} voucher-koder genereret` });
+    } catch (err: any) {
+      toast({ title: err.message, variant: "destructive" });
+    }
+    setAdding(false);
+  }
+
+  async function handleDelete(id: string, code: string) {
+    if (!confirm(`Slet voucher "${code}"?`)) return;
+    const { error } = await supabase.from("voucher_codes").delete().eq("id", id);
+    if (error) { toast({ title: error.message, variant: "destructive" }); return; }
+    refetch();
+    toast({ title: "Voucher slettet" });
+  }
+
+  function copyToClipboard(code: string) {
+    navigator.clipboard.writeText(code);
+    toast({ title: `"${code}" kopieret` });
+  }
+
+  const usedCount = vouchers.filter((v) => v.used_by).length;
+  const availableCount = vouchers.length - usedCount;
+
+  return (
+    <div className="space-y-4">
+      {/* Stats */}
+      <div className="flex gap-4 text-sm">
+        <span className="text-muted-foreground">Total: <span className="font-bold text-foreground">{vouchers.length}</span></span>
+        <span className="text-muted-foreground">Ledige: <span className="font-bold text-green-500">{availableCount}</span></span>
+        <span className="text-muted-foreground">Brugte: <span className="font-bold text-racing-red">{usedCount}</span></span>
+      </div>
+
+      {/* Add single code */}
+      <div className="flex gap-2">
+        <Input
+          placeholder="Voucher-kode (f.eks. VIP2026)"
+          value={newCode}
+          onChange={(e) => setNewCode(e.target.value)}
+          className="bg-secondary border-border uppercase max-w-xs"
+          maxLength={50}
+          onKeyDown={(e) => e.key === "Enter" && handleAddSingle()}
+        />
+        <Button onClick={handleAddSingle} disabled={adding} className="bg-gradient-racing text-primary-foreground font-display">
+          <Plus className="h-4 w-4 mr-1" />Tilføj
+        </Button>
+      </div>
+
+      {/* Generate bulk */}
+      <div className="flex gap-2 items-center">
+        <Input
+          placeholder="Antal"
+          type="number"
+          min={1}
+          max={50}
+          value={bulkCount}
+          onChange={(e) => setBulkCount(e.target.value)}
+          className="bg-secondary border-border w-24"
+        />
+        <Button onClick={handleGenerateBulk} disabled={adding} variant="outline" className="font-display">
+          <Ticket className="h-4 w-4 mr-1" />Generér tilfældige koder
+        </Button>
+      </div>
+
+      {/* List */}
+      <div className="space-y-1">
+        {vouchers.map((v) => (
+          <div key={v.id} className={`flex items-center justify-between rounded px-3 py-2 text-sm ${v.used_by ? "bg-muted/50" : "bg-secondary/50"}`}>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <button onClick={() => copyToClipboard(v.code)} className="hover:text-gold transition-colors" title="Kopiér">
+                <Copy className="h-3.5 w-3.5" />
+              </button>
+              <span className={`font-mono font-semibold ${v.used_by ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                {v.code}
+              </span>
+              {v.used_by && v.used_at && (
+                <span className="text-xs text-muted-foreground">
+                  Brugt {new Date(v.used_at).toLocaleDateString("da-DK")}
+                </span>
+              )}
+            </div>
+            {!v.used_by && (
+              <button onClick={() => handleDelete(v.id, v.code)} className="text-destructive hover:text-destructive/80 ml-2">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        ))}
+        {vouchers.length === 0 && <p className="text-sm text-muted-foreground">Ingen voucher-koder oprettet endnu.</p>}
+      </div>
+    </div>
+  );
+}
