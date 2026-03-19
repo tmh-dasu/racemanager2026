@@ -73,6 +73,7 @@ export default function AdminPage() {
           <TabsContent value="races"><RacesAdmin /></TabsContent>
           <TabsContent value="results"><ResultsAdmin /></TabsContent>
           <TabsContent value="managers"><ManagersAdmin /></TabsContent>
+          <TabsContent value="vouchers"><VouchersAdmin /></TabsContent>
           <TabsContent value="settings"><SettingsAdmin /></TabsContent>
         </Tabs>
       </div>
