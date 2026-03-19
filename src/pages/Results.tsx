@@ -107,29 +107,29 @@ export default function ResultsPage() {
                   </div>
                   {race.location && <p className="text-xs text-muted-foreground mb-3">{race.location}</p>}
 
-                  <div className="grid grid-cols-12 gap-1 text-xs text-muted-foreground px-2 py-1">
-                    <span className="col-span-1">#</span>
-                    <span className="col-span-3">Kører</span>
+                  <div className="grid gap-1 text-xs text-muted-foreground px-2 py-1" style={{ gridTemplateColumns: "1.5rem 1fr repeat(4, 1.5rem) 2.5rem" }}>
+                    <span>#</span>
+                    <span>Kører</span>
                     {SESSION_TYPES.map((s) => (
-                      <span key={s} className="col-span-1 text-center">{SESSION_SHORT[s]}</span>
+                      <span key={s} className="text-center">{SESSION_SHORT[s]}</span>
                     ))}
-                    <span className="col-span-4 text-right">Total</span>
+                    <span className="text-right">Tot</span>
                   </div>
 
                   <div className="space-y-1">
                     {driverSummaries.map(({ driverId, sessions, total }) => (
-                      <div key={driverId} className="grid grid-cols-12 gap-1 items-center rounded bg-secondary/50 px-2 py-1.5 text-sm">
-                        <span className="col-span-1 text-muted-foreground font-display">#{driverNumber(driverId)}</span>
-                        <span className="col-span-3 font-medium text-foreground truncate">{driverName(driverId)}</span>
+                      <div key={driverId} className="grid gap-1 items-center rounded bg-secondary/50 px-2 py-1.5 text-sm" style={{ gridTemplateColumns: "1.5rem 1fr repeat(4, 1.5rem) 2.5rem" }}>
+                        <span className="text-[10px] text-muted-foreground font-display">{driverNumber(driverId)}</span>
+                        <span className="font-medium text-foreground truncate text-xs">{driverName(driverId)}</span>
                         {SESSION_TYPES.map((s) => {
                           const r = sessions[s];
                           return (
-                            <span key={s} className="col-span-1 text-center text-xs text-muted-foreground" title={r ? (r.dnf ? "DNF" : `P${r.position}`) : "–"}>
+                            <span key={s} className="text-center text-[11px] text-muted-foreground" title={r ? (r.dnf ? "DNF" : `P${r.position}`) : "–"}>
                               {r ? (r.dnf ? <span className="text-destructive">0</span> : r.points) : <span className="text-border">–</span>}
                             </span>
                           );
                         })}
-                        <span className="col-span-4 text-right font-display font-bold text-foreground">{total}</span>
+                        <span className="text-right font-display font-bold text-foreground text-xs">{total}</span>
                       </div>
                     ))}
                   </div>
