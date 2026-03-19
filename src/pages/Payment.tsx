@@ -1,18 +1,57 @@
-import { CreditCard, ShieldCheck, Flag } from "lucide-react";
+import { useState } from "react";
+import { CreditCard, ShieldCheck, Flag, Ticket } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import PageLayout from "@/components/PageLayout";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function PaymentPage() {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [voucherCode, setVoucherCode] = useState("");
+  const [validating, setValidating] = useState(false);
 
   function handlePay() {
-    // TODO: Replace with Stripe Checkout session redirect
     toast({
       title: "Stripe er ikke konfigureret endnu",
       description: "Betalingsintegration kommer snart. Kontakt admin for adgang.",
       variant: "destructive",
     });
+  }
+
+  async function handleVoucher() {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (!voucherCode.trim()) {
+      toast({ title: "Indtast en voucher-kode", variant: "destructive" });
+      return;
+    }
+
+    setValidating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("validate-voucher", {
+        body: { code: voucherCode },
+      });
+
+      if (error || !data?.success) {
+        toast({
+          title: data?.error || "Ugyldig voucher-kode",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Voucher indløst! 🎉" });
+        navigate("/vaelg-hold?paid=true");
+      }
+    } catch {
+      toast({ title: "Noget gik galt", variant: "destructive" });
+    }
+    setValidating(false);
   }
 
   return (
@@ -63,6 +102,32 @@ export default function PaymentPage() {
               <CreditCard className="h-5 w-5" />
               Betal med kort
             </Button>
+          </div>
+
+          {/* Voucher Section */}
+          <div className="rounded-lg border border-border bg-card p-6 shadow-card space-y-4">
+            <div className="flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-gold" />
+              <span className="font-display font-semibold text-foreground">Har du en voucher-kode?</span>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Indtast kode"
+                value={voucherCode}
+                onChange={(e) => setVoucherCode(e.target.value)}
+                className="bg-secondary border-border uppercase"
+                maxLength={50}
+                onKeyDown={(e) => e.key === "Enter" && handleVoucher()}
+              />
+              <Button
+                onClick={handleVoucher}
+                disabled={validating || !voucherCode.trim()}
+                variant="outline"
+                className="shrink-0 border-gold text-gold hover:bg-gold/10 font-display"
+              >
+                {validating ? "Tjekker..." : "Indløs"}
+              </Button>
+            </div>
           </div>
 
           <p className="text-center text-xs text-muted-foreground">
