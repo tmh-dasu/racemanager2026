@@ -114,6 +114,21 @@ export default function PickTeamPage() {
     );
   }
 
+  if (!hasPaid) {
+    return (
+      <PageLayout>
+        <div className="container py-12 text-center space-y-4">
+          <AlertTriangle className="mx-auto h-10 w-10 text-gold" />
+          <h1 className="font-display text-2xl font-bold text-foreground">Betaling påkrævet</h1>
+          <p className="text-muted-foreground">Du skal betale tilmeldingsgebyret før du kan vælge dit hold.</p>
+          <Button onClick={() => navigate("/betal")} className="bg-gradient-racing text-primary-foreground font-display">
+            Gå til betaling
+          </Button>
+        </div>
+      </PageLayout>
+    );
+  }
+
   if (!registrationOpen) {
     return (
       <PageLayout>
