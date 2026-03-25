@@ -38,6 +38,7 @@ export default function PickTeamPage() {
   const [selectedDriverIds, setSelectedDriverIds] = useState<Record<Tier, string | null>>({
     gold: null, silver: null, bronze: null,
   });
+  const [seasonPredictionId, setSeasonPredictionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const registrationOpen = settings?.team_registration_open ?? false;
@@ -59,6 +60,7 @@ export default function PickTeamPage() {
     if (!user) { navigate("/login"); return; }
     if (!teamName) { toast({ title: "Udfyld holdnavn", variant: "destructive" }); return; }
     if (!allSelected) { toast({ title: "Vælg én kører fra hver tier", variant: "destructive" }); return; }
+    if (!seasonPredictionId) { toast({ title: "Vælg din sæsonprediction", variant: "destructive" }); return; }
 
     setSubmitting(true);
     try {
@@ -68,6 +70,7 @@ export default function PickTeamPage() {
       for (const dId of Object.values(selectedDriverIds)) {
         if (dId) await addManagerDriver(manager.id, dId);
       }
+      await submitSeasonPrediction(manager.id, seasonPredictionId);
       queryClient.invalidateQueries({ queryKey: ["managers"] });
       toast({ title: "Hold oprettet! 🏁" });
       navigate("/mit-hold");
