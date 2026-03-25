@@ -26,7 +26,8 @@ export default function PickTeamPage() {
   const hasPaid = searchParams.get("paid") === "true";
   const { user, loading: authLoading } = useAuth();
 
-  const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
+  const { data: allDrivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
+  const drivers = allDrivers.filter((d) => !d.withdrawn);
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
   const { data: existingManager } = useQuery({
     queryKey: ["manager", user?.id],

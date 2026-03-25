@@ -11,6 +11,7 @@ export interface Driver {
   club: string;
   quote: string;
   tier: "gold" | "silver" | "bronze";
+  withdrawn: boolean;
 }
 
 export interface Race {
@@ -51,6 +52,7 @@ export interface Manager {
   joker_used: boolean;
   total_points: number;
   slug?: string;
+  emergency_transfer_used?: boolean;
 }
 
 export interface ManagerDriver {
@@ -133,12 +135,12 @@ export async function fetchRaceResults(raceId?: string): Promise<RaceResult[]> {
 }
 
 export async function fetchManagers(): Promise<Manager[]> {
-  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at, slug").order("total_points", { ascending: false });
+  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at, slug, emergency_transfer_used").order("total_points", { ascending: false });
   return (data || []) as Manager[];
 }
 
 export async function fetchManagerBySlug(slug: string): Promise<Manager | null> {
-  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at, slug").eq("slug", slug).maybeSingle();
+  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at, slug, emergency_transfer_used").eq("slug", slug).maybeSingle();
   return data as Manager | null;
 }
 
@@ -411,5 +413,81 @@ export async function resolvePredictions(questionId: string, correctAnswer: stri
   for (const a of (answers || [])) {
     const isCorrect = a.answer.toLowerCase() === correctAnswer.toLowerCase();
     await supabase.from("prediction_answers").update({ is_correct: isCorrect }).eq("id", a.id);
+  }
+}
+
+// Driver withdrawal: mark driver as withdrawn, restore joker for affected managers, send notifications
+export async function withdrawDriver(driverId: string) {
+  // Mark driver as withdrawn
+  const { error: wErr } = await supabase.from("drivers").update({ withdrawn: true } as any).eq("id", driverId);
+  if (wErr) throw wErr;
+
+  // Find all managers who have this driver
+  const { data: affectedMDs } = await supabase.from("manager_drivers").select("manager_id").eq("driver_id", driverId);
+  if (!affectedMDs || affectedMDs.length === 0) return { affectedCount: 0 };
+
+  const managerIds = affectedMDs.map((md: any) => md.manager_id);
+
+  // For each affected manager: if joker_used=false, just reset; if joker_used=true, give emergency transfer
+  const { data: affectedManagers } = await supabase.from("managers").select("id, joker_used, email, team_name").in("id", managerIds);
+
+  for (const mgr of (affectedManagers || [])) {
+    if (mgr.joker_used) {
+      // Joker was already used — grant emergency transfer
+      await supabase.from("managers").update({ emergency_transfer_used: false } as any).eq("id", mgr.id);
+    } else {
+      // Joker not used — keep it available (it already is)
+    }
+  }
+
+  // Send email notifications via edge function
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  for (const mgr of (affectedManagers || [])) {
+    if (mgr.email) {
+      try {
+        await supabase.functions.invoke("send-email", {
+          body: {
+            to: mgr.email,
+            subject: "⚠️ Kører udgået – DASU Race Manager",
+            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+              <h2 style="color:#e11d48;">Kører udgået af klassen</h2>
+              <p>Hej ${mgr.team_name},</p>
+              <p>En kører på dit hold er officielt udgået af klassen.</p>
+              <p>${mgr.joker_used
+                ? "Da du allerede har brugt din joker, har du fået en <strong>ekstraordinær erstatnings-transfer</strong>. Du kan nu bytte den udgåede kører med en ny kører inden for samme tier."
+                : "Din joker er stadig tilgængelig, og du kan bruge den til at erstatte køreren."
+              }</p>
+              <p>Gå til <a href="https://dasuracemanager.lovable.app/mit-hold" style="color:#2563eb;">Mit Hold</a> for at foretage skiftet.</p>
+              <p>Med venlig hilsen,<br/>DASU Race Manager</p>
+            </div>`,
+          },
+        });
+      } catch (e) {
+        console.error("Failed to send withdrawal email to", mgr.email, e);
+      }
+    }
+  }
+
+  return { affectedCount: affectedManagers?.length || 0 };
+}
+
+// Emergency transfer (same as joker but for withdrawn driver replacement)
+export async function useEmergencyTransfer(managerId: string, oldDriverId: string, newDriverId: string, newBudget: number) {
+  const { error: deleteError } = await supabase.from("manager_drivers").delete().eq("manager_id", managerId).eq("driver_id", oldDriverId);
+  if (deleteError) throw deleteError;
+  const { error: insertError } = await supabase.from("manager_drivers").insert({ manager_id: managerId, driver_id: newDriverId });
+  if (insertError) throw insertError;
+  const { error: updateError } = await supabase.from("managers").update({ emergency_transfer_used: true, budget_remaining: newBudget } as any).eq("id", managerId);
+  if (updateError) throw updateError;
+
+  // Inherit captaincy from old driver to new driver for future races
+  const { data: futureRaces } = await supabase.from("races").select("id").gt("captain_deadline", new Date().toISOString());
+  if (futureRaces && futureRaces.length > 0) {
+    const futureRaceIds = futureRaces.map((r) => r.id);
+    await supabase.from("captain_selections")
+      .update({ driver_id: newDriverId })
+      .eq("manager_id", managerId)
+      .eq("driver_id", oldDriverId)
+      .in("race_id", futureRaceIds);
   }
 }

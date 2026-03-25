@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Zap, ArrowLeftRight, AlertTriangle, LogOut, Share2 } from "lucide-react";
-import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, useJoker, fetchManagerByUserId, type Manager, type Driver } from "@/lib/api";
+import { Trophy, Zap, ArrowLeftRight, AlertTriangle, LogOut, Share2, ShieldAlert } from "lucide-react";
+import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, useJoker, useEmergencyTransfer, fetchManagerByUserId, type Manager, type Driver } from "@/lib/api";
 import { formatDKR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -38,12 +38,19 @@ export default function MyTeamPage() {
   const myRank = manager ? allManagers.findIndex((m) => m.id === manager.id) + 1 : null;
 
   const [jokerOpen, setJokerOpen] = useState(false);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [swapOutId, setSwapOutId] = useState<string | null>(null);
   const [swapInId, setSwapInId] = useState<string | null>(null);
 
   const myDriverIds = managerDrivers.map((md) => md.driver_id);
   const myDrivers = drivers.filter((d) => myDriverIds.includes(d.id));
-  const availableDrivers = drivers.filter((d) => !myDriverIds.includes(d.id));
+  const withdrawnDrivers = myDrivers.filter((d) => d.withdrawn);
+  const hasWithdrawnDriver = withdrawnDrivers.length > 0;
+  const canEmergencyTransfer = hasWithdrawnDriver && manager?.joker_used && !(manager as any).emergency_transfer_used;
+
+  // For joker/emergency: only show same-tier drivers that aren't withdrawn
+  const swapOutDriver = drivers.find((d) => d.id === swapOutId);
+  const availableDrivers = drivers.filter((d) => !myDriverIds.includes(d.id) && !d.withdrawn && (!swapOutDriver || d.tier === swapOutDriver.tier));
 
   function getDriverPoints(driverId: string) {
     return allResults.filter((r) => r.driver_id === driverId).reduce((s, r) => s + r.points, 0);
@@ -59,6 +66,10 @@ export default function MyTeamPage() {
     const oldDriver = drivers.find((d) => d.id === swapOutId);
     const newDriver = drivers.find((d) => d.id === swapInId);
     if (!oldDriver || !newDriver) return;
+    if (oldDriver.tier !== newDriver.tier) {
+      toast({ title: "Du kan kun bytte til en kører i samme tier", variant: "destructive" });
+      return;
+    }
 
     const priceDiff = newDriver.price - oldDriver.price;
     const newBudget = manager.budget_remaining - priceDiff;
@@ -75,6 +86,33 @@ export default function MyTeamPage() {
       setSwapOutId(null);
       setSwapInId(null);
       toast({ title: "Joker brugt! Kører skiftet 🃏" });
+      refetchManager();
+    } catch (err: any) {
+      toast({ title: "Fejl: " + err.message, variant: "destructive" });
+    }
+  }
+
+  async function handleEmergencyTransfer() {
+    if (!manager || !swapOutId || !swapInId) return;
+    const oldDriver = drivers.find((d) => d.id === swapOutId);
+    const newDriver = drivers.find((d) => d.id === swapInId);
+    if (!oldDriver || !newDriver) return;
+
+    const priceDiff = newDriver.price - oldDriver.price;
+    const newBudget = manager.budget_remaining - priceDiff;
+    if (newBudget < 0) {
+      toast({ title: "Ikke nok budget til dette skifte", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await useEmergencyTransfer(manager.id, swapOutId, swapInId, newBudget);
+      queryClient.invalidateQueries({ queryKey: ["manager", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["manager_drivers", manager.id] });
+      setEmergencyOpen(false);
+      setSwapOutId(null);
+      setSwapInId(null);
+      toast({ title: "Nødtransfer gennemført! Kører erstattet 🔄" });
       refetchManager();
     } catch (err: any) {
       toast({ title: "Fejl: " + err.message, variant: "destructive" });
@@ -170,6 +208,31 @@ export default function MyTeamPage() {
           </span>
         </div>
 
+        {/* Withdrawn Driver Warning */}
+        {hasWithdrawnDriver && (
+          <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+            <ShieldAlert className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+            <div>
+              <p className="font-display font-semibold text-foreground">Kører udgået af klassen</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {withdrawnDrivers.map(d => d.name).join(", ")} er officielt udgået.
+                {canEmergencyTransfer && " Du har fået en ekstraordinær erstatnings-transfer."}
+                {!manager.joker_used && " Du kan bruge din joker til at erstatte køreren."}
+              </p>
+              {canEmergencyTransfer && (
+                <Button
+                  onClick={() => { setSwapOutId(withdrawnDrivers[0]?.id || null); setEmergencyOpen(true); }}
+                  className="mt-2 bg-destructive text-destructive-foreground font-display font-semibold hover:bg-destructive/90"
+                  size="sm"
+                >
+                  <ArrowLeftRight className="mr-2 h-4 w-4" />
+                  Nødtransfer
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Joker Status */}
         <div className="flex items-center gap-3">
           {!manager.joker_used ? (
@@ -191,7 +254,7 @@ export default function MyTeamPage() {
 
         {/* Captain Selector */}
         {myDrivers.length > 0 && (
-          <CaptainSelector managerId={manager.id} drivers={myDrivers} races={races} />
+          <CaptainSelector managerId={manager.id} drivers={myDrivers.filter(d => !d.withdrawn)} races={races} />
         )}
 
         {/* Predictions */}
@@ -200,15 +263,18 @@ export default function MyTeamPage() {
         {/* Drivers */}
         <div className="space-y-3">
           {myDrivers.map((d) => (
-            <div key={d.id} className="rounded-lg border border-border bg-card p-4 shadow-card">
+            <div key={d.id} className={`rounded-lg border p-4 shadow-card ${d.withdrawn ? "border-destructive/30 bg-destructive/5" : "border-border bg-card"}`}>
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-md bg-secondary font-display text-lg font-bold text-muted-foreground">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-md font-display text-lg font-bold ${d.withdrawn ? "bg-destructive/20 text-destructive" : "bg-secondary text-muted-foreground"}`}>
                   #{d.car_number}
                 </div>
                 <div className="flex-1">
-                  <p className="font-display font-semibold text-foreground">{d.name}</p>
-                  <p className="text-xs text-muted-foreground">{d.team}{(d as any).club ? ` • ${(d as any).club}` : ""}</p>
-                  {(d as any).quote && <p className="text-xs italic text-muted-foreground mt-0.5">"{(d as any).quote}"</p>}
+                  <div className="flex items-center gap-2">
+                    <p className={`font-display font-semibold ${d.withdrawn ? "text-muted-foreground line-through" : "text-foreground"}`}>{d.name}</p>
+                    {d.withdrawn && <span className="text-xs bg-destructive/20 text-destructive px-1.5 py-0.5 rounded font-display">Udgået</span>}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{d.team}{d.club ? ` • ${d.club}` : ""}</p>
+                  {d.quote && <p className="text-xs italic text-muted-foreground mt-0.5">"{d.quote}"</p>}
                 </div>
                 <div className="text-right">
                   <p className="font-display text-xl font-bold text-foreground">{getDriverPoints(d.id)}</p>
@@ -236,6 +302,7 @@ export default function MyTeamPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">Brug Joker – Skift kører</DialogTitle>
           </DialogHeader>
+          <p className="text-xs text-muted-foreground">Du kan kun bytte til en kører inden for samme tier.</p>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground mb-2">Vælg kører at fjerne:</p>
@@ -243,11 +310,12 @@ export default function MyTeamPage() {
                 {myDrivers.map((d) => (
                   <button
                     key={d.id}
-                    onClick={() => setSwapOutId(d.id)}
+                    onClick={() => { setSwapOutId(d.id); setSwapInId(null); }}
                     className={`w-full flex items-center gap-3 rounded-md border p-2 text-left transition ${swapOutId === d.id ? "border-destructive bg-destructive/10" : "border-border"}`}
                   >
                     <span className="font-display font-bold text-foreground">#{d.car_number}</span>
                     <span className="text-sm text-foreground">{d.name}</span>
+                    <span className="text-xs text-muted-foreground capitalize">{d.tier === "gold" ? "🥇" : d.tier === "silver" ? "🥈" : "🥉"} {d.tier}</span>
                     <span className="ml-auto text-sm text-gold">{formatDKR(d.price)}</span>
                   </button>
                 ))}
@@ -255,8 +323,9 @@ export default function MyTeamPage() {
             </div>
             {swapOutId && (
               <div>
-                <p className="text-sm text-muted-foreground mb-2">Vælg ny kører:</p>
+                <p className="text-sm text-muted-foreground mb-2">Vælg ny kører ({swapOutDriver?.tier === "gold" ? "🥇 Guld" : swapOutDriver?.tier === "silver" ? "🥈 Sølv" : "🥉 Bronze"}):</p>
                 <div className="max-h-48 space-y-2 overflow-y-auto">
+                  {availableDrivers.length === 0 && <p className="text-xs text-muted-foreground">Ingen ledige kørere i denne tier.</p>}
                   {availableDrivers.map((d) => {
                     const oldDriver = drivers.find((x) => x.id === swapOutId);
                     const priceDiff = d.price - (oldDriver?.price || 0);
@@ -283,6 +352,53 @@ export default function MyTeamPage() {
             <Button onClick={handleJoker} disabled={!swapOutId || !swapInId} className="w-full bg-gradient-racing text-primary-foreground font-display shadow-racing">
               <ArrowLeftRight className="mr-2 h-4 w-4" />
               Bekræft joker-skifte
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Emergency Transfer Dialog */}
+      <Dialog open={emergencyOpen} onOpenChange={setEmergencyOpen}>
+        <DialogContent className="bg-card border-border max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display text-foreground">Nødtransfer – Erstat udgået kører</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">Du kan kun vælge en kører inden for samme tier som den udgåede kører.</p>
+          <div className="space-y-4">
+            {swapOutId && swapOutDriver && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm">
+                <span className="text-destructive font-semibold">Udgået: </span>
+                <span className="text-foreground">#{swapOutDriver.car_number} {swapOutDriver.name} ({swapOutDriver.tier === "gold" ? "🥇 Guld" : swapOutDriver.tier === "silver" ? "🥈 Sølv" : "🥉 Bronze"})</span>
+              </div>
+            )}
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Vælg erstatningskører:</p>
+              <div className="max-h-48 space-y-2 overflow-y-auto">
+                {availableDrivers.length === 0 && <p className="text-xs text-muted-foreground">Ingen ledige kørere i denne tier.</p>}
+                {availableDrivers.map((d) => {
+                  const priceDiff = d.price - (swapOutDriver?.price || 0);
+                  const canAfford = manager.budget_remaining - priceDiff >= 0;
+                  return (
+                    <button
+                      key={d.id}
+                      onClick={() => canAfford && setSwapInId(d.id)}
+                      disabled={!canAfford}
+                      className={`w-full flex items-center gap-3 rounded-md border p-2 text-left transition ${
+                        swapInId === d.id ? "border-success bg-success/10" : !canAfford ? "border-border opacity-40" : "border-border hover:border-success/50"
+                      }`}
+                    >
+                      <span className="font-display font-bold text-foreground">#{d.car_number}</span>
+                      <span className="text-sm text-foreground">{d.name}</span>
+                      <span className="ml-auto text-sm text-gold">{formatDKR(d.price)}</span>
+                      {!canAfford && <span className="text-xs text-destructive">For dyr</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <Button onClick={handleEmergencyTransfer} disabled={!swapOutId || !swapInId} className="w-full bg-destructive text-destructive-foreground font-display">
+              <ArrowLeftRight className="mr-2 h-4 w-4" />
+              Bekræft nødtransfer
             </Button>
           </div>
         </DialogContent>
