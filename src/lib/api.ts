@@ -262,6 +262,8 @@ export async function recalculateManagerPoints() {
   const { data: allResults } = await supabase.from("race_results").select("driver_id, points, race_id");
   const { data: allMDs } = await supabase.from("manager_drivers").select("manager_id, driver_id");
   const { data: allCaptains } = await supabase.from("captain_selections").select("manager_id, race_id, driver_id");
+  const { data: allPredAnswers } = await supabase.from("prediction_answers").select("manager_id, is_correct");
+  const { data: allSeasonPreds } = await supabase.from("season_predictions").select("manager_id, is_correct");
 
   for (const mgr of managerRows) {
     const driverIds = (allMDs || []).filter((md: any) => md.manager_id === mgr.id).map((md: any) => md.driver_id);
@@ -270,7 +272,6 @@ export async function recalculateManagerPoints() {
       continue;
     }
 
-    // Build captain map: race_id -> driver_id
     const captainMap = new Map<string, string>();
     (allCaptains || []).filter((c: any) => c.manager_id === mgr.id).forEach((c: any) => {
       captainMap.set(c.race_id, c.driver_id);
@@ -280,12 +281,16 @@ export async function recalculateManagerPoints() {
       .filter((r: any) => driverIds.includes(r.driver_id))
       .map((r: any) => {
         const pts = r.points || 0;
-        // Double points if this driver is captain for this race
         const isCaptain = captainMap.get(r.race_id) === r.driver_id;
         return isCaptain ? pts * 2 : pts;
       });
     const { total } = applyDropWorst(sessionPoints, completedRounds);
-    await supabase.from("managers").update({ total_points: total }).eq("id", mgr.id);
+
+    // Prediction bonuses: +10 per correct race prediction, +15 for correct season prediction
+    const predictionBonus = (allPredAnswers || []).filter((a: any) => a.manager_id === mgr.id && a.is_correct === true).length * 10;
+    const seasonBonus = (allSeasonPreds || []).find((s: any) => s.manager_id === mgr.id && s.is_correct === true) ? 15 : 0;
+
+    await supabase.from("managers").update({ total_points: total + predictionBonus + seasonBonus }).eq("id", mgr.id);
   }
 }
 
