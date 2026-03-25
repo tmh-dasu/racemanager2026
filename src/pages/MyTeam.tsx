@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Zap, ArrowLeftRight, AlertTriangle, LogOut, Share2 } from "lucide-react";
-import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, useJoker, fetchManagerByUserId, type Manager, type Driver } from "@/lib/api";
+import { Trophy, Zap, ArrowLeftRight, AlertTriangle, LogOut, Share2, ShieldAlert } from "lucide-react";
+import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, useJoker, useEmergencyTransfer, fetchManagerByUserId, type Manager, type Driver } from "@/lib/api";
 import { formatDKR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
