@@ -52,6 +52,7 @@ export interface Manager {
   joker_used: boolean;
   total_points: number;
   slug?: string;
+  emergency_transfer_used?: boolean;
 }
 
 export interface ManagerDriver {
