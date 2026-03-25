@@ -140,7 +140,7 @@ export async function fetchManagers(): Promise<Manager[]> {
 }
 
 export async function fetchManagerBySlug(slug: string): Promise<Manager | null> {
-  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at, slug").eq("slug", slug).maybeSingle();
+  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at, slug, emergency_transfer_used").eq("slug", slug).maybeSingle();
   return data as Manager | null;
 }
 
