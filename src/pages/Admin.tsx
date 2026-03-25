@@ -263,7 +263,7 @@ function ManagersAdmin() {
           <div className="flex-1 min-w-0">
             <span className="font-medium text-foreground">{m.team_name}</span>
             <span className="text-muted-foreground ml-2">({m.name})</span>
-            <span className="text-muted-foreground ml-2">• {m.total_points} point • Budget: {formatDKR(Number(m.budget_remaining))}</span>
+            <span className="text-muted-foreground ml-2">• {m.total_points} point</span>
             {m.joker_used && <span className="text-muted-foreground ml-2">• Joker brugt</span>}
           </div>
           <button onClick={() => handleDelete(m.id, m.team_name)} className="text-destructive hover:text-destructive/80 shrink-0 ml-2"><Trash2 className="h-4 w-4" /></button>
