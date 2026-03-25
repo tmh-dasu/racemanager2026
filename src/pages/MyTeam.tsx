@@ -194,6 +194,9 @@ export default function MyTeamPage() {
           <CaptainSelector managerId={manager.id} drivers={myDrivers} races={races} />
         )}
 
+        {/* Predictions */}
+        <PredictionPanel managerId={manager.id} races={races} />
+
         {/* Drivers */}
         <div className="space-y-3">
           {myDrivers.map((d) => (
