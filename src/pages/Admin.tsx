@@ -92,6 +92,7 @@ function DriversAdmin() {
   const { data: drivers = [], refetch } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const [form, setForm] = useState({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
   const [editId, setEditId] = useState<string | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
 
   function startEdit(d: any) {
     setEditId(d.id);
@@ -127,6 +128,20 @@ function DriversAdmin() {
     toast({ title: "Kører slettet" });
   }
 
+  async function handleWithdraw(d: any) {
+    if (!confirm(`Er du sikker på at markere ${d.name} som udgået af klassen? Berørte hold får joker/nødtransfer tilbage og notificeres via email.`)) return;
+    setWithdrawing(true);
+    try {
+      const result = await withdrawDriver(d.id);
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["managers"] });
+      toast({ title: `${d.name} markeret som udgået. ${result.affectedCount} hold berørt.` });
+    } catch (err: any) {
+      toast({ title: "Fejl: " + err.message, variant: "destructive" });
+    }
+    setWithdrawing(false);
+  }
+
   const tierLabel = (t: string) => t === "gold" ? "🥇 Guld" : t === "silver" ? "🥈 Sølv" : "🥉 Bronze";
 
   return (
@@ -159,12 +174,25 @@ function DriversAdmin() {
             <div key={tier} className="space-y-1">
               <p className="text-xs font-bold text-muted-foreground uppercase mt-3">{tierLabel(tier)} ({tierDrivers.length})</p>
               {tierDrivers.map((d: any) => (
-                <div key={d.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
+                <div key={d.id} className={`flex items-center justify-between rounded px-3 py-2 text-sm ${d.withdrawn ? "bg-destructive/10 border border-destructive/20" : "bg-secondary/50"}`}>
                   <button onClick={() => startEdit(d)} className="text-left flex-1 min-w-0">
-                    <span className="text-foreground">#{d.car_number} {d.name} – {d.team} – {Number(d.price).toLocaleString("da-DK")} DKR</span>
+                    <span className={d.withdrawn ? "text-muted-foreground line-through" : "text-foreground"}>#{d.car_number} {d.name} – {d.team} – {Number(d.price).toLocaleString("da-DK")} DKR</span>
                     {d.club && <span className="text-muted-foreground ml-2">• {d.club}</span>}
+                    {d.withdrawn && <span className="text-destructive ml-2 text-xs font-bold">UDGÅET</span>}
                   </button>
-                  <button onClick={() => handleDelete(d.id)} className="text-destructive hover:text-destructive/80 ml-2"><Trash2 className="h-4 w-4" /></button>
+                  <div className="flex items-center gap-1 ml-2">
+                    {!d.withdrawn && (
+                      <button
+                        onClick={() => handleWithdraw(d)}
+                        disabled={withdrawing}
+                        className="text-amber-500 hover:text-amber-400 transition-colors"
+                        title="Markér som udgået af klassen"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button onClick={() => handleDelete(d.id)} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
+                  </div>
                 </div>
               ))}
             </div>
