@@ -38,12 +38,19 @@ export default function MyTeamPage() {
   const myRank = manager ? allManagers.findIndex((m) => m.id === manager.id) + 1 : null;
 
   const [jokerOpen, setJokerOpen] = useState(false);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [swapOutId, setSwapOutId] = useState<string | null>(null);
   const [swapInId, setSwapInId] = useState<string | null>(null);
 
   const myDriverIds = managerDrivers.map((md) => md.driver_id);
   const myDrivers = drivers.filter((d) => myDriverIds.includes(d.id));
-  const availableDrivers = drivers.filter((d) => !myDriverIds.includes(d.id));
+  const withdrawnDrivers = myDrivers.filter((d) => d.withdrawn);
+  const hasWithdrawnDriver = withdrawnDrivers.length > 0;
+  const canEmergencyTransfer = hasWithdrawnDriver && manager?.joker_used && !(manager as any).emergency_transfer_used;
+
+  // For joker/emergency: only show same-tier drivers that aren't withdrawn
+  const swapOutDriver = drivers.find((d) => d.id === swapOutId);
+  const availableDrivers = drivers.filter((d) => !myDriverIds.includes(d.id) && !d.withdrawn && (!swapOutDriver || d.tier === swapOutDriver.tier));
 
   function getDriverPoints(driverId: string) {
     return allResults.filter((r) => r.driver_id === driverId).reduce((s, r) => s + r.points, 0);
@@ -59,6 +66,10 @@ export default function MyTeamPage() {
     const oldDriver = drivers.find((d) => d.id === swapOutId);
     const newDriver = drivers.find((d) => d.id === swapInId);
     if (!oldDriver || !newDriver) return;
+    if (oldDriver.tier !== newDriver.tier) {
+      toast({ title: "Du kan kun bytte til en kører i samme tier", variant: "destructive" });
+      return;
+    }
 
     const priceDiff = newDriver.price - oldDriver.price;
     const newBudget = manager.budget_remaining - priceDiff;
@@ -75,6 +86,33 @@ export default function MyTeamPage() {
       setSwapOutId(null);
       setSwapInId(null);
       toast({ title: "Joker brugt! Kører skiftet 🃏" });
+      refetchManager();
+    } catch (err: any) {
+      toast({ title: "Fejl: " + err.message, variant: "destructive" });
+    }
+  }
+
+  async function handleEmergencyTransfer() {
+    if (!manager || !swapOutId || !swapInId) return;
+    const oldDriver = drivers.find((d) => d.id === swapOutId);
+    const newDriver = drivers.find((d) => d.id === swapInId);
+    if (!oldDriver || !newDriver) return;
+
+    const priceDiff = newDriver.price - oldDriver.price;
+    const newBudget = manager.budget_remaining - priceDiff;
+    if (newBudget < 0) {
+      toast({ title: "Ikke nok budget til dette skifte", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await useEmergencyTransfer(manager.id, swapOutId, swapInId, newBudget);
+      queryClient.invalidateQueries({ queryKey: ["manager", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["manager_drivers", manager.id] });
+      setEmergencyOpen(false);
+      setSwapOutId(null);
+      setSwapInId(null);
+      toast({ title: "Nødtransfer gennemført! Kører erstattet 🔄" });
       refetchManager();
     } catch (err: any) {
       toast({ title: "Fejl: " + err.message, variant: "destructive" });
