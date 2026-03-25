@@ -65,6 +65,7 @@ export default function AdminPage() {
             <TabsTrigger value="drivers" className="font-display">Kørere</TabsTrigger>
             <TabsTrigger value="races" className="font-display">Løb</TabsTrigger>
             <TabsTrigger value="results" className="font-display">Resultater</TabsTrigger>
+            <TabsTrigger value="predictions" className="font-display">Predictions</TabsTrigger>
             <TabsTrigger value="managers" className="font-display">Managers</TabsTrigger>
             <TabsTrigger value="vouchers" className="font-display">Vouchers</TabsTrigger>
             <TabsTrigger value="settings" className="font-display">Indstillinger</TabsTrigger>
@@ -73,6 +74,7 @@ export default function AdminPage() {
           <TabsContent value="drivers"><DriversAdmin /></TabsContent>
           <TabsContent value="races"><RacesAdmin /></TabsContent>
           <TabsContent value="results"><ResultsAdmin /></TabsContent>
+          <TabsContent value="predictions"><PredictionsAdmin /></TabsContent>
           <TabsContent value="managers"><ManagersAdmin /></TabsContent>
           <TabsContent value="vouchers"><VouchersAdmin /></TabsContent>
           <TabsContent value="settings"><SettingsAdmin /></TabsContent>
