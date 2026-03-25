@@ -176,13 +176,13 @@ function DriversAdmin() {
 function RacesAdmin() {
   const { toast } = useToast();
   const { data: races = [], refetch } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
-  const [form, setForm] = useState({ round_number: "", name: "", location: "", race_date: "" });
+  const [form, setForm] = useState({ round_number: "", name: "", location: "", race_date: "", captain_deadline: "" });
 
   async function handleAdd() {
     if (!form.round_number || !form.name) { toast({ title: "Udfyld runde og navn", variant: "destructive" }); return; }
     try {
-      await upsertRace({ round_number: Number(form.round_number), name: form.name, location: form.location || null, race_date: form.race_date || null });
-      setForm({ round_number: "", name: "", location: "", race_date: "" });
+      await upsertRace({ round_number: Number(form.round_number), name: form.name, location: form.location || null, race_date: form.race_date || null, captain_deadline: form.captain_deadline || null } as any);
+      setForm({ round_number: "", name: "", location: "", race_date: "", captain_deadline: "" });
       refetch();
       toast({ title: "Løb tilføjet" });
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
@@ -190,17 +190,27 @@ function RacesAdmin() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-2 sm:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
         <Input placeholder="Runde #" type="number" value={form.round_number} onChange={(e) => setForm({ ...form, round_number: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Navn" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Lokation" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="bg-secondary border-border" />
-        <Input placeholder="Dato" type="datetime-local" value={form.race_date} onChange={(e) => setForm({ ...form, race_date: e.target.value })} className="bg-secondary border-border" />
+        <div>
+          <label className="text-xs text-muted-foreground">Løbsdato</label>
+          <Input type="datetime-local" value={form.race_date} onChange={(e) => setForm({ ...form, race_date: e.target.value })} className="bg-secondary border-border" />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Captain deadline</label>
+          <Input type="datetime-local" value={form.captain_deadline} onChange={(e) => setForm({ ...form, captain_deadline: e.target.value })} className="bg-secondary border-border" />
+        </div>
       </div>
       <Button onClick={handleAdd} className="bg-gradient-racing text-primary-foreground font-display"><Plus className="h-4 w-4 mr-1" />Tilføj løb</Button>
       <div className="space-y-1">
         {races.map((r) => (
           <div key={r.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm text-foreground">
-            <span>Runde {r.round_number}: {r.name} {r.location && `– ${r.location}`}</span>
+            <span>
+              Runde {r.round_number}: {r.name} {r.location && `– ${r.location}`}
+              {r.captain_deadline && <span className="text-muted-foreground ml-2">• Captain DL: {new Date(r.captain_deadline).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
+            </span>
             <button onClick={async () => { await deleteRace(r.id); refetch(); toast({ title: "Løb slettet" }); }} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
