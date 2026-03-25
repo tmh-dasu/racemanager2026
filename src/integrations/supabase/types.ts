@@ -80,6 +80,7 @@ export type Database = {
           quote: string | null
           team: string
           tier: string | null
+          withdrawn: boolean
         }
         Insert: {
           bio?: string | null
@@ -93,6 +94,7 @@ export type Database = {
           quote?: string | null
           team: string
           tier?: string | null
+          withdrawn?: boolean
         }
         Update: {
           bio?: string | null
@@ -106,6 +108,7 @@ export type Database = {
           quote?: string | null
           team?: string
           tier?: string | null
+          withdrawn?: boolean
         }
         Relationships: []
       }
@@ -297,6 +300,7 @@ export type Database = {
           budget_remaining: number
           created_at: string
           email: string
+          emergency_transfer_used: boolean
           id: string
           joker_used: boolean
           name: string
@@ -309,6 +313,7 @@ export type Database = {
           budget_remaining?: number
           created_at?: string
           email: string
+          emergency_transfer_used?: boolean
           id?: string
           joker_used?: boolean
           name: string
@@ -321,6 +326,7 @@ export type Database = {
           budget_remaining?: number
           created_at?: string
           email?: string
+          emergency_transfer_used?: boolean
           id?: string
           joker_used?: boolean
           name?: string
