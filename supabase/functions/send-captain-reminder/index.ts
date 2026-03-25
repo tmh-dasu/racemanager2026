@@ -20,15 +20,13 @@ Deno.serve(async (req) => {
     })
   }
 
-  // Only allow service_role or anon (for cron) access
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   try {
-    // Find races with captain_deadline ~24 hours from now (within a 1-hour window)
     const now = new Date()
     const target = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-    const windowStart = new Date(target.getTime() - 30 * 60 * 1000) // -30 min
-    const windowEnd = new Date(target.getTime() + 30 * 60 * 1000)   // +30 min
+    const windowStart = new Date(target.getTime() - 30 * 60 * 1000)
+    const windowEnd = new Date(target.getTime() + 30 * 60 * 1000)
 
     const { data: races } = await supabase
       .from('races')
@@ -37,12 +35,11 @@ Deno.serve(async (req) => {
       .lte('captain_deadline', windowEnd.toISOString())
 
     if (!races || races.length === 0) {
-      return new Response(JSON.stringify({ message: 'No upcoming captain deadlines' }), {
+      return new Response(JSON.stringify({ message: 'No upcoming deadlines' }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Get all managers with their emails
     const { data: managers } = await supabase.from('managers').select('id, email, team_name')
     if (!managers || managers.length === 0) {
       return new Response(JSON.stringify({ message: 'No managers found' }), {
@@ -50,40 +47,65 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get existing captain selections for these races
     const raceIds = races.map(r => r.id)
-    const { data: existingSelections } = await supabase
+
+    // Existing captain selections
+    const { data: existingCaptains } = await supabase
       .from('captain_selections')
       .select('manager_id, race_id')
       .in('race_id', raceIds)
+    const captainSet = new Set((existingCaptains || []).map(s => `${s.manager_id}_${s.race_id}`))
 
-    const selectionSet = new Set(
-      (existingSelections || []).map(s => `${s.manager_id}_${s.race_id}`)
-    )
+    // Prediction questions for these races
+    const { data: predQuestions } = await supabase
+      .from('prediction_questions')
+      .select('id, race_id, question_text')
+      .in('race_id', raceIds)
+
+    // Existing prediction answers
+    const questionIds = (predQuestions || []).map(q => q.id)
+    const { data: existingPreds } = questionIds.length > 0
+      ? await supabase.from('prediction_answers').select('manager_id, question_id').in('question_id', questionIds)
+      : { data: [] }
+    const predSet = new Set((existingPreds || []).map(s => `${s.manager_id}_${s.question_id}`))
 
     let sentCount = 0
+    const siteUrl = 'https://dasuracemanager.lovable.app'
 
     for (const race of races) {
       const deadlineStr = new Date(race.captain_deadline!).toLocaleString('da-DK', {
         day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
       })
 
-      for (const mgr of managers) {
-        // Skip if already selected captain for this race
-        if (selectionSet.has(`${mgr.id}_${race.id}`)) continue
+      const raceQuestion = (predQuestions || []).find(q => q.race_id === race.id)
 
-        const siteUrl = 'https://dasuracemanager.lovable.app'
+      for (const mgr of managers) {
+        const needsCaptain = !captainSet.has(`${mgr.id}_${race.id}`)
+        const needsPrediction = raceQuestion && !predSet.has(`${mgr.id}_${raceQuestion.id}`)
+
+        // Only send if something is missing
+        if (!needsCaptain && !needsPrediction) continue
+
+        let reminderItems = ''
+        if (needsCaptain) {
+          reminderItems += '<li>🏆 <strong>Captain-valg</strong> — din captains point tæller dobbelt!</li>'
+        }
+        if (needsPrediction && raceQuestion) {
+          reminderItems += `<li>🔮 <strong>Prediction</strong> — "${raceQuestion.question_text}" (10 bonuspoint)</li>`
+        }
 
         const html = `
           <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #e53e3e;">🏎️ Captain-valg åbent!</h2>
+            <h2 style="color: #e53e3e;">🏎️ Husk inden ${race.name}!</h2>
             <p>Hej ${mgr.team_name},</p>
-            <p>Husk at vælge din <strong>captain</strong> inden <strong>${deadlineStr}</strong> for <strong>${race.name}</strong>.</p>
-            <p>Din captains point tæller dobbelt for hele arrangementet!</p>
+            <p>Deadline er <strong>${deadlineStr}</strong>. Du mangler:</p>
+            <ul style="margin: 16px 0; padding-left: 20px;">
+              ${reminderItems}
+            </ul>
             <p style="margin: 24px 0;">
               <a href="${siteUrl}/mit-hold" 
                  style="background: linear-gradient(135deg, #e53e3e, #c53030); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                Vælg Captain →
+                Gå til Mit Hold →
               </a>
             </p>
             <p style="font-size: 12px; color: #999;">DASU Race Manager</p>
@@ -100,7 +122,7 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               from: 'DASU Race Manager <noreply@racemanager.dasu.dk>',
               to: [mgr.email],
-              subject: `⏰ Vælg captain inden ${deadlineStr} — ${race.name}`,
+              subject: `⏰ Deadline ${deadlineStr} — ${race.name}`,
               html,
             }),
           })
@@ -115,7 +137,7 @@ Deno.serve(async (req) => {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('Captain reminder error:', error)
+    console.error('Reminder error:', error)
     return new Response(JSON.stringify({ error: 'Internal error' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 import ShareTeamCard from "@/components/ShareTeamCard";
 import CaptainSelector from "@/components/CaptainSelector";
+import PredictionPanel from "@/components/PredictionPanel";
 
 export default function MyTeamPage() {
   const { toast } = useToast();
@@ -192,6 +193,9 @@ export default function MyTeamPage() {
         {myDrivers.length > 0 && (
           <CaptainSelector managerId={manager.id} drivers={myDrivers} races={races} />
         )}
+
+        {/* Predictions */}
+        <PredictionPanel managerId={manager.id} races={races} />
 
         {/* Drivers */}
         <div className="space-y-3">

@@ -262,6 +262,8 @@ export async function recalculateManagerPoints() {
   const { data: allResults } = await supabase.from("race_results").select("driver_id, points, race_id");
   const { data: allMDs } = await supabase.from("manager_drivers").select("manager_id, driver_id");
   const { data: allCaptains } = await supabase.from("captain_selections").select("manager_id, race_id, driver_id");
+  const { data: allPredAnswers } = await supabase.from("prediction_answers").select("manager_id, is_correct");
+  const { data: allSeasonPreds } = await supabase.from("season_predictions").select("manager_id, is_correct");
 
   for (const mgr of managerRows) {
     const driverIds = (allMDs || []).filter((md: any) => md.manager_id === mgr.id).map((md: any) => md.driver_id);
@@ -270,7 +272,6 @@ export async function recalculateManagerPoints() {
       continue;
     }
 
-    // Build captain map: race_id -> driver_id
     const captainMap = new Map<string, string>();
     (allCaptains || []).filter((c: any) => c.manager_id === mgr.id).forEach((c: any) => {
       captainMap.set(c.race_id, c.driver_id);
@@ -280,12 +281,16 @@ export async function recalculateManagerPoints() {
       .filter((r: any) => driverIds.includes(r.driver_id))
       .map((r: any) => {
         const pts = r.points || 0;
-        // Double points if this driver is captain for this race
         const isCaptain = captainMap.get(r.race_id) === r.driver_id;
         return isCaptain ? pts * 2 : pts;
       });
     const { total } = applyDropWorst(sessionPoints, completedRounds);
-    await supabase.from("managers").update({ total_points: total }).eq("id", mgr.id);
+
+    // Prediction bonuses: +10 per correct race prediction, +15 for correct season prediction
+    const predictionBonus = (allPredAnswers || []).filter((a: any) => a.manager_id === mgr.id && a.is_correct === true).length * 10;
+    const seasonBonus = (allSeasonPreds || []).find((s: any) => s.manager_id === mgr.id && s.is_correct === true) ? 15 : 0;
+
+    await supabase.from("managers").update({ total_points: total + predictionBonus + seasonBonus }).eq("id", mgr.id);
   }
 }
 
@@ -316,4 +321,90 @@ export function getCaptaincyBudget(
 ): number {
   const used = captainSelections.filter((c) => c.driver_id === driverId).length;
   return Math.max(0, 2 - used);
+}
+
+// Prediction types
+export interface PredictionQuestion {
+  id: string;
+  race_id: string;
+  question_type: "final_winner" | "fastest_qualifying" | "tier_winner" | "most_points";
+  question_text: string;
+  correct_answer: string | null;
+  created_at: string;
+}
+
+export interface PredictionAnswer {
+  id: string;
+  question_id: string;
+  manager_id: string;
+  answer: string;
+  is_correct: boolean | null;
+  created_at: string;
+}
+
+export interface SeasonPrediction {
+  id: string;
+  manager_id: string;
+  driver_id: string;
+  is_correct: boolean | null;
+  created_at: string;
+}
+
+export const QUESTION_TYPE_LABELS: Record<string, string> = {
+  final_winner: "Gæt vinder af finalen",
+  fastest_qualifying: "Gæt hurtigste i tidtagning",
+  tier_winner: "Gæt hvilken tier vinder finalen",
+  most_points: "Gæt kører med flest point",
+};
+
+// Prediction API functions
+export async function fetchPredictionQuestions(): Promise<PredictionQuestion[]> {
+  const { data } = await supabase.from("prediction_questions").select("*").order("created_at");
+  return (data || []) as PredictionQuestion[];
+}
+
+export async function fetchPredictionAnswers(managerId: string): Promise<PredictionAnswer[]> {
+  const { data } = await supabase.from("prediction_answers").select("*").eq("manager_id", managerId);
+  return (data || []) as PredictionAnswer[];
+}
+
+export async function submitPredictionAnswer(questionId: string, managerId: string, answer: string) {
+  const { error } = await supabase.from("prediction_answers").upsert(
+    { question_id: questionId, manager_id: managerId, answer },
+    { onConflict: "question_id,manager_id" }
+  );
+  if (error) throw error;
+}
+
+export async function fetchSeasonPrediction(managerId: string): Promise<SeasonPrediction | null> {
+  const { data } = await supabase.from("season_predictions").select("*").eq("manager_id", managerId).maybeSingle();
+  return data as SeasonPrediction | null;
+}
+
+export async function submitSeasonPrediction(managerId: string, driverId: string) {
+  const { error } = await supabase.from("season_predictions").insert({ manager_id: managerId, driver_id: driverId });
+  if (error) throw error;
+}
+
+export async function upsertPredictionQuestion(q: { id?: string; race_id: string; question_type: string; question_text: string; correct_answer?: string | null }) {
+  if (q.id) {
+    const { error } = await supabase.from("prediction_questions").update(q).eq("id", q.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("prediction_questions").insert(q);
+    if (error) throw error;
+  }
+}
+
+export async function resolvePredictions(questionId: string, correctAnswer: string) {
+  // Update the question with correct answer
+  const { error: qErr } = await supabase.from("prediction_questions").update({ correct_answer: correctAnswer }).eq("id", questionId);
+  if (qErr) throw qErr;
+
+  // Fetch all answers and mark correct/incorrect
+  const { data: answers } = await supabase.from("prediction_answers").select("id, answer").eq("question_id", questionId);
+  for (const a of (answers || [])) {
+    const isCorrect = a.answer.toLowerCase() === correctAnswer.toLowerCase();
+    await supabase.from("prediction_answers").update({ is_correct: isCorrect }).eq("id", a.id);
+  }
 }

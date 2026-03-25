@@ -331,6 +331,90 @@ export type Database = {
         }
         Relationships: []
       }
+      prediction_answers: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          is_correct: boolean | null
+          manager_id: string
+          question_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          manager_id: string
+          question_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          manager_id?: string
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_answers_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prediction_answers_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prediction_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prediction_questions: {
+        Row: {
+          correct_answer: string | null
+          created_at: string
+          id: string
+          question_text: string
+          question_type: string
+          race_id: string
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string
+          id?: string
+          question_text: string
+          question_type: string
+          race_id: string
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string
+          id?: string
+          question_text?: string
+          question_type?: string
+          race_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_questions_race_id_fkey"
+            columns: ["race_id"]
+            isOneToOne: true
+            referencedRelation: "races"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       race_results: {
         Row: {
           created_at: string
@@ -414,6 +498,52 @@ export type Database = {
           round_number?: number
         }
         Relationships: []
+      }
+      season_predictions: {
+        Row: {
+          created_at: string
+          driver_id: string
+          id: string
+          is_correct: boolean | null
+          manager_id: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          id?: string
+          is_correct?: boolean | null
+          manager_id: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          id?: string
+          is_correct?: boolean | null
+          manager_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "season_predictions_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "season_predictions_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: true
+            referencedRelation: "managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "season_predictions_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: true
+            referencedRelation: "managers_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       settings: {
         Row: {
