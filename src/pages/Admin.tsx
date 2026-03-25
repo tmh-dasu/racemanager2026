@@ -224,12 +224,6 @@ function SettingsAdmin() {
     toast({ title: "Indstilling opdateret" });
   }
 
-  async function updateBudget(val: string) {
-    await updateSetting("budget_limit", val);
-    refetch();
-    toast({ title: "Budget opdateret" });
-  }
-
   if (!settings) return null;
 
   return (
@@ -241,15 +235,6 @@ function SettingsAdmin() {
       <div className="flex items-center justify-between rounded bg-secondary/50 px-4 py-3">
         <span className="text-sm text-foreground">Transfervindue åbent</span>
         <Switch checked={settings.transfer_window_open} onCheckedChange={() => toggle("transfer_window_open", settings.transfer_window_open)} />
-      </div>
-      <div className="flex items-center gap-3 rounded bg-secondary/50 px-4 py-3">
-        <span className="text-sm text-foreground">Budgetgrænse</span>
-        <Input
-          type="number"
-          className="w-24 bg-card border-border"
-          defaultValue={settings.budget_limit}
-          onBlur={(e) => updateBudget(e.target.value)}
-        />
       </div>
     </div>
   );
