@@ -1,0 +1,1 @@
+ALTER TABLE public.drivers ADD COLUMN tier text DEFAULT 'bronze' CHECK (tier IN ('gold', 'silver', 'bronze'));

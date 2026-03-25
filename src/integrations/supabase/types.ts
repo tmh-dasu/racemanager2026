@@ -26,6 +26,7 @@ export type Database = {
           price: number
           quote: string | null
           team: string
+          tier: string | null
         }
         Insert: {
           bio?: string | null
@@ -38,6 +39,7 @@ export type Database = {
           price?: number
           quote?: string | null
           team: string
+          tier?: string | null
         }
         Update: {
           bio?: string | null
@@ -50,6 +52,7 @@ export type Database = {
           price?: number
           quote?: string | null
           team?: string
+          tier?: string | null
         }
         Relationships: []
       }

@@ -10,6 +10,7 @@ export interface Driver {
   bio: string;
   club: string;
   quote: string;
+  tier: "gold" | "silver" | "bronze";
 }
 
 export interface Race {

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Users, Flag, Settings as SettingsIcon, Plus, Trash2, Save, AlertTriangle, Ticket, Copy } from "lucide-react";
 import { fetchDrivers, fetchRaces, fetchRaceResults, fetchSettings, fetchManagers, fetchManagerDrivers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, type Driver, type Race, type Manager } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDKR } from "@/lib/format";
+
 import ResultsAdmin from "@/components/admin/ResultsAdmin";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -82,29 +82,37 @@ export default function AdminPage() {
   );
 }
 
+const TIER_DEFAULTS: Record<string, number> = { gold: 5000000, silver: 3000000, bronze: 2000000 };
+
 function DriversAdmin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: drivers = [], refetch } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
-  const [form, setForm] = useState({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "" });
+  const [form, setForm] = useState({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
   const [editId, setEditId] = useState<string | null>(null);
 
-  function startEdit(d: Driver) {
+  function startEdit(d: any) {
     setEditId(d.id);
-    setForm({ name: d.name, car_number: String(d.car_number), team: d.team, price: String(d.price), photo_url: d.photo_url || "", bio: d.bio || "", club: d.club || "", quote: d.quote || "" });
+    setForm({ name: d.name, car_number: String(d.car_number), team: d.team, price: String(d.price), photo_url: d.photo_url || "", bio: d.bio || "", club: d.club || "", quote: d.quote || "", tier: d.tier || "bronze" });
   }
 
   function resetForm() {
     setEditId(null);
-    setForm({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "" });
+    setForm({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
+  }
+
+  function handleTierChange(tier: string) {
+    const autoPrice = !form.price || Object.values(TIER_DEFAULTS).includes(Number(form.price));
+    setForm({ ...form, tier, ...(autoPrice ? { price: String(TIER_DEFAULTS[tier] || 2000000) } : {}) });
   }
 
   async function handleSave() {
-    if (!form.name || !form.car_number || !form.team || !form.price) {
+    if (!form.name || !form.car_number || !form.team) {
       toast({ title: "Udfyld alle påkrævede felter", variant: "destructive" }); return;
     }
+    const price = Number(form.price) || TIER_DEFAULTS[form.tier] || 2000000;
     try {
-      await upsertDriver({ id: editId || undefined, name: form.name, car_number: Number(form.car_number), team: form.team, price: Number(form.price), photo_url: form.photo_url || null, bio: form.bio, club: form.club, quote: form.quote } as any);
+      await upsertDriver({ id: editId || undefined, name: form.name, car_number: Number(form.car_number), team: form.team, price, photo_url: form.photo_url || null, bio: form.bio, club: form.club, quote: form.quote, tier: form.tier } as any);
       resetForm();
       refetch();
       toast({ title: editId ? "Kører opdateret" : "Kører tilføjet" });
@@ -117,16 +125,23 @@ function DriversAdmin() {
     toast({ title: "Kører slettet" });
   }
 
+  const tierLabel = (t: string) => t === "gold" ? "🥇 Guld" : t === "silver" ? "🥈 Sølv" : "🥉 Bronze";
+
   return (
     <div className="space-y-4">
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Input placeholder="Navn *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Bil # *" type="number" value={form.car_number} onChange={(e) => setForm({ ...form, car_number: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Team *" value={form.team} onChange={(e) => setForm({ ...form, team: e.target.value })} className="bg-secondary border-border" />
-        <Input placeholder="Pris *" type="number" step="0.1" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="bg-secondary border-border" />
+        <select value={form.tier} onChange={(e) => handleTierChange(e.target.value)} className="rounded-md bg-secondary border border-border px-3 py-2 text-sm text-foreground">
+          <option value="gold">🥇 Guld</option>
+          <option value="silver">🥈 Sølv</option>
+          <option value="bronze">🥉 Bronze</option>
+        </select>
+        <Input placeholder="Børsværdi" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Klub" value={form.club} onChange={(e) => setForm({ ...form, club: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Citat" value={form.quote} onChange={(e) => setForm({ ...form, quote: e.target.value })} className="bg-secondary border-border" />
-        <Input placeholder="Bio (maks 100 tegn)" maxLength={100} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} className="bg-secondary border-border sm:col-span-2" />
+        <Input placeholder="Bio (maks 100 tegn)" maxLength={100} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} className="bg-secondary border-border" />
       </div>
       <div className="flex gap-2">
         <Button onClick={handleSave} className="bg-gradient-racing text-primary-foreground font-display">
@@ -135,15 +150,24 @@ function DriversAdmin() {
         {editId && <Button variant="outline" onClick={resetForm}>Annuller</Button>}
       </div>
       <div className="space-y-1">
-        {drivers.map((d) => (
-          <div key={d.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
-            <button onClick={() => startEdit(d)} className="text-left flex-1 min-w-0">
-              <span className="text-foreground">#{d.car_number} {d.name} – {d.team} – {Number(d.price).toLocaleString("da-DK")} DKR</span>
-              {d.club && <span className="text-muted-foreground ml-2">• {d.club}</span>}
-            </button>
-            <button onClick={() => handleDelete(d.id)} className="text-destructive hover:text-destructive/80 ml-2"><Trash2 className="h-4 w-4" /></button>
-          </div>
-        ))}
+        {(["gold", "silver", "bronze"] as const).map((tier) => {
+          const tierDrivers = drivers.filter((d: any) => (d.tier || "bronze") === tier);
+          if (tierDrivers.length === 0) return null;
+          return (
+            <div key={tier} className="space-y-1">
+              <p className="text-xs font-bold text-muted-foreground uppercase mt-3">{tierLabel(tier)} ({tierDrivers.length})</p>
+              {tierDrivers.map((d: any) => (
+                <div key={d.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
+                  <button onClick={() => startEdit(d)} className="text-left flex-1 min-w-0">
+                    <span className="text-foreground">#{d.car_number} {d.name} – {d.team} – {Number(d.price).toLocaleString("da-DK")} DKR</span>
+                    {d.club && <span className="text-muted-foreground ml-2">• {d.club}</span>}
+                  </button>
+                  <button onClick={() => handleDelete(d.id)} className="text-destructive hover:text-destructive/80 ml-2"><Trash2 className="h-4 w-4" /></button>
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -200,12 +224,6 @@ function SettingsAdmin() {
     toast({ title: "Indstilling opdateret" });
   }
 
-  async function updateBudget(val: string) {
-    await updateSetting("budget_limit", val);
-    refetch();
-    toast({ title: "Budget opdateret" });
-  }
-
   if (!settings) return null;
 
   return (
@@ -217,15 +235,6 @@ function SettingsAdmin() {
       <div className="flex items-center justify-between rounded bg-secondary/50 px-4 py-3">
         <span className="text-sm text-foreground">Transfervindue åbent</span>
         <Switch checked={settings.transfer_window_open} onCheckedChange={() => toggle("transfer_window_open", settings.transfer_window_open)} />
-      </div>
-      <div className="flex items-center gap-3 rounded bg-secondary/50 px-4 py-3">
-        <span className="text-sm text-foreground">Budgetgrænse</span>
-        <Input
-          type="number"
-          className="w-24 bg-card border-border"
-          defaultValue={settings.budget_limit}
-          onBlur={(e) => updateBudget(e.target.value)}
-        />
       </div>
     </div>
   );
@@ -254,7 +263,7 @@ function ManagersAdmin() {
           <div className="flex-1 min-w-0">
             <span className="font-medium text-foreground">{m.team_name}</span>
             <span className="text-muted-foreground ml-2">({m.name})</span>
-            <span className="text-muted-foreground ml-2">• {m.total_points} point • Budget: {formatDKR(Number(m.budget_remaining))}</span>
+            <span className="text-muted-foreground ml-2">• {m.total_points} point</span>
             {m.joker_used && <span className="text-muted-foreground ml-2">• Joker brugt</span>}
           </div>
           <button onClick={() => handleDelete(m.id, m.team_name)} className="text-destructive hover:text-destructive/80 shrink-0 ml-2"><Trash2 className="h-4 w-4" /></button>
