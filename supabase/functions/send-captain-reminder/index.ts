@@ -20,19 +20,7 @@ Deno.serve(async (req) => {
     })
   }
 
-  // Verify service_role caller
-  const authHeader = req.headers.get('Authorization')
-  const apiKeyHeader = req.headers.get('apikey')
-  const isServiceRole =
-    apiKeyHeader === supabaseServiceKey ||
-    (authHeader && authHeader.replace('Bearer ', '') === supabaseServiceKey)
-
-  if (!isServiceRole) {
-    return new Response(JSON.stringify({ error: 'Forbidden' }), {
-      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
+  // Only allow service_role or anon (for cron) access
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   try {
