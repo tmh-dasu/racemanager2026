@@ -1,5 +1,5 @@
 import PageLayout from "@/components/PageLayout";
-import { Trophy, Zap, Target, Calendar, ArrowRightLeft, AlertTriangle, ListMinus, Crown, Brain } from "lucide-react";
+import { Trophy, Zap, Target, Calendar, ArrowRightLeft, AlertTriangle, ListMinus, Crown, Brain, ShieldAlert } from "lucide-react";
 
 const pointsTable = [
   { pos: "1.", pts: 25 }, { pos: "2.", pts: 22 }, { pos: "3.", pts: 20 },
@@ -36,18 +36,18 @@ export default function RulesPage() {
           <div className="flex items-center gap-3 mb-3">
             <Trophy className="h-6 w-6 text-gold" />
             <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-              Regler for <span className="text-gradient-racing">Fantasy Manager 2026</span>
+              Regler for <span className="text-gradient-racing">DASU RaceManager</span>
             </h1>
           </div>
           <p className="text-muted-foreground">
-            DASU Race Manager – Danish Supercar League Super GT
+            DASU RaceManager – Danish Supercar League Super GT
           </p>
         </div>
 
         {/* What is it */}
-        <Section icon={<Target className="h-5 w-5 text-accent" />} title="Hvad er DASU Race Manager?">
+        <Section icon={<Target className="h-5 w-5 text-accent" />} title="Hvad er DASU RaceManager?">
           <p className="text-sm text-muted-foreground">
-            DASU Race Manager er et fantasy managerspil for Danish Supercar League Super GT-sæsonen 2026.
+            DASU RaceManager er et fantasy managerspil for Danish Supercar League Super GT-sæsonen 2026.
             Du sammensætter dit eget hold af rigtige kørere og optjener point baseret på deres resultater i løbene.
           </p>
         </Section>
@@ -126,15 +126,28 @@ export default function RulesPage() {
         <Section icon={<ArrowRightLeft className="h-5 w-5 text-accent" />} title="Joker-transfer 🃏">
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>• Du har <strong className="text-foreground">én</strong> Joker-transfer i hele sæsonen</li>
-            <li>• Jokeren lader dig udskifte <strong className="text-foreground">én kører</strong> med en anden</li>
+            <li>• Jokeren lader dig udskifte <strong className="text-foreground">én kører</strong> med en anden <strong className="text-foreground">inden for samme tier</strong></li>
+            <li>• Erstatter du din guldkører, skal den nye kører også være guld – og tilsvarende for sølv og bronze</li>
             <li>• Den nye kører skal kunne passe inden for dit resterende budget</li>
             <li>• Transfervinduet åbner <strong className="text-foreground">24 timer efter</strong> et løbs resultater offentliggøres</li>
             <li>• Transfervinduet lukker <strong className="text-foreground">24 timer før</strong> næste løb</li>
+            <li>• Ved joker-transfer arver den nye kører den udgående kørers <strong className="text-foreground">resterende captaincy-budget</strong></li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2">
             <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
             <p className="text-xs text-destructive">Brug den med omtanke – du har kun én!</p>
           </div>
+        </Section>
+
+        {/* Driver withdrawal */}
+        <Section icon={<ShieldAlert className="h-5 w-5 text-destructive" />} title="Kører udgår af klassen ⚠️">
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>• Hvis en kører officielt udgår af klassen, markeres det af admin i systemet</li>
+            <li>• Berørte hold får automatisk <strong className="text-foreground">joker-restitution</strong> – uanset om jokeren allerede er brugt</li>
+            <li>• Hvis jokeren allerede er brugt, får du én ekstraordinær <strong className="text-foreground">nødtransfer</strong> inden for samme tier</li>
+            <li>• Du modtager en <strong className="text-foreground">email-notifikation</strong> når en af dine kørere udgår</li>
+            <li>• Den nye kører arver den udgåede kørers resterende captaincy-budget</li>
+          </ul>
         </Section>
 
         {/* Captain */}
