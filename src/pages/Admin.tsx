@@ -329,6 +329,7 @@ function PredictionsAdmin() {
   );
 }
 
+function SettingsAdmin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: settings, refetch } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
