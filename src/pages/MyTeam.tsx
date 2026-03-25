@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 import ShareTeamCard from "@/components/ShareTeamCard";
 import CaptainSelector from "@/components/CaptainSelector";
+import PredictionPanel from "@/components/PredictionPanel";
 
 export default function MyTeamPage() {
   const { toast } = useToast();
