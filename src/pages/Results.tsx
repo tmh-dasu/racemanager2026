@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Flag, Trophy } from "lucide-react";
-import { fetchRaces, fetchRaceResults, fetchDrivers, fetchManagers, fetchManagerDrivers, SESSION_TYPES, applyDropWorst, type RaceResult } from "@/lib/api";
+import { Flag, Trophy, Crown } from "lucide-react";
+import { fetchRaces, fetchRaceResults, fetchDrivers, fetchAllCaptainSelections, fetchManagers, fetchManagerDrivers, SESSION_TYPES, applyDropWorst, type RaceResult, type CaptainSelection } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageLayout from "@/components/PageLayout";
 
@@ -16,6 +15,7 @@ export default function ResultsPage() {
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
+  const { data: captainSelections = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
 
   function driverName(id: string) {
     return drivers.find((d) => d.id === id)?.name || "Ukendt";
@@ -27,6 +27,11 @@ export default function ResultsPage() {
 
   function driverTeam(id: string) {
     return drivers.find((d) => d.id === id)?.team || "";
+  }
+
+  // Count how many managers have this driver as captain for a given race
+  function captainCount(driverId: string, raceId: string): number {
+    return captainSelections.filter((c) => c.driver_id === driverId && c.race_id === raceId).length;
   }
 
   // Build driver championship standings
@@ -42,7 +47,6 @@ export default function ResultsPage() {
       entry.allSession.push(r.points);
     });
 
-    // Count only rounds that actually have results (not total calendar rounds)
     const racesWithResults = new Set(allResults.map(r => r.race_id));
     const completedRounds = racesWithResults.size;
 
@@ -107,31 +111,38 @@ export default function ResultsPage() {
                   </div>
                   {race.location && <p className="text-xs text-muted-foreground mb-3">{race.location}</p>}
 
-                  <div className="grid gap-1 text-xs text-muted-foreground px-2 py-1" style={{ gridTemplateColumns: "1.5rem 1fr repeat(4, 1.5rem) 2.5rem" }}>
+                  <div className="grid gap-1 text-xs text-muted-foreground px-2 py-1" style={{ gridTemplateColumns: "1.5rem 1fr repeat(4, 1.5rem) 2.5rem 1.5rem" }}>
                     <span>#</span>
                     <span>Kører</span>
                     {SESSION_TYPES.map((s) => (
                       <span key={s} className="text-center">{SESSION_SHORT[s]}</span>
                     ))}
                     <span className="text-right">Tot</span>
+                    <span></span>
                   </div>
 
                   <div className="space-y-1">
-                    {driverSummaries.map(({ driverId, sessions, total }) => (
-                      <div key={driverId} className="grid gap-1 items-center rounded bg-secondary/50 px-2 py-1.5 text-sm" style={{ gridTemplateColumns: "1.5rem 1fr repeat(4, 1.5rem) 2.5rem" }}>
-                        <span className="text-[10px] text-muted-foreground font-display">{driverNumber(driverId)}</span>
-                        <span className="font-medium text-foreground truncate text-xs">{driverName(driverId)}</span>
-                        {SESSION_TYPES.map((s) => {
-                          const r = sessions[s];
-                          return (
-                            <span key={s} className="text-center text-[11px] text-muted-foreground" title={r ? (r.dnf ? "DNF" : `P${r.position}`) : "–"}>
-                              {r ? (r.dnf ? <span className="text-destructive">0</span> : r.points) : <span className="text-border">–</span>}
-                            </span>
-                          );
-                        })}
-                        <span className="text-right font-display font-bold text-foreground text-xs">{total}</span>
-                      </div>
-                    ))}
+                    {driverSummaries.map(({ driverId, sessions, total }) => {
+                      const cc = captainCount(driverId, race.id);
+                      return (
+                        <div key={driverId} className="grid gap-1 items-center rounded bg-secondary/50 px-2 py-1.5 text-sm" style={{ gridTemplateColumns: "1.5rem 1fr repeat(4, 1.5rem) 2.5rem 1.5rem" }}>
+                          <span className="text-[10px] text-muted-foreground font-display">{driverNumber(driverId)}</span>
+                          <span className="font-medium text-foreground truncate text-xs">{driverName(driverId)}</span>
+                          {SESSION_TYPES.map((s) => {
+                            const r = sessions[s];
+                            return (
+                              <span key={s} className="text-center text-[11px] text-muted-foreground" title={r ? (r.dnf ? "DNF" : `P${r.position}`) : "–"}>
+                                {r ? (r.dnf ? <span className="text-destructive">0</span> : r.points) : <span className="text-border">–</span>}
+                              </span>
+                            );
+                          })}
+                          <span className="text-right font-display font-bold text-foreground text-xs">{total}</span>
+                          <span className="text-center" title={cc > 0 ? `Captain for ${cc} hold` : ""}>
+                            {cc > 0 && <Crown className="h-3 w-3 text-gold inline-block" />}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -179,9 +190,15 @@ export default function ResultsPage() {
                         </div>
                         {races.map((race) => {
                           const roundPts = perRound.get(race.id);
+                          const cc = captainCount(driverId, race.id);
                           return (
                             <span key={race.id} className="text-center text-xs text-muted-foreground">
-                              {roundPts !== undefined ? roundPts : <span className="text-border">–</span>}
+                              {roundPts !== undefined ? (
+                                <span className="inline-flex items-center gap-0.5">
+                                  {cc > 0 && <Crown className="h-2.5 w-2.5 text-gold inline-block" />}
+                                  {roundPts}
+                                </span>
+                              ) : <span className="text-border">–</span>}
                             </span>
                           );
                         })}

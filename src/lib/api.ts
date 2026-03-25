@@ -300,6 +300,11 @@ export async function fetchCaptainSelections(managerId: string): Promise<Captain
   return (data || []) as CaptainSelection[];
 }
 
+export async function fetchAllCaptainSelections(): Promise<CaptainSelection[]> {
+  const { data } = await supabase.from("captain_selections").select("*");
+  return (data || []) as CaptainSelection[];
+}
+
 export async function setCaptainSelection(managerId: string, raceId: string, driverId: string) {
   const { error } = await supabase.from("captain_selections").upsert(
     { manager_id: managerId, race_id: raceId, driver_id: driverId },
