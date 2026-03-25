@@ -19,6 +19,15 @@ export interface Race {
   name: string;
   location: string | null;
   race_date: string | null;
+  captain_deadline: string | null;
+}
+
+export interface CaptainSelection {
+  id: string;
+  manager_id: string;
+  race_id: string;
+  driver_id: string;
+  created_at: string;
 }
 
 export interface RaceResult {
