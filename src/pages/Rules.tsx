@@ -1,5 +1,5 @@
 import PageLayout from "@/components/PageLayout";
-import { Trophy, Zap, Target, Calendar, ArrowRightLeft, AlertTriangle, ListMinus } from "lucide-react";
+import { Trophy, Zap, Target, Calendar, ArrowRightLeft, AlertTriangle, ListMinus, Crown, Brain } from "lucide-react";
 
 const pointsTable = [
   { pos: "1.", pts: 25 }, { pos: "2.", pts: 22 }, { pos: "3.", pts: 20 },
@@ -56,7 +56,8 @@ export default function RulesPage() {
         <Section icon={<Zap className="h-5 w-5 text-accent" />} title="Sådan deltager du">
           <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
             <li>Opret dit hold med et holdnavn, dit navn og din e-mail</li>
-            <li>Vælg <strong className="text-foreground">3 kørere</strong> inden for budgettet på <strong className="text-foreground">1.000.000 DKR</strong></li>
+            <li>Vælg <strong className="text-foreground">3 kørere</strong>: én fra <strong className="text-gold">Guld</strong>, én fra <strong className="text-silver">Sølv</strong> og én fra <strong className="text-bronze">Bronze</strong>-tier</li>
+            <li>Vælg din <strong className="text-foreground">sæsonprediction</strong> (gæt den samlede sæsonvinder)</li>
             <li>Når holdet er valgt, er det låst for resten af sæsonen – med én undtagelse (se Joker nedenfor)</li>
           </ol>
         </Section>
@@ -134,6 +135,42 @@ export default function RulesPage() {
             <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
             <p className="text-xs text-destructive">Brug den med omtanke – du har kun én!</p>
           </div>
+        </Section>
+
+        {/* Captain */}
+        <Section icon={<Crown className="h-5 w-5 text-gold" />} title="Captain-valg 👑">
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>• Inden hvert arrangement vælger du <strong className="text-foreground">én kører som captain</strong></li>
+            <li>• Captainens point for <strong className="text-foreground">hele arrangementet</strong> (alle 4 sessioner) tæller <strong className="text-foreground">dobbelt</strong></li>
+            <li>• Hver kører kan vælges som captain <strong className="text-foreground">max 2 gange</strong> i løbet af de 6 afdelinger</li>
+            <li>• Deadline for captain-valg: <strong className="text-foreground">når tidtagning starter</strong></li>
+            <li>• Hvis du ikke vælger captain inden deadline, tæller alle point <strong className="text-foreground">normalt</strong> (ingen bonus)</li>
+            <li>• Ved joker-transfer arver den nye kører den udgående kørers <strong className="text-foreground">resterende captaincy-budget</strong></li>
+          </ul>
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-gold/10 border border-gold/20 px-3 py-2">
+            <Crown className="h-4 w-4 text-gold mt-0.5 shrink-0" />
+            <p className="text-xs text-gold">Du får en påmindelse 24 timer inden deadline!</p>
+          </div>
+        </Section>
+
+        {/* Predictions */}
+        <Section icon={<Brain className="h-5 w-5 text-accent" />} title="Predictions 🔮">
+          <p className="text-sm text-muted-foreground mb-3">
+            Optjen bonuspoint ved at gætte rigtigt!
+          </p>
+          <h3 className="font-display font-semibold text-foreground text-sm mb-2">Per arrangement (+10 point)</h3>
+          <ul className="space-y-1 text-sm text-muted-foreground mb-4">
+            <li>• Admin stiller ét spørgsmål per arrangement inden det starter</li>
+            <li>• Mulige spørgsmålstyper: gæt vinder af finalen, hurtigste i tidtagning, hvilken tier vinder finalen, eller kører med flest point</li>
+            <li>• Korrekt svar = <strong className="text-foreground">+10 bonuspoint</strong> til din sæsontotal</li>
+            <li>• Prediction låser <strong className="text-foreground">når tidtagning starter</strong></li>
+          </ul>
+          <h3 className="font-display font-semibold text-foreground text-sm mb-2">Sæsonprediction (+15 point)</h3>
+          <ul className="space-y-1 text-sm text-muted-foreground">
+            <li>• Ved tilmelding gætter du på den <strong className="text-foreground">samlede sæsonvinder</strong> (kører)</li>
+            <li>• Kan <strong className="text-foreground">ikke ændres</strong> efter tilmelding</li>
+            <li>• Korrekt gæt ved sæsonafslutning = <strong className="text-foreground">+15 bonuspoint</strong></li>
+          </ul>
         </Section>
 
         {/* Race calendar */}
