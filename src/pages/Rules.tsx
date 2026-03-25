@@ -36,11 +36,11 @@ export default function RulesPage() {
           <div className="flex items-center gap-3 mb-3">
             <Trophy className="h-6 w-6 text-gold" />
             <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-              Regler for <span className="text-gradient-racing">Fantasy Manager 2026</span>
+              Regler for <span className="text-gradient-racing">DASU RaceManager</span>
             </h1>
           </div>
           <p className="text-muted-foreground">
-            DASU Race Manager – Danish Supercar League Super GT
+            DASU RaceManager – Danish Supercar League Super GT
           </p>
         </div>
 
