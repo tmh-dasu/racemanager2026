@@ -644,6 +644,7 @@ export type Database = {
         Row: {
           budget_remaining: number | null
           created_at: string | null
+          emergency_transfer_used: boolean | null
           id: string | null
           joker_used: boolean | null
           name: string | null
@@ -654,9 +655,10 @@ export type Database = {
         Insert: {
           budget_remaining?: number | null
           created_at?: string | null
+          emergency_transfer_used?: boolean | null
           id?: string | null
           joker_used?: boolean | null
-          name?: never
+          name?: string | null
           slug?: string | null
           team_name?: string | null
           total_points?: number | null
@@ -664,9 +666,10 @@ export type Database = {
         Update: {
           budget_remaining?: number | null
           created_at?: string | null
+          emergency_transfer_used?: boolean | null
           id?: string | null
           joker_used?: boolean | null
-          name?: never
+          name?: string | null
           slug?: string | null
           team_name?: string | null
           total_points?: number | null
