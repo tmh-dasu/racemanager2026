@@ -224,7 +224,111 @@ function RacesAdmin() {
 
 
 
-function SettingsAdmin() {
+function PredictionsAdmin() {
+  const { toast } = useToast();
+  const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
+  const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
+  const { data: questions = [], refetch } = useQuery({ queryKey: ["prediction_questions"], queryFn: fetchPredictionQuestions });
+
+  const [form, setForm] = useState({ race_id: "", question_type: "final_winner", question_text: "" });
+  const [resolveId, setResolveId] = useState<string | null>(null);
+  const [resolveAnswer, setResolveAnswer] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function handleCreate() {
+    if (!form.race_id || !form.question_text) { toast({ title: "Vælg løb og skriv spørgsmål", variant: "destructive" }); return; }
+    setSaving(true);
+    try {
+      await upsertPredictionQuestion({ race_id: form.race_id, question_type: form.question_type, question_text: form.question_text });
+      setForm({ race_id: "", question_type: "final_winner", question_text: "" });
+      refetch();
+      toast({ title: "Prediction-spørgsmål oprettet" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    setSaving(false);
+  }
+
+  async function handleResolve() {
+    if (!resolveId || !resolveAnswer) return;
+    setSaving(true);
+    try {
+      await resolvePredictions(resolveId, resolveAnswer);
+      setResolveId(null);
+      setResolveAnswer("");
+      refetch();
+      toast({ title: "Predictions afgjort!" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    setSaving(false);
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Create question */}
+      <div className="space-y-2">
+        <h3 className="font-display font-semibold text-foreground">Opret prediction-spørgsmål</h3>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <select value={form.race_id} onChange={(e) => setForm({ ...form, race_id: e.target.value })} className="rounded-md bg-secondary border border-border px-3 py-2 text-sm text-foreground">
+            <option value="">Vælg løb</option>
+            {races.map((r) => <option key={r.id} value={r.id}>R{r.round_number}: {r.name}</option>)}
+          </select>
+          <select value={form.question_type} onChange={(e) => setForm({ ...form, question_type: e.target.value })} className="rounded-md bg-secondary border border-border px-3 py-2 text-sm text-foreground">
+            {Object.entries(QUESTION_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+          <Input placeholder="Spørgsmålstekst *" value={form.question_text} onChange={(e) => setForm({ ...form, question_text: e.target.value })} className="bg-secondary border-border sm:col-span-2" />
+        </div>
+        <Button onClick={handleCreate} disabled={saving} className="bg-gradient-racing text-primary-foreground font-display">
+          <Plus className="h-4 w-4 mr-1" />Opret spørgsmål
+        </Button>
+      </div>
+
+      {/* Existing questions */}
+      <div className="space-y-2">
+        <h3 className="font-display font-semibold text-foreground">Spørgsmål</h3>
+        {questions.length === 0 && <p className="text-sm text-muted-foreground">Ingen spørgsmål oprettet endnu.</p>}
+        {questions.map((q) => {
+          const race = races.find((r) => r.id === q.race_id);
+          return (
+            <div key={q.id} className="rounded bg-secondary/50 px-3 py-3 text-sm space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-semibold text-foreground">{race?.name || "?"}: </span>
+                  <span className="text-foreground">{q.question_text}</span>
+                  <span className="text-xs text-muted-foreground ml-2">({QUESTION_TYPE_LABELS[q.question_type]})</span>
+                </div>
+                {q.correct_answer ? (
+                  <span className="text-xs text-green-400">✓ Afgjort: {
+                    q.question_type === "tier_winner" ? (q.correct_answer === "gold" ? "Guld" : q.correct_answer === "silver" ? "Sølv" : "Bronze")
+                    : (drivers.find((d) => d.id === q.correct_answer)?.name || q.correct_answer)
+                  }</span>
+                ) : null}
+              </div>
+              {!q.correct_answer && (
+                <div className="flex gap-2 items-center">
+                  {q.question_type === "tier_winner" ? (
+                    <select value={resolveId === q.id ? resolveAnswer : ""} onChange={(e) => { setResolveId(q.id); setResolveAnswer(e.target.value); }} className="rounded-md bg-card border border-border px-2 py-1 text-sm text-foreground">
+                      <option value="">Vælg korrekt svar</option>
+                      <option value="gold">Guld</option>
+                      <option value="silver">Sølv</option>
+                      <option value="bronze">Bronze</option>
+                    </select>
+                  ) : (
+                    <select value={resolveId === q.id ? resolveAnswer : ""} onChange={(e) => { setResolveId(q.id); setResolveAnswer(e.target.value); }} className="rounded-md bg-card border border-border px-2 py-1 text-sm text-foreground">
+                      <option value="">Vælg korrekt kører</option>
+                      {drivers.map((d) => <option key={d.id} value={d.id}>#{d.car_number} {d.name}</option>)}
+                    </select>
+                  )}
+                  <Button size="sm" onClick={handleResolve} disabled={resolveId !== q.id || !resolveAnswer || saving} className="bg-gradient-racing text-primary-foreground font-display text-xs">
+                    Afgør
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: settings, refetch } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
