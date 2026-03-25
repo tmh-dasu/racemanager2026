@@ -11,6 +11,7 @@ export interface Driver {
   club: string;
   quote: string;
   tier: "gold" | "silver" | "bronze";
+  withdrawn: boolean;
 }
 
 export interface Race {
