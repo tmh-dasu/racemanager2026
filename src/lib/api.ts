@@ -241,17 +241,15 @@ export async function upsertRaceResult(result: Omit<RaceResult, "id">) {
 }
 
 export async function recalculateManagerPoints() {
-  // Read managers directly (admin-only operation)
   const { data: managerRows } = await supabase.from("managers").select("id");
   if (!managerRows || managerRows.length === 0) return;
 
-  // Count completed rounds from results
   const { data: resultRaces } = await supabase.from("race_results").select("race_id");
   const completedRounds = new Set((resultRaces || []).map((r: any) => r.race_id)).size;
 
-  // Fetch all results and manager_drivers in bulk
-  const { data: allResults } = await supabase.from("race_results").select("driver_id, points");
+  const { data: allResults } = await supabase.from("race_results").select("driver_id, points, race_id");
   const { data: allMDs } = await supabase.from("manager_drivers").select("manager_id, driver_id");
+  const { data: allCaptains } = await supabase.from("captain_selections").select("manager_id, race_id, driver_id");
 
   for (const mgr of managerRows) {
     const driverIds = (allMDs || []).filter((md: any) => md.manager_id === mgr.id).map((md: any) => md.driver_id);
@@ -259,10 +257,51 @@ export async function recalculateManagerPoints() {
       await supabase.from("managers").update({ total_points: 0 }).eq("id", mgr.id);
       continue;
     }
+
+    // Build captain map: race_id -> driver_id
+    const captainMap = new Map<string, string>();
+    (allCaptains || []).filter((c: any) => c.manager_id === mgr.id).forEach((c: any) => {
+      captainMap.set(c.race_id, c.driver_id);
+    });
+
     const sessionPoints = (allResults || [])
       .filter((r: any) => driverIds.includes(r.driver_id))
-      .map((r: any) => r.points || 0);
+      .map((r: any) => {
+        const pts = r.points || 0;
+        // Double points if this driver is captain for this race
+        const isCaptain = captainMap.get(r.race_id) === r.driver_id;
+        return isCaptain ? pts * 2 : pts;
+      });
     const { total } = applyDropWorst(sessionPoints, completedRounds);
     await supabase.from("managers").update({ total_points: total }).eq("id", mgr.id);
   }
+}
+
+// Captain functions
+export async function fetchCaptainSelections(managerId: string): Promise<CaptainSelection[]> {
+  const { data } = await supabase.from("captain_selections").select("*").eq("manager_id", managerId);
+  return (data || []) as CaptainSelection[];
+}
+
+export async function setCaptainSelection(managerId: string, raceId: string, driverId: string) {
+  const { error } = await supabase.from("captain_selections").upsert(
+    { manager_id: managerId, race_id: raceId, driver_id: driverId },
+    { onConflict: "manager_id,race_id" }
+  );
+  if (error) throw error;
+}
+
+export function getNextRaceWithDeadline(races: Race[]): Race | null {
+  const now = new Date();
+  return races
+    .filter((r) => r.captain_deadline && new Date(r.captain_deadline) > now)
+    .sort((a, b) => new Date(a.captain_deadline!).getTime() - new Date(b.captain_deadline!).getTime())[0] || null;
+}
+
+export function getCaptaincyBudget(
+  driverId: string, 
+  captainSelections: CaptainSelection[]
+): number {
+  const used = captainSelections.filter((c) => c.driver_id === driverId).length;
+  return Math.max(0, 2 - used);
 }
