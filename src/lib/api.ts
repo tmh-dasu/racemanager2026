@@ -185,6 +185,18 @@ export async function useJoker(managerId: string, oldDriverId: string, newDriver
   const { error: updateError } = await supabase.from("managers").update({ joker_used: true, budget_remaining: newBudget }).eq("id", managerId);
   if (updateError) throw updateError;
   await supabase.from("joker_transfers").insert({ manager_id: managerId, old_driver_id: oldDriverId, new_driver_id: newDriverId });
+
+  // Inherit captaincy: update future captain selections from old driver to new driver
+  // Only for races where captain_deadline hasn't passed yet
+  const { data: futureRaces } = await supabase.from("races").select("id").gt("captain_deadline", new Date().toISOString());
+  if (futureRaces && futureRaces.length > 0) {
+    const futureRaceIds = futureRaces.map((r) => r.id);
+    await supabase.from("captain_selections")
+      .update({ driver_id: newDriverId })
+      .eq("manager_id", managerId)
+      .eq("driver_id", oldDriverId)
+      .in("race_id", futureRaceIds);
+  }
 }
 
 export async function updateSetting(key: string, value: string) {
