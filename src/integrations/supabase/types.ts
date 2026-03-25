@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      captain_selections: {
+        Row: {
+          created_at: string
+          driver_id: string
+          id: string
+          manager_id: string
+          race_id: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          id?: string
+          manager_id: string
+          race_id: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          id?: string
+          manager_id?: string
+          race_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "captain_selections_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "captain_selections_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "captain_selections_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "captain_selections_race_id_fkey"
+            columns: ["race_id"]
+            isOneToOne: false
+            referencedRelation: "races"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           bio: string | null
@@ -334,6 +387,7 @@ export type Database = {
       }
       races: {
         Row: {
+          captain_deadline: string | null
           created_at: string
           id: string
           location: string | null
@@ -342,6 +396,7 @@ export type Database = {
           round_number: number
         }
         Insert: {
+          captain_deadline?: string | null
           created_at?: string
           id?: string
           location?: string | null
@@ -350,6 +405,7 @@ export type Database = {
           round_number: number
         }
         Update: {
+          captain_deadline?: string | null
           created_at?: string
           id?: string
           location?: string | null

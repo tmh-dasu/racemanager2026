@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 import ShareTeamCard from "@/components/ShareTeamCard";
+import CaptainSelector from "@/components/CaptainSelector";
 
 export default function MyTeamPage() {
   const { toast } = useToast();
@@ -186,6 +187,11 @@ export default function MyTeamPage() {
           )}
           <span className="text-xs text-muted-foreground">Budget: {formatDKR(Number(manager.budget_remaining))}</span>
         </div>
+
+        {/* Captain Selector */}
+        {myDrivers.length > 0 && (
+          <CaptainSelector managerId={manager.id} drivers={myDrivers} races={races} />
+        )}
 
         {/* Drivers */}
         <div className="space-y-3">
