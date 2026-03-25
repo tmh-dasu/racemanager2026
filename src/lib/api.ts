@@ -317,3 +317,89 @@ export function getCaptaincyBudget(
   const used = captainSelections.filter((c) => c.driver_id === driverId).length;
   return Math.max(0, 2 - used);
 }
+
+// Prediction types
+export interface PredictionQuestion {
+  id: string;
+  race_id: string;
+  question_type: "final_winner" | "fastest_qualifying" | "tier_winner" | "most_points";
+  question_text: string;
+  correct_answer: string | null;
+  created_at: string;
+}
+
+export interface PredictionAnswer {
+  id: string;
+  question_id: string;
+  manager_id: string;
+  answer: string;
+  is_correct: boolean | null;
+  created_at: string;
+}
+
+export interface SeasonPrediction {
+  id: string;
+  manager_id: string;
+  driver_id: string;
+  is_correct: boolean | null;
+  created_at: string;
+}
+
+export const QUESTION_TYPE_LABELS: Record<string, string> = {
+  final_winner: "Gæt vinder af finalen",
+  fastest_qualifying: "Gæt hurtigste i tidtagning",
+  tier_winner: "Gæt hvilken tier vinder finalen",
+  most_points: "Gæt kører med flest point",
+};
+
+// Prediction API functions
+export async function fetchPredictionQuestions(): Promise<PredictionQuestion[]> {
+  const { data } = await supabase.from("prediction_questions").select("*").order("created_at");
+  return (data || []) as PredictionQuestion[];
+}
+
+export async function fetchPredictionAnswers(managerId: string): Promise<PredictionAnswer[]> {
+  const { data } = await supabase.from("prediction_answers").select("*").eq("manager_id", managerId);
+  return (data || []) as PredictionAnswer[];
+}
+
+export async function submitPredictionAnswer(questionId: string, managerId: string, answer: string) {
+  const { error } = await supabase.from("prediction_answers").upsert(
+    { question_id: questionId, manager_id: managerId, answer },
+    { onConflict: "question_id,manager_id" }
+  );
+  if (error) throw error;
+}
+
+export async function fetchSeasonPrediction(managerId: string): Promise<SeasonPrediction | null> {
+  const { data } = await supabase.from("season_predictions").select("*").eq("manager_id", managerId).maybeSingle();
+  return data as SeasonPrediction | null;
+}
+
+export async function submitSeasonPrediction(managerId: string, driverId: string) {
+  const { error } = await supabase.from("season_predictions").insert({ manager_id: managerId, driver_id: driverId });
+  if (error) throw error;
+}
+
+export async function upsertPredictionQuestion(q: { id?: string; race_id: string; question_type: string; question_text: string; correct_answer?: string | null }) {
+  if (q.id) {
+    const { error } = await supabase.from("prediction_questions").update(q).eq("id", q.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("prediction_questions").insert(q);
+    if (error) throw error;
+  }
+}
+
+export async function resolvePredictions(questionId: string, correctAnswer: string) {
+  // Update the question with correct answer
+  const { error: qErr } = await supabase.from("prediction_questions").update({ correct_answer: correctAnswer }).eq("id", questionId);
+  if (qErr) throw qErr;
+
+  // Fetch all answers and mark correct/incorrect
+  const { data: answers } = await supabase.from("prediction_answers").select("id, answer").eq("question_id", questionId);
+  for (const a of (answers || [])) {
+    const isCorrect = a.answer.toLowerCase() === correctAnswer.toLowerCase();
+    await supabase.from("prediction_answers").update({ is_correct: isCorrect }).eq("id", a.id);
+  }
+}
