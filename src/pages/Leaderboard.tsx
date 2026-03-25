@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Zap, ChevronDown, ChevronUp } from "lucide-react";
+import { Trophy, Zap, ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, type Manager, type Driver } from "@/lib/api";
+import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, type Manager, type Driver, type CaptainSelection, type Race } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 
-function ExpandableTeam({ manager, rank, allResults, allDrivers }: { manager: Manager; rank: number; allResults: any[]; allDrivers: Driver[] }) {
+function ExpandableTeam({ manager, rank, allResults, allDrivers, captainSelections, races }: { manager: Manager; rank: number; allResults: any[]; allDrivers: Driver[]; captainSelections: CaptainSelection[]; races: Race[] }) {
   const [open, setOpen] = useState(false);
   const { data: managerDrivers } = useQuery({
     queryKey: ["manager_drivers", manager.id],
@@ -17,8 +17,20 @@ function ExpandableTeam({ manager, rank, allResults, allDrivers }: { manager: Ma
     ? allDrivers.filter((d) => managerDrivers.some((md) => md.driver_id === d.id))
     : [];
 
+  const mgrCaptains = captainSelections.filter((c) => c.manager_id === manager.id);
+
   function getDriverPoints(driverId: string) {
     return allResults.filter((r) => r.driver_id === driverId).reduce((s, r) => s + r.points, 0);
+  }
+
+  function getCaptainRaces(driverId: string): number[] {
+    return mgrCaptains
+      .filter((c) => c.driver_id === driverId)
+      .map((c) => {
+        const race = races.find((r) => r.id === c.race_id);
+        return race?.round_number || 0;
+      })
+      .sort((a, b) => a - b);
   }
 
   return (
@@ -52,13 +64,22 @@ function ExpandableTeam({ manager, rank, allResults, allDrivers }: { manager: Ma
       </button>
       {open && (
         <div className="ml-11 mt-1 mb-1 space-y-1">
-          {teamDrivers.length > 0 ? teamDrivers.map((d) => (
-            <div key={d.id} className="flex items-center gap-2 rounded bg-secondary/50 px-3 py-1.5 text-sm">
-              <span className="font-display font-bold text-muted-foreground">#{d.car_number}</span>
-              <span className="text-foreground flex-1">{d.name}</span>
-              <span className="font-display font-bold text-foreground">{getDriverPoints(d.id)} pts</span>
-            </div>
-          )) : (
+          {teamDrivers.length > 0 ? teamDrivers.map((d) => {
+            const captainRounds = getCaptainRaces(d.id);
+            return (
+              <div key={d.id} className="flex items-center gap-2 rounded bg-secondary/50 px-3 py-1.5 text-sm">
+                <span className="font-display font-bold text-muted-foreground">#{d.car_number}</span>
+                <span className="text-foreground flex-1">{d.name}</span>
+                {captainRounds.length > 0 && (
+                  <span className="flex items-center gap-1 text-gold text-[11px]" title={`Captain i runde ${captainRounds.join(", ")}`}>
+                    <Crown className="h-3 w-3" />
+                    R{captainRounds.join(", R")}
+                  </span>
+                )}
+                <span className="font-display font-bold text-foreground">{getDriverPoints(d.id)} pts</span>
+              </div>
+            );
+          }) : (
             <div className="rounded bg-secondary/50 px-3 py-1.5 text-sm text-muted-foreground">Henter kørere…</div>
           )}
         </div>
@@ -71,6 +92,8 @@ export default function LeaderboardPage() {
   const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
   const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
   const { data: allDrivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
+  const { data: captainSelections = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
+  const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
 
   return (
     <PageLayout>
@@ -83,7 +106,7 @@ export default function LeaderboardPage() {
 
         <div className="space-y-2">
           {managers.map((m, i) => (
-            <ExpandableTeam key={m.id} manager={m} rank={i} allResults={allResults} allDrivers={allDrivers} />
+            <ExpandableTeam key={m.id} manager={m} rank={i} allResults={allResults} allDrivers={allDrivers} captainSelections={captainSelections} races={races} />
           ))}
         </div>
       </div>
