@@ -45,9 +45,9 @@ export default function RulesPage() {
         </div>
 
         {/* What is it */}
-        <Section icon={<Target className="h-5 w-5 text-accent" />} title="Hvad er DASU Race Manager?">
+        <Section icon={<Target className="h-5 w-5 text-accent" />} title="Hvad er DASU RaceManager?">
           <p className="text-sm text-muted-foreground">
-            DASU Race Manager er et fantasy managerspil for Danish Supercar League Super GT-sæsonen 2026.
+            DASU RaceManager er et fantasy managerspil for Danish Supercar League Super GT-sæsonen 2026.
             Du sammensætter dit eget hold af rigtige kørere og optjener point baseret på deres resultater i løbene.
           </p>
         </Section>
