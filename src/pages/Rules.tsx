@@ -1,5 +1,5 @@
 import PageLayout from "@/components/PageLayout";
-import { Trophy, Zap, Target, Calendar, ArrowRightLeft, AlertTriangle, ListMinus } from "lucide-react";
+import { Trophy, Zap, Target, Calendar, ArrowRightLeft, AlertTriangle, ListMinus, Crown, Brain } from "lucide-react";
 
 const pointsTable = [
   { pos: "1.", pts: 25 }, { pos: "2.", pts: 22 }, { pos: "3.", pts: 20 },
