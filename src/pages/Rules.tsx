@@ -172,20 +172,26 @@ export default function RulesPage() {
         {/* Predictions */}
         <Section icon={<Brain className="h-5 w-5 text-accent" />} title="Predictions 🔮">
           <p className="text-sm text-muted-foreground mb-3">
-            Optjen bonuspoint ved at gætte rigtigt!
+            Optjen bonuspoint ved at gætte rigtigt! Admin opretter <strong className="text-foreground">3 spørgsmål per arrangement</strong>.
           </p>
-          <h3 className="font-display font-semibold text-foreground text-sm mb-2">Per arrangement (+10 point)</h3>
+          <h3 className="font-display font-semibold text-foreground text-sm mb-2">Pointgivning</h3>
           <ul className="space-y-1 text-sm text-muted-foreground mb-4">
-            <li>• Admin stiller ét spørgsmål per arrangement inden det starter</li>
-            <li>• Mulige spørgsmålstyper: gæt vinder af finalen, hurtigste i tidtagning, hvilken tier vinder finalen, eller kører med flest point</li>
-            <li>• Korrekt svar = <strong className="text-foreground">+10 bonuspoint</strong> til din sæsontotal</li>
-            <li>• Prediction låser <strong className="text-foreground">når tidtagning starter</strong></li>
+            <li>• Hvert korrekt svar = <strong className="text-foreground">+5 bonuspoint</strong></li>
+            <li>• Maks <strong className="text-foreground">15 bonuspoint</strong> per arrangement (3 × 5)</li>
+            <li>• Point tilføjes automatisk når admin bekræfter korrekte svar</li>
           </ul>
-          <h3 className="font-display font-semibold text-foreground text-sm mb-2">Sæsonprediction (+15 point)</h3>
+          <h3 className="font-display font-semibold text-foreground text-sm mb-2">Spørgsmålstyper</h3>
+          <ul className="space-y-1 text-sm text-muted-foreground mb-4">
+            <li>• <strong className="text-foreground">Duel:</strong> "Hvem kvalificerer sig bedst af [Kører A] og [Kører B]?" — vælg én af to kørere</li>
+            <li>• <strong className="text-foreground">Pointduel:</strong> "Hvem opnår flest point i weekenden af [Kører A] og [Kører B]?" — vælg én af to kørere</li>
+            <li>• <strong className="text-foreground">Ja/Nej:</strong> Fritekstspørgsmål med ja eller nej som svar</li>
+          </ul>
+          <h3 className="font-display font-semibold text-foreground text-sm mb-2">Predictions-vindue</h3>
           <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>• Ved tilmelding gætter du på den <strong className="text-foreground">samlede sæsonvinder</strong> (kører)</li>
-            <li>• Kan <strong className="text-foreground">ikke ændres</strong> efter tilmelding</li>
-            <li>• Korrekt gæt ved sæsonafslutning = <strong className="text-foreground">+15 bonuspoint</strong></li>
+            <li>• Vinduet åbner når admin publicerer spørgsmålene</li>
+            <li>• Vinduet lukker <strong className="text-foreground">24 timer inden arrangementet starter</strong></li>
+            <li>• Du kan ændre dine svar <strong className="text-foreground">indtil vinduet lukker</strong></li>
+            <li>• Efter vinduet lukker kan du se dine svar men ikke ændre dem</li>
           </ul>
         </Section>
 
