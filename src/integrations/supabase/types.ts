@@ -199,59 +199,6 @@ export type Database = {
         }
         Relationships: []
       }
-      joker_transfers: {
-        Row: {
-          created_at: string
-          id: string
-          manager_id: string
-          new_driver_id: string
-          old_driver_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          manager_id: string
-          new_driver_id: string
-          old_driver_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          manager_id?: string
-          new_driver_id?: string
-          old_driver_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "joker_transfers_manager_id_fkey"
-            columns: ["manager_id"]
-            isOneToOne: false
-            referencedRelation: "managers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "joker_transfers_manager_id_fkey"
-            columns: ["manager_id"]
-            isOneToOne: false
-            referencedRelation: "managers_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "joker_transfers_new_driver_id_fkey"
-            columns: ["new_driver_id"]
-            isOneToOne: false
-            referencedRelation: "drivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "joker_transfers_old_driver_id_fkey"
-            columns: ["old_driver_id"]
-            isOneToOne: false
-            referencedRelation: "drivers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       manager_drivers: {
         Row: {
           created_at: string
@@ -300,9 +247,7 @@ export type Database = {
           budget_remaining: number
           created_at: string
           email: string
-          emergency_transfer_used: boolean
           id: string
-          joker_used: boolean
           name: string
           slug: string | null
           team_name: string
@@ -313,9 +258,7 @@ export type Database = {
           budget_remaining?: number
           created_at?: string
           email: string
-          emergency_transfer_used?: boolean
           id?: string
-          joker_used?: boolean
           name: string
           slug?: string | null
           team_name: string
@@ -326,9 +269,7 @@ export type Database = {
           budget_remaining?: number
           created_at?: string
           email?: string
-          emergency_transfer_used?: boolean
           id?: string
-          joker_used?: boolean
           name?: string
           slug?: string | null
           team_name?: string
@@ -703,9 +644,7 @@ export type Database = {
         Row: {
           budget_remaining: number | null
           created_at: string | null
-          emergency_transfer_used: boolean | null
           id: string | null
-          joker_used: boolean | null
           name: string | null
           slug: string | null
           team_name: string | null
@@ -714,9 +653,7 @@ export type Database = {
         Insert: {
           budget_remaining?: number | null
           created_at?: string | null
-          emergency_transfer_used?: boolean | null
           id?: string | null
-          joker_used?: boolean | null
           name?: string | null
           slug?: string | null
           team_name?: string | null
@@ -725,9 +662,7 @@ export type Database = {
         Update: {
           budget_remaining?: number | null
           created_at?: string | null
-          emergency_transfer_used?: boolean | null
           id?: string | null
-          joker_used?: boolean | null
           name?: string | null
           slug?: string | null
           team_name?: string | null
