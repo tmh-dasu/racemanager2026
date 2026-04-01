@@ -463,6 +463,7 @@ function SettingsAdmin() {
   const queryClient = useQueryClient();
   const { data: settings, refetch } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
   const [transferCostInput, setTransferCostInput] = useState("");
+  const [adminEmailInput, setAdminEmailInput] = useState("");
 
   async function toggle(key: string, current: boolean) {
     await updateSetting(key, (!current).toString());
