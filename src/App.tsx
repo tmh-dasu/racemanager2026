@@ -14,6 +14,7 @@ import Rules from "./pages/Rules";
 import Payment from "./pages/Payment";
 import Auth from "./pages/Auth";
 import TeamPublic from "./pages/TeamPublic";
+import Predictions from "./pages/Predictions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
