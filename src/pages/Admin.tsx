@@ -129,7 +129,7 @@ function DriversAdmin() {
   }
 
   async function handleWithdraw(d: any) {
-    if (!confirm(`Er du sikker på at markere ${d.name} som udgået af klassen? Berørte hold får joker/nødtransfer tilbage og notificeres via email.`)) return;
+    if (!confirm(`Er du sikker på at markere ${d.name} som udgået af klassen? Berørte hold får et gratis nødtransfer og notificeres via email.`)) return;
     setWithdrawing(true);
     try {
       const result = await withdrawDriver(d.id);
