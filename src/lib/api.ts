@@ -5,7 +5,6 @@ export interface Driver {
   name: string;
   car_number: number;
   team: string;
-  price: number;
   photo_url: string | null;
   bio: string;
   club: string;
