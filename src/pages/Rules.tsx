@@ -131,7 +131,7 @@ export default function RulesPage() {
             <li>• Pointfradraget er <strong className="text-foreground">permanent</strong> og kan ikke fortrydes</li>
             <li>• Transfervinduet <strong className="text-foreground">åbner</strong> når admin indtaster resultater for et arrangement</li>
             <li>• Transfervinduet <strong className="text-foreground">lukker</strong> når tidtagning starter ved næste arrangement</li>
-            <li>• Ved transfer arver den nye kører den udgående kørers <strong className="text-foreground">resterende captaincy-budget</strong></li>
+            <li>• Captaincy-budgettet følger <strong className="text-foreground">tier-pladsen</strong>, ikke den individuelle kører — se captain-regler nedenfor</li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-accent/10 border border-accent/20 px-3 py-2">
             <ArrowRightLeft className="h-4 w-4 text-accent mt-0.5 shrink-0" />
