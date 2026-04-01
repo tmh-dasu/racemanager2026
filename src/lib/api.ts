@@ -139,7 +139,7 @@ export async function fetchRaceResults(raceId?: string): Promise<RaceResult[]> {
 }
 
 export async function fetchManagers(): Promise<Manager[]> {
-  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, budget_remaining, created_at, slug").order("total_points", { ascending: false });
+  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, created_at, slug").order("total_points", { ascending: false });
   return (data || []) as Manager[];
 }
 
