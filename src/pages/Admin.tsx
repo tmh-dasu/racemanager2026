@@ -84,38 +84,36 @@ export default function AdminPage() {
   );
 }
 
-const TIER_DEFAULTS: Record<string, number> = { gold: 5000000, silver: 3000000, bronze: 2000000 };
+
 
 function DriversAdmin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: drivers = [], refetch } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
-  const [form, setForm] = useState({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
+  const [form, setForm] = useState({ name: "", car_number: "", team: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
   const [editId, setEditId] = useState<string | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
 
   function startEdit(d: any) {
     setEditId(d.id);
-    setForm({ name: d.name, car_number: String(d.car_number), team: d.team, price: String(d.price), photo_url: d.photo_url || "", bio: d.bio || "", club: d.club || "", quote: d.quote || "", tier: d.tier || "bronze" });
+    setForm({ name: d.name, car_number: String(d.car_number), team: d.team, photo_url: d.photo_url || "", bio: d.bio || "", club: d.club || "", quote: d.quote || "", tier: d.tier || "bronze" });
   }
 
   function resetForm() {
     setEditId(null);
-    setForm({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
+    setForm({ name: "", car_number: "", team: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
   }
 
   function handleTierChange(tier: string) {
-    const autoPrice = !form.price || Object.values(TIER_DEFAULTS).includes(Number(form.price));
-    setForm({ ...form, tier, ...(autoPrice ? { price: String(TIER_DEFAULTS[tier] || 2000000) } : {}) });
+    setForm({ ...form, tier });
   }
 
   async function handleSave() {
     if (!form.name || !form.car_number || !form.team) {
       toast({ title: "Udfyld alle påkrævede felter", variant: "destructive" }); return;
     }
-    const price = Number(form.price) || TIER_DEFAULTS[form.tier] || 2000000;
     try {
-      await upsertDriver({ id: editId || undefined, name: form.name, car_number: Number(form.car_number), team: form.team, price, photo_url: form.photo_url || null, bio: form.bio, club: form.club, quote: form.quote, tier: form.tier } as any);
+      await upsertDriver({ id: editId || undefined, name: form.name, car_number: Number(form.car_number), team: form.team, photo_url: form.photo_url || null, bio: form.bio, club: form.club, quote: form.quote, tier: form.tier } as any);
       resetForm();
       refetch();
       toast({ title: editId ? "Kører opdateret" : "Kører tilføjet" });
@@ -155,7 +153,6 @@ function DriversAdmin() {
           <option value="silver">🥈 Sølv</option>
           <option value="bronze">🥉 Bronze</option>
         </select>
-        <Input placeholder="Børsværdi" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Klub" value={form.club} onChange={(e) => setForm({ ...form, club: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Citat" value={form.quote} onChange={(e) => setForm({ ...form, quote: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Bio (maks 100 tegn)" maxLength={100} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} className="bg-secondary border-border" />
@@ -176,7 +173,7 @@ function DriversAdmin() {
               {tierDrivers.map((d: any) => (
                 <div key={d.id} className={`flex items-center justify-between rounded px-3 py-2 text-sm ${d.withdrawn ? "bg-destructive/10 border border-destructive/20" : "bg-secondary/50"}`}>
                   <button onClick={() => startEdit(d)} className="text-left flex-1 min-w-0">
-                    <span className={d.withdrawn ? "text-muted-foreground line-through" : "text-foreground"}>#{d.car_number} {d.name} – {d.team} – {Number(d.price).toLocaleString("da-DK")} DKR</span>
+                    <span className={d.withdrawn ? "text-muted-foreground line-through" : "text-foreground"}>#{d.car_number} {d.name} – {d.team}</span>
                     {d.club && <span className="text-muted-foreground ml-2">• {d.club}</span>}
                     {d.withdrawn && <span className="text-destructive ml-2 text-xs font-bold">UDGÅET</span>}
                   </button>

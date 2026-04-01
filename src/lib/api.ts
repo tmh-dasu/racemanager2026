@@ -5,7 +5,6 @@ export interface Driver {
   name: string;
   car_number: number;
   team: string;
-  price: number;
   photo_url: string | null;
   bio: string;
   club: string;
@@ -48,7 +47,6 @@ export interface Manager {
   name: string;
   email?: string;
   team_name: string;
-  budget_remaining: number;
   total_points: number;
   slug?: string;
 }
@@ -70,7 +68,6 @@ export interface Transfer {
 }
 
 export interface Settings {
-  budget_limit: number;
   transfer_window_open: boolean;
   team_registration_open: boolean;
   transfer_cost: number;
@@ -118,7 +115,6 @@ export async function fetchSettings(): Promise<Settings> {
   const map: Record<string, string> = {};
   data?.forEach((s: any) => { map[s.key] = s.value; });
   return {
-    budget_limit: Number(map.budget_limit || 100),
     transfer_window_open: map.transfer_window_open === "true",
     team_registration_open: map.team_registration_open === "true",
     transfer_cost: Number(map.transfer_cost || 10),
@@ -143,12 +139,12 @@ export async function fetchRaceResults(raceId?: string): Promise<RaceResult[]> {
 }
 
 export async function fetchManagers(): Promise<Manager[]> {
-  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, budget_remaining, created_at, slug").order("total_points", { ascending: false });
+  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, created_at, slug").order("total_points", { ascending: false });
   return (data || []) as Manager[];
 }
 
 export async function fetchManagerBySlug(slug: string): Promise<Manager | null> {
-  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, budget_remaining, created_at, slug").eq("slug", slug).maybeSingle();
+  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, created_at, slug").eq("slug", slug).maybeSingle();
   return data as Manager | null;
 }
 
@@ -173,9 +169,9 @@ export function generateSlug(teamName: string): string {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-export async function createManager(name: string, email: string, teamName: string, budgetRemaining: number, userId?: string) {
+export async function createManager(name: string, email: string, teamName: string, userId?: string) {
   const slug = generateSlug(teamName);
-  const insertData: any = { name, email, team_name: teamName, budget_remaining: budgetRemaining, slug };
+  const insertData: any = { name, email, team_name: teamName, slug };
   if (userId) insertData.user_id = userId;
   const { data, error } = await supabase.from("managers").insert(insertData).select().single();
   if (error) throw error;
@@ -229,7 +225,7 @@ export async function updateSetting(key: string, value: string) {
   if (error) throw error;
 }
 
-export async function upsertDriver(driver: Partial<Driver> & { name: string; car_number: number; team: string; price: number }) {
+export async function upsertDriver(driver: Partial<Driver> & { name: string; car_number: number; team: string }) {
   if (driver.id) {
     const { error } = await supabase.from("drivers").update(driver).eq("id", driver.id);
     if (error) throw error;
