@@ -76,7 +76,7 @@ export default function PaymentPage() {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Tilmeldingsgebyr</span>
               <span className="font-display text-3xl font-bold text-foreground">
-                50 <span className="text-lg text-muted-foreground">kr.</span>
+                49 <span className="text-lg text-muted-foreground">kr.</span>
               </span>
             </div>
 
