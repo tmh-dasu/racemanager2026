@@ -39,7 +39,6 @@ export default function PickTeamPage() {
   const [selectedDriverIds, setSelectedDriverIds] = useState<Record<Tier, string | null>>({
     gold: null, silver: null, bronze: null,
   });
-  const [seasonPredictionId, setSeasonPredictionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const registrationOpen = settings?.team_registration_open ?? false;
