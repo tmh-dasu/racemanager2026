@@ -294,6 +294,21 @@ function PredictionsAdmin() {
       if (error) throw error;
       refetch();
       toast({ title: published ? "Spørgsmål publiceret" : "Spørgsmål skjult" });
+      
+      // Send notification when publishing
+      if (published) {
+        const question = questions.find(q => q.id === id);
+        if (question) {
+          try {
+            await supabase.functions.invoke("notify-predictions", {
+              body: { race_id: question.race_id },
+            });
+            toast({ title: "Prediction-notifikation sendt til alle spillere" });
+          } catch (e) {
+            console.error("Failed to send prediction notification:", e);
+          }
+        }
+      }
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
     setSaving(false);
   }
