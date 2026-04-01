@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Trophy, ListOrdered, Flag, Settings, BookOpen, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Home, Users, Trophy, ListOrdered, Flag, Settings, BookOpen, LogIn, LogOut, Menu, X, HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 
