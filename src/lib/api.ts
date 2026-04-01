@@ -319,6 +319,59 @@ export async function recalculateManagerPoints() {
   }
 }
 
+export interface PointBreakdown {
+  racePoints: number;
+  captainBonus: number;
+  predictionPoints: number;
+  transferCosts: number;
+  total: number;
+}
+
+export function computePointBreakdown(
+  managerId: string,
+  allMDs: { manager_id: string; driver_id: string }[],
+  allResults: { driver_id: string; points: number; race_id: string }[],
+  allCaptains: { manager_id: string; race_id: string; driver_id: string }[],
+  allPredAnswers: { manager_id: string; is_correct: boolean | null }[],
+  allTransfers: { manager_id: string; point_cost: number }[],
+  completedRounds: number,
+): PointBreakdown {
+  const driverIds = allMDs.filter((md) => md.manager_id === managerId).map((md) => md.driver_id);
+
+  const captainMap = new Map<string, string>();
+  allCaptains.filter((c) => c.manager_id === managerId).forEach((c) => {
+    captainMap.set(c.race_id, c.driver_id);
+  });
+
+  const baseSessionPts: number[] = [];
+  const captainSessionPts: number[] = [];
+
+  allResults
+    .filter((r) => driverIds.includes(r.driver_id))
+    .forEach((r) => {
+      const pts = r.points || 0;
+      const isCaptain = captainMap.get(r.race_id) === r.driver_id;
+      baseSessionPts.push(pts);
+      captainSessionPts.push(isCaptain ? pts * 2 : pts);
+    });
+
+  const { total: baseTotal } = applyDropWorst(baseSessionPts, completedRounds);
+  const { total: totalWithCaptain } = applyDropWorst(captainSessionPts, completedRounds);
+
+  const racePoints = baseTotal;
+  const captainBonus = totalWithCaptain - baseTotal;
+  const predictionPoints = allPredAnswers.filter((a) => a.manager_id === managerId && a.is_correct === true).length * 5;
+  const transferCosts = allTransfers.filter((t) => t.manager_id === managerId).reduce((sum, t) => sum + (t.point_cost || 0), 0);
+
+  return {
+    racePoints,
+    captainBonus,
+    predictionPoints,
+    transferCosts,
+    total: totalWithCaptain + predictionPoints - transferCosts,
+  };
+}
+
 // Captain functions
 export async function fetchCaptainSelections(managerId: string): Promise<CaptainSelection[]> {
   const { data } = await supabase.from("captain_selections").select("*").eq("manager_id", managerId);

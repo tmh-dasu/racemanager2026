@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, AlertTriangle, LogOut, ShieldAlert, History } from "lucide-react";
-import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers } from "@/lib/api";
+import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers, fetchAllCaptainSelections, fetchAllPredictionAnswers, fetchAllTransfers, computePointBreakdown } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,24 @@ export default function MyTeamPage() {
     queryFn: () => fetchTransfers(manager!.id),
     enabled: !!manager,
   });
+  const { data: captainSelections = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
+  const { data: predAnswers = [] } = useQuery({ queryKey: ["all_prediction_answers"], queryFn: fetchAllPredictionAnswers });
+  const { data: allTransfersData = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
+
+  const completedRounds = useMemo(() => new Set(allResults.map(r => r.race_id)).size, [allResults]);
+
+  const breakdown = useMemo(() => {
+    if (!manager) return null;
+    return computePointBreakdown(
+      manager.id,
+      managerDrivers.map(md => ({ manager_id: md.manager_id, driver_id: md.driver_id })),
+      allResults,
+      captainSelections,
+      predAnswers,
+      allTransfersData,
+      completedRounds,
+    );
+  }, [manager, managerDrivers, allResults, captainSelections, predAnswers, allTransfersData, completedRounds]);
 
   const myRank = manager ? allManagers.findIndex((m) => m.id === manager.id) + 1 : null;
 
@@ -186,6 +204,33 @@ export default function MyTeamPage() {
             </Button>
           </div>
         </div>
+
+        {/* Point Breakdown */}
+        {breakdown && (
+          <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+            <p className="text-xs text-muted-foreground mb-2 font-display font-semibold">Pointopdeling</p>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div>
+                <p className="text-xs text-muted-foreground">Race-point</p>
+                <p className="font-display text-lg font-bold text-foreground">{breakdown.racePoints}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Captain-bonus</p>
+                <p className="font-display text-lg font-bold text-gold">+{breakdown.captainBonus}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Predictions</p>
+                <p className="font-display text-lg font-bold text-success">+{breakdown.predictionPoints}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Transfers</p>
+                <p className={`font-display text-lg font-bold ${breakdown.transferCosts > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                  {breakdown.transferCosts > 0 ? `−${breakdown.transferCosts}` : "0"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Share */}
         <ShareTeamCard
