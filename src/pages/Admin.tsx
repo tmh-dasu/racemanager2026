@@ -483,7 +483,7 @@ function TransfersAdmin() {
   );
 }
 
-
+function VouchersAdmin() {
   const { toast } = useToast();
   const [newCode, setNewCode] = useState("");
   const [bulkCount, setBulkCount] = useState("");
