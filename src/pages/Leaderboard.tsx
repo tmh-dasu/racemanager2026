@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp, Crown, ArrowLeftRight } from "lucide-react";
+import { ChevronDown, ChevronUp, Crown, ArrowLeftRight, Trophy, TrendingUp, Brain, Minus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, type Manager, type Driver, type CaptainSelection, type Race, type Transfer } from "@/lib/api";
+import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, fetchAllPredictionAnswers, computePointBreakdown, type Manager, type Driver, type CaptainSelection, type Race, type Transfer, type PointBreakdown } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const TIER_BADGE: Record<string, { label: string; className: string }> = {
   gold: { label: "Guld", className: "bg-gold/20 text-gold border-gold/40" },
