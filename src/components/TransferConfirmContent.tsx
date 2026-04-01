@@ -23,13 +23,7 @@ export default function TransferConfirmContent({ swapOutDriver, swapInDriver, tr
   });
 
   const tier = swapOutDriver?.tier || "bronze";
-  const tierUsed = captainSelections.filter((c: CaptainSelection) => {
-    // We need to check if captain selections exist for this tier
-    // Since we don't have drivers list here, check against the outgoing driver
-    return c.driver_id === swapOutDriver?.id;
-  }).length;
-  // Actually we need all drivers in this tier to count properly
-  // For simplicity, count all captain selections and note that budget follows the slot
+  const tierCaptainCount = captainSelections.filter((c) => c.driver_id === swapOutDriver?.id).length;
 
   const tierCaptainCount = captainSelections.filter((c) => c.driver_id === swapOutDriver?.id).length;
   const tierRemaining = Math.max(0, 2 - tierCaptainCount);

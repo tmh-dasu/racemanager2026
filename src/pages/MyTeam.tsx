@@ -12,6 +12,7 @@ import PageLayout from "@/components/PageLayout";
 import ShareTeamCard from "@/components/ShareTeamCard";
 import CaptainSelector from "@/components/CaptainSelector";
 import PredictionPanel from "@/components/PredictionPanel";
+import TransferConfirmContent from "@/components/TransferConfirmContent";
 
 export default function MyTeamPage() {
   const { toast } = useToast();
