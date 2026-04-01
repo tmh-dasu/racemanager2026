@@ -1,28 +1,36 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Trophy, Clock, ChevronRight, Flag } from "lucide-react";
-import { fetchManagers, fetchRaces, fetchSettings } from "@/lib/api";
+import { Trophy, Clock, ChevronRight, Flag, Crown, ArrowLeftRight, HelpCircle } from "lucide-react";
+import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 
-function CountdownTimer({ raceDate }: { raceDate: string }) {
-  const target = new Date(raceDate);
-  const now = new Date();
+function CountdownTimer({ deadline, label }: { deadline: string; label: string }) {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const target = new Date(deadline);
   const diff = target.getTime() - now.getTime();
 
-  if (diff <= 0) return <span className="text-muted-foreground">Løb afsluttet</span>;
+  if (diff <= 0) return <span className="text-xs text-muted-foreground">{label}: Lukket</span>;
 
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
   return (
-    <div className="flex gap-3">
-      <div className="flex flex-col items-center rounded-md bg-secondary px-3 py-2">
-        <span className="font-display text-2xl font-bold text-foreground">{days}</span>
-        <span className="text-xs text-muted-foreground">dage</span>
-      </div>
-      <div className="flex flex-col items-center rounded-md bg-secondary px-3 py-2">
-        <span className="font-display text-2xl font-bold text-foreground">{hours}</span>
-        <span className="text-xs text-muted-foreground">timer</span>
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground">{label}:</span>
+      <div className="flex gap-1">
+        {days > 0 && (
+          <span className="rounded bg-secondary px-1.5 py-0.5 font-display text-xs font-bold text-foreground">{days}d</span>
+        )}
+        <span className="rounded bg-secondary px-1.5 py-0.5 font-display text-xs font-bold text-foreground">{hours}t</span>
+        <span className="rounded bg-secondary px-1.5 py-0.5 font-display text-xs font-bold text-foreground">{mins}m</span>
       </div>
     </div>
   );
@@ -32,10 +40,21 @@ export default function HomePage() {
   const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
+  const { data: predictionQuestions = [] } = useQuery({ queryKey: ["prediction_questions_published"], queryFn: fetchPublishedPredictionQuestions });
 
-  const nextRace = races.find((r) => r.race_date && new Date(r.race_date) > new Date());
+  const now = new Date();
+  const nextRace = races.find((r) => r.race_date && new Date(r.race_date) > now);
   const top5 = managers.slice(0, 5);
   const registrationOpen = settings?.team_registration_open ?? false;
+
+  // Check if predictions are open for next race
+  const nextRacePredictions = nextRace
+    ? predictionQuestions.filter((q) => q.race_id === nextRace.id)
+    : [];
+  const hasOpenPredictions = nextRacePredictions.some((q) => {
+    const deadline = q.prediction_deadline ? new Date(q.prediction_deadline) : null;
+    return deadline ? now < deadline : true;
+  });
 
   return (
     <PageLayout>
@@ -53,7 +72,7 @@ export default function HomePage() {
               <img src="/images/supergt-logo.png" alt="Super GT Danmark" className="h-12 w-auto" />
             </div>
             <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-              DASU <span className="text-gradient-racing">Race Manager</span>
+              DASU <span className="text-gradient-racing">RaceManager</span>
             </h1>
             <p className="mt-2 text-muted-foreground">Super GT Fantasy Racing – Dansk Automobil Sports Union</p>
 
@@ -75,22 +94,44 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Next Race */}
+        {/* Next Race Status */}
         {nextRace && (
           <div className="rounded-lg border border-border bg-card p-5 shadow-card">
             <div className="flex items-center gap-2 text-muted-foreground mb-3">
               <Clock className="h-4 w-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Næste løb</span>
+              <span className="text-xs font-semibold uppercase tracking-wider">Næste arrangement</span>
             </div>
             <h2 className="font-display text-xl font-bold text-foreground">
               Runde {nextRace.round_number}: {nextRace.name}
             </h2>
             {nextRace.location && <p className="text-sm text-muted-foreground">{nextRace.location}</p>}
-            {nextRace.race_date && (
-              <div className="mt-3">
-                <CountdownTimer raceDate={nextRace.race_date} />
+
+            <div className="mt-3 space-y-2">
+              {nextRace.race_date && (
+                <CountdownTimer deadline={nextRace.race_date} label="Arrangement" />
+              )}
+              {nextRace.captain_deadline && (
+                <CountdownTimer deadline={nextRace.captain_deadline} label="Captain deadline" />
+              )}
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {/* Transfer window */}
+              <div className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs">
+                <ArrowLeftRight className="h-3 w-3" />
+                <span className={settings?.transfer_window_open ? "text-success" : "text-muted-foreground"}>
+                  Transfer {settings?.transfer_window_open ? "åbent" : "lukket"}
+                </span>
               </div>
-            )}
+
+              {/* Predictions */}
+              <Link to="/predictions" className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs hover:bg-secondary/80 transition-colors">
+                <HelpCircle className="h-3 w-3" />
+                <span className={hasOpenPredictions ? "text-gold" : "text-muted-foreground"}>
+                  Predictions {hasOpenPredictions ? "åbne" : nextRacePredictions.length > 0 ? "lukket" : "ingen"}
+                </span>
+              </Link>
+            </div>
           </div>
         )}
 
@@ -108,10 +149,10 @@ export default function HomePage() {
           {top5.length === 0 && <p className="text-sm text-muted-foreground">Ingen hold tilmeldt endnu.</p>}
           <div className="space-y-2">
             {top5.map((m, i) => (
-              <div key={m.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
+              <Link key={m.id} to={`/hold/${m.slug}`} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2 hover:bg-secondary/80 transition-colors">
                 <div className="flex items-center gap-3">
                   <span
-                    className={`font-display text-lg font-bold ${i === 0 ? "text-gold" : i === 1 ? "text-muted-foreground" : i === 2 ? "text-racing-red" : "text-muted-foreground"}`}
+                    className={`font-display text-lg font-bold ${i === 0 ? "text-gold" : i === 1 ? "text-silver" : i === 2 ? "text-bronze" : "text-muted-foreground"}`}
                   >
                     {i + 1}
                   </span>
@@ -121,7 +162,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <span className="font-display text-lg font-bold text-foreground">{m.total_points}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

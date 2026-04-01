@@ -1,11 +1,21 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp, Crown } from "lucide-react";
+import { ChevronDown, ChevronUp, Crown, ArrowLeftRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, type Manager, type Driver, type CaptainSelection, type Race } from "@/lib/api";
+import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, type Manager, type Driver, type CaptainSelection, type Race, type Transfer } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
+import { Badge } from "@/components/ui/badge";
 
-function ExpandableTeam({ manager, rank, allResults, allDrivers, captainSelections, races }: { manager: Manager; rank: number; allResults: any[]; allDrivers: Driver[]; captainSelections: CaptainSelection[]; races: Race[] }) {
+const TIER_BADGE: Record<string, { label: string; className: string }> = {
+  gold: { label: "Guld", className: "bg-gold/20 text-gold border-gold/40" },
+  silver: { label: "Sølv", className: "bg-silver/20 text-silver border-silver/40" },
+  bronze: { label: "Bronze", className: "bg-bronze/20 text-bronze border-bronze/40" },
+};
+
+function ExpandableTeam({ manager, rank, allResults, allDrivers, captainSelections, races, transfers }: {
+  manager: Manager; rank: number; allResults: any[]; allDrivers: Driver[];
+  captainSelections: CaptainSelection[]; races: Race[]; transfers: Transfer[];
+}) {
   const [open, setOpen] = useState(false);
   const { data: managerDrivers } = useQuery({
     queryKey: ["manager_drivers", manager.id],
@@ -18,9 +28,14 @@ function ExpandableTeam({ manager, rank, allResults, allDrivers, captainSelectio
     : [];
 
   const mgrCaptains = captainSelections.filter((c) => c.manager_id === manager.id);
+  const mgrTransfers = transfers.filter((t) => t.manager_id === manager.id);
 
-  function getDriverPoints(driverId: string) {
-    return allResults.filter((r) => r.driver_id === driverId).reduce((s, r) => s + r.points, 0);
+  // Captaincy budget per tier
+  function getCaptaincyUsed(tier: string) {
+    return mgrCaptains.filter((c) => {
+      const d = allDrivers.find((dr) => dr.id === c.driver_id);
+      return d?.tier === tier;
+    }).length;
   }
 
   function getCaptainRaces(driverId: string): number[] {
@@ -47,36 +62,61 @@ function ExpandableTeam({ manager, rank, allResults, allDrivers, captainSelectio
           {rank + 1}
         </span>
         <div className="flex-1 min-w-0">
-          <Link to={`/hold/${manager.slug}`} className="hover:underline">
+          <Link to={`/hold/${manager.slug}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>
             <p className="font-display font-semibold text-foreground truncate">{manager.team_name}</p>
           </Link>
           <p className="text-xs text-muted-foreground truncate">{manager.name}</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          {mgrTransfers.length > 0 && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground" title={`${mgrTransfers.length} transfers`}>
+              <ArrowLeftRight className="h-3 w-3" />{mgrTransfers.length}
+            </span>
+          )}
           <span className="font-display text-xl font-bold text-foreground">{manager.total_points}</span>
           {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         </div>
       </button>
       {open && (
         <div className="ml-11 mt-1 mb-1 space-y-1">
-          {teamDrivers.length > 0 ? teamDrivers.map((d) => {
-            const captainRounds = getCaptainRaces(d.id);
-            return (
-              <div key={d.id} className="flex items-center gap-2 rounded bg-secondary/50 px-3 py-1.5 text-sm">
-                <span className="font-display font-bold text-muted-foreground">#{d.car_number}</span>
-                <span className="text-foreground flex-1">{d.name}</span>
-                {captainRounds.length > 0 && (
-                  <span className="flex items-center gap-1 text-gold text-[11px]" title={`Captain i runde ${captainRounds.join(", ")}`}>
-                    <Crown className="h-3 w-3" />
-                    R{captainRounds.join(", R")}
-                  </span>
-                )}
-                <span className="font-display font-bold text-foreground">{getDriverPoints(d.id)} pts</span>
-              </div>
-            );
-          }) : (
+          {teamDrivers.length > 0 ? teamDrivers
+            .sort((a, b) => {
+              const order = { gold: 0, silver: 1, bronze: 2 };
+              return (order[a.tier as keyof typeof order] ?? 3) - (order[b.tier as keyof typeof order] ?? 3);
+            })
+            .map((d) => {
+              const captainRounds = getCaptainRaces(d.id);
+              const tier = TIER_BADGE[d.tier] || TIER_BADGE.bronze;
+              return (
+                <div key={d.id} className="flex items-center gap-2 rounded bg-secondary/50 px-3 py-1.5 text-sm">
+                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${tier.className}`}>{tier.label}</Badge>
+                  <span className="text-foreground flex-1 truncate">{d.name}</span>
+                  {captainRounds.length > 0 && (
+                    <span className="flex items-center gap-1 text-gold text-[11px]" title={`Captain i runde ${captainRounds.join(", ")}`}>
+                      <Crown className="h-3 w-3" />
+                      R{captainRounds.join(", R")}
+                    </span>
+                  )}
+                </div>
+              );
+            }) : (
             <div className="rounded bg-secondary/50 px-3 py-1.5 text-sm text-muted-foreground">Henter kørere…</div>
           )}
+          {/* Captaincy budget per tier */}
+          <div className="flex gap-2 px-1 pt-1">
+            {(["gold", "silver", "bronze"] as const).map((tier) => {
+              const used = getCaptaincyUsed(tier);
+              const remaining = 2 - used;
+              const badge = TIER_BADGE[tier];
+              return (
+                <span key={tier} className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Crown className="h-2.5 w-2.5 text-gold" />
+                  <span className={badge.className.split(" ").find(c => c.startsWith("text-")) || ""}>{badge.label}:</span>
+                  {remaining}/2
+                </span>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -89,6 +129,7 @@ export default function LeaderboardPage() {
   const { data: allDrivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const { data: captainSelections = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
+  const { data: transfers = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
 
   return (
     <PageLayout>
@@ -101,7 +142,7 @@ export default function LeaderboardPage() {
 
         <div className="space-y-2">
           {managers.map((m, i) => (
-            <ExpandableTeam key={m.id} manager={m} rank={i} allResults={allResults} allDrivers={allDrivers} captainSelections={captainSelections} races={races} />
+            <ExpandableTeam key={m.id} manager={m} rank={i} allResults={allResults} allDrivers={allDrivers} captainSelections={captainSelections} races={races} transfers={transfers} />
           ))}
         </div>
       </div>
