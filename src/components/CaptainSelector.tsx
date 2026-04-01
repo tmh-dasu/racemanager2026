@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, Clock, Lock } from "lucide-react";
-import { fetchCaptainSelections, setCaptainSelection, getNextRaceWithDeadline, type Driver, type Race, type CaptainSelection } from "@/lib/api";
+import { fetchCaptainSelections, setCaptainSelection, getNextRaceWithDeadline, getEffectiveDeadline, type Driver, type Race, type CaptainSelection } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
