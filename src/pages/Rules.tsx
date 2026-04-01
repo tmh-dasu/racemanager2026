@@ -146,7 +146,7 @@ export default function RulesPage() {
             <li>• Berørte hold får automatisk ét <strong className="text-foreground">gratis ekstraordinært transfer</strong> inden for samme tier – uden pointfradrag</li>
             <li>• Det gratis transfer gælder kun til erstatning af den udgåede kører</li>
             <li>• Du modtager en <strong className="text-foreground">email-notifikation</strong> når en af dine kørere udgår</li>
-            <li>• Den nye kører arver den udgåede kørers resterende captaincy-budget</li>
+            <li>• Captaincy-budgettet følger tier-pladsen — den nye kører har samme resterende budget som pladsen</li>
           </ul>
         </Section>
 
