@@ -202,6 +202,11 @@ export default function ResultsAdmin() {
             <Button onClick={handleSaveAll} disabled={saving} className="bg-gradient-racing text-primary-foreground font-display" size="sm">
               <Save className="h-4 w-4 mr-2" />{saving ? "Gemmer..." : "Gem alle sessioner"}
             </Button>
+            {roundsWithResults.has(selectedRace) && (
+              <Button onClick={handleNotifyResults} disabled={notifying} variant="outline" size="sm" className="font-display">
+                <Mail className="h-4 w-4 mr-2" />{notifying ? "Sender..." : "Send resultat-email"}
+              </Button>
+            )}
             <span className="text-xs text-muted-foreground ml-auto">
               CSV-format: bil_nr, tidtagning, heat1, heat2, heat3 (brug "DNF" for udgåede)
             </span>
