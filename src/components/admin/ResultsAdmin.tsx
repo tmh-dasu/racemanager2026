@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Upload, CheckCircle2, AlertCircle } from "lucide-react";
+import { Save, Upload, CheckCircle2, AlertCircle, Mail } from "lucide-react";
 import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, SESSION_TYPES, SESSION_LABELS, type Driver, type Race } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
