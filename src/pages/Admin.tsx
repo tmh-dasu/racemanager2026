@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Shield, Plus, Trash2, Save, AlertTriangle, Ticket, Copy } from "lucide-react";
-import { fetchDrivers, fetchRaces, fetchSettings, fetchManagers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, fetchPredictionQuestions, upsertPredictionQuestion, resolvePredictions, withdrawDriver, fetchAllTransfers, QUESTION_TYPE_LABELS } from "@/lib/api";
+import { fetchDrivers, fetchRaces, fetchSettings, fetchManagers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, fetchPredictionQuestions, upsertPredictionQuestion, resolvePredictions, deletePredictionQuestion, withdrawDriver, fetchAllTransfers, QUESTION_TYPE_LABELS } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 
 import ResultsAdmin from "@/components/admin/ResultsAdmin";
@@ -254,23 +254,46 @@ function RacesAdmin() {
 
 function PredictionsAdmin() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const { data: questions = [], refetch } = useQuery({ queryKey: ["prediction_questions"], queryFn: fetchPredictionQuestions });
 
-  const [form, setForm] = useState({ race_id: "", question_type: "final_winner", question_text: "" });
+  const [form, setForm] = useState({ race_id: "", question_type: "duel", question_text: "", option_a: "", option_b: "", prediction_deadline: "" });
   const [resolveId, setResolveId] = useState<string | null>(null);
   const [resolveAnswer, setResolveAnswer] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const isDuel = form.question_type === "duel" || form.question_type === "point_duel";
+
   async function handleCreate() {
     if (!form.race_id || !form.question_text) { toast({ title: "Vælg løb og skriv spørgsmål", variant: "destructive" }); return; }
+    if (isDuel && (!form.option_a || !form.option_b)) { toast({ title: "Vælg begge kørere for duel", variant: "destructive" }); return; }
     setSaving(true);
     try {
-      await upsertPredictionQuestion({ race_id: form.race_id, question_type: form.question_type, question_text: form.question_text });
-      setForm({ race_id: "", question_type: "final_winner", question_text: "" });
+      await upsertPredictionQuestion({
+        race_id: form.race_id,
+        question_type: form.question_type,
+        question_text: form.question_text,
+        option_a: isDuel ? `driver:${form.option_a}` : form.question_type === "yes_no" ? "ja" : null,
+        option_b: isDuel ? `driver:${form.option_b}` : form.question_type === "yes_no" ? "nej" : null,
+        prediction_deadline: form.prediction_deadline || null,
+      });
+      setForm({ race_id: "", question_type: "duel", question_text: "", option_a: "", option_b: "", prediction_deadline: "" });
       refetch();
       toast({ title: "Prediction-spørgsmål oprettet" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    setSaving(false);
+  }
+
+  async function handlePublish(id: string, published: boolean) {
+    setSaving(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.from("prediction_questions").update({ published } as any).eq("id", id);
+      if (error) throw error;
+      refetch();
+      toast({ title: published ? "Spørgsmål publiceret" : "Spørgsmål skjult" });
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
     setSaving(false);
   }
@@ -280,12 +303,38 @@ function PredictionsAdmin() {
     setSaving(true);
     try {
       await resolvePredictions(resolveId, resolveAnswer);
+      // Recalculate points
+      const { recalculateManagerPoints } = await import("@/lib/api");
+      await recalculateManagerPoints();
+      queryClient.invalidateQueries({ queryKey: ["managers"] });
       setResolveId(null);
       setResolveAnswer("");
       refetch();
-      toast({ title: "Predictions afgjort!" });
+      toast({ title: "Predictions afgjort! Point opdateret." });
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
     setSaving(false);
+  }
+
+  async function handleDeleteQuestion(id: string) {
+    if (!confirm("Slet dette spørgsmål og alle tilhørende svar?")) return;
+    try {
+      await deletePredictionQuestion(id);
+      refetch();
+      toast({ title: "Spørgsmål slettet" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+  }
+
+  function getDriverName(val: string) {
+    const id = val.replace("driver:", "");
+    const d = drivers.find((d) => d.id === id);
+    return d ? `#${d.car_number} ${d.name}` : val;
+  }
+
+  // Group questions by race
+  const questionsByRace = new Map<string, typeof questions>();
+  for (const q of questions) {
+    if (!questionsByRace.has(q.race_id)) questionsByRace.set(q.race_id, []);
+    questionsByRace.get(q.race_id)!.push(q);
   }
 
   return (
@@ -293,7 +342,7 @@ function PredictionsAdmin() {
       {/* Create question */}
       <div className="space-y-2">
         <h3 className="font-display font-semibold text-foreground">Opret prediction-spørgsmål</h3>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <select value={form.race_id} onChange={(e) => setForm({ ...form, race_id: e.target.value })} className="rounded-md bg-secondary border border-border px-3 py-2 text-sm text-foreground">
             <option value="">Vælg løb</option>
             {races.map((r) => <option key={r.id} value={r.id}>R{r.round_number}: {r.name}</option>)}
@@ -301,58 +350,94 @@ function PredictionsAdmin() {
           <select value={form.question_type} onChange={(e) => setForm({ ...form, question_type: e.target.value })} className="rounded-md bg-secondary border border-border px-3 py-2 text-sm text-foreground">
             {Object.entries(QUESTION_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-          <Input placeholder="Spørgsmålstekst *" value={form.question_text} onChange={(e) => setForm({ ...form, question_text: e.target.value })} className="bg-secondary border-border sm:col-span-2" />
+          <div>
+            <label className="text-xs text-muted-foreground">Deadline</label>
+            <Input type="datetime-local" value={form.prediction_deadline} onChange={(e) => setForm({ ...form, prediction_deadline: e.target.value })} className="bg-secondary border-border" />
+          </div>
         </div>
+        <Input placeholder="Spørgsmålstekst *" value={form.question_text} onChange={(e) => setForm({ ...form, question_text: e.target.value })} className="bg-secondary border-border" />
+        {isDuel && (
+          <div className="grid gap-2 sm:grid-cols-2">
+            <select value={form.option_a} onChange={(e) => setForm({ ...form, option_a: e.target.value })} className="rounded-md bg-secondary border border-border px-3 py-2 text-sm text-foreground">
+              <option value="">Kører A</option>
+              {drivers.filter(d => !d.withdrawn).map((d) => <option key={d.id} value={d.id}>#{d.car_number} {d.name}</option>)}
+            </select>
+            <select value={form.option_b} onChange={(e) => setForm({ ...form, option_b: e.target.value })} className="rounded-md bg-secondary border border-border px-3 py-2 text-sm text-foreground">
+              <option value="">Kører B</option>
+              {drivers.filter(d => !d.withdrawn).map((d) => <option key={d.id} value={d.id}>#{d.car_number} {d.name}</option>)}
+            </select>
+          </div>
+        )}
         <Button onClick={handleCreate} disabled={saving} className="bg-gradient-racing text-primary-foreground font-display">
           <Plus className="h-4 w-4 mr-1" />Opret spørgsmål
         </Button>
       </div>
 
-      {/* Existing questions */}
-      <div className="space-y-2">
-        <h3 className="font-display font-semibold text-foreground">Spørgsmål</h3>
-        {questions.length === 0 && <p className="text-sm text-muted-foreground">Ingen spørgsmål oprettet endnu.</p>}
-        {questions.map((q) => {
-          const race = races.find((r) => r.id === q.race_id);
-          return (
-            <div key={q.id} className="rounded bg-secondary/50 px-3 py-3 text-sm space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="font-semibold text-foreground">{race?.name || "?"}: </span>
-                  <span className="text-foreground">{q.question_text}</span>
-                  <span className="text-xs text-muted-foreground ml-2">({QUESTION_TYPE_LABELS[q.question_type]})</span>
+      {/* Existing questions grouped by race */}
+      {races.map((race) => {
+        const raceQs = questionsByRace.get(race.id) || [];
+        if (raceQs.length === 0) return null;
+        return (
+          <div key={race.id} className="space-y-2">
+            <h3 className="font-display font-semibold text-foreground">R{race.round_number}: {race.name} ({raceQs.length}/3)</h3>
+            {raceQs.map((q: any) => (
+              <div key={q.id} className="rounded bg-secondary/50 px-3 py-3 text-sm space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-foreground">{q.question_text}</span>
+                    <span className="text-xs text-muted-foreground ml-2">({QUESTION_TYPE_LABELS[q.question_type]})</span>
+                    {q.option_a && <span className="text-xs text-muted-foreground ml-2">• {getDriverName(q.option_a)} vs {getDriverName(q.option_b)}</span>}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {q.published ? (
+                      <span className="text-xs text-green-400 font-semibold">Publiceret</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Kladde</span>
+                    )}
+                    {q.correct_answer && <span className="text-xs text-green-400">✓ Afgjort</span>}
+                  </div>
                 </div>
-                {q.correct_answer ? (
-                  <span className="text-xs text-green-400">✓ Afgjort: {
-                    q.question_type === "tier_winner" ? (q.correct_answer === "gold" ? "Guld" : q.correct_answer === "silver" ? "Sølv" : "Bronze")
-                    : (drivers.find((d) => d.id === q.correct_answer)?.name || q.correct_answer)
-                  }</span>
-                ) : null}
-              </div>
-              {!q.correct_answer && (
-                <div className="flex gap-2 items-center">
-                  {q.question_type === "tier_winner" ? (
-                    <select value={resolveId === q.id ? resolveAnswer : ""} onChange={(e) => { setResolveId(q.id); setResolveAnswer(e.target.value); }} className="rounded-md bg-card border border-border px-2 py-1 text-sm text-foreground">
-                      <option value="">Vælg korrekt svar</option>
-                      <option value="gold">Guld</option>
-                      <option value="silver">Sølv</option>
-                      <option value="bronze">Bronze</option>
-                    </select>
-                  ) : (
-                    <select value={resolveId === q.id ? resolveAnswer : ""} onChange={(e) => { setResolveId(q.id); setResolveAnswer(e.target.value); }} className="rounded-md bg-card border border-border px-2 py-1 text-sm text-foreground">
-                      <option value="">Vælg korrekt kører</option>
-                      {drivers.map((d) => <option key={d.id} value={d.id}>#{d.car_number} {d.name}</option>)}
-                    </select>
+                <div className="flex flex-wrap gap-2 items-center">
+                  {!q.published && (
+                    <Button size="sm" variant="outline" onClick={() => handlePublish(q.id, true)} disabled={saving} className="text-xs">
+                      Publicer
+                    </Button>
                   )}
-                  <Button size="sm" onClick={handleResolve} disabled={resolveId !== q.id || !resolveAnswer || saving} className="bg-gradient-racing text-primary-foreground font-display text-xs">
-                    Afgør
-                  </Button>
+                  {q.published && !q.correct_answer && (
+                    <Button size="sm" variant="outline" onClick={() => handlePublish(q.id, false)} disabled={saving} className="text-xs">
+                      Skjul
+                    </Button>
+                  )}
+                  {!q.correct_answer && (
+                    <>
+                      {q.question_type === "yes_no" ? (
+                        <select value={resolveId === q.id ? resolveAnswer : ""} onChange={(e) => { setResolveId(q.id); setResolveAnswer(e.target.value); }} className="rounded-md bg-card border border-border px-2 py-1 text-sm text-foreground">
+                          <option value="">Vælg korrekt svar</option>
+                          <option value="ja">Ja</option>
+                          <option value="nej">Nej</option>
+                        </select>
+                      ) : (
+                        <select value={resolveId === q.id ? resolveAnswer : ""} onChange={(e) => { setResolveId(q.id); setResolveAnswer(e.target.value); }} className="rounded-md bg-card border border-border px-2 py-1 text-sm text-foreground">
+                          <option value="">Vælg korrekt svar</option>
+                          {q.option_a && <option value={q.option_a}>{getDriverName(q.option_a)}</option>}
+                          {q.option_b && <option value={q.option_b}>{getDriverName(q.option_b)}</option>}
+                        </select>
+                      )}
+                      <Button size="sm" onClick={handleResolve} disabled={resolveId !== q.id || !resolveAnswer || saving} className="bg-gradient-racing text-primary-foreground font-display text-xs">
+                        Afgør
+                      </Button>
+                    </>
+                  )}
+                  <button onClick={() => handleDeleteQuestion(q.id)} className="text-destructive hover:text-destructive/80 ml-auto">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+      {questions.length === 0 && <p className="text-sm text-muted-foreground">Ingen spørgsmål oprettet endnu.</p>}
     </div>
   );
 }

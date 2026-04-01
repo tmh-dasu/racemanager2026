@@ -14,6 +14,7 @@ import Rules from "./pages/Rules";
 import Payment from "./pages/Payment";
 import Auth from "./pages/Auth";
 import TeamPublic from "./pages/TeamPublic";
+import Predictions from "./pages/Predictions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/rangering" element={<Leaderboard />} />
             <Route path="/resultater" element={<Results />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/predictions" element={<Predictions />} />
             <Route path="/regler" element={<Rules />} />
             <Route path="/hold/:slug" element={<TeamPublic />} />
             <Route path="*" element={<NotFound />} />

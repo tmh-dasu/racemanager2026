@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, AlertTriangle } from "lucide-react";
-import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByUserId, submitSeasonPrediction, type Driver } from "@/lib/api";
+import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByUserId, type Driver } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,6 @@ export default function PickTeamPage() {
   const [selectedDriverIds, setSelectedDriverIds] = useState<Record<Tier, string | null>>({
     gold: null, silver: null, bronze: null,
   });
-  const [seasonPredictionId, setSeasonPredictionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const registrationOpen = settings?.team_registration_open ?? false;
@@ -61,7 +60,6 @@ export default function PickTeamPage() {
     if (!user) { navigate("/login"); return; }
     if (!teamName) { toast({ title: "Udfyld holdnavn", variant: "destructive" }); return; }
     if (!allSelected) { toast({ title: "Vælg én kører fra hver tier", variant: "destructive" }); return; }
-    if (!seasonPredictionId) { toast({ title: "Vælg din sæsonprediction", variant: "destructive" }); return; }
 
     setSubmitting(true);
     try {
@@ -71,7 +69,6 @@ export default function PickTeamPage() {
       for (const dId of Object.values(selectedDriverIds)) {
         if (dId) await addManagerDriver(manager.id, dId);
       }
-      await submitSeasonPrediction(manager.id, seasonPredictionId);
       queryClient.invalidateQueries({ queryKey: ["managers"] });
       toast({ title: "Hold oprettet! 🏁" });
       navigate("/mit-hold");
@@ -153,36 +150,10 @@ export default function PickTeamPage() {
           <p className="text-center text-muted-foreground">Ingen kørere tilgængelige endnu.</p>
         )}
 
-        {/* Season Prediction */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Badge className="bg-accent/20 text-accent-foreground border-accent/40">🔮 Sæsonprediction</Badge>
-            <span className="text-sm text-muted-foreground">
-              Hvem vinder sæsonen? (15 bonuspoint) {seasonPredictionId ? "✓" : ""}
-            </span>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 max-h-64 overflow-y-auto">
-            {drivers.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => setSeasonPredictionId(d.id === seasonPredictionId ? null : d.id)}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-all ${
-                  seasonPredictionId === d.id
-                    ? "border-gold bg-gold/10 shadow-md"
-                    : "border-border bg-card hover:border-gold/30"
-                }`}
-              >
-                <span className="font-display font-bold text-muted-foreground">#{d.car_number}</span>
-                <span className="text-foreground truncate">{d.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="flex justify-center">
           <Button
             onClick={handleSubmit}
-            disabled={submitting || !allSelected || !seasonPredictionId}
+            disabled={submitting || !allSelected}
             className="bg-gradient-racing px-8 py-3 font-display text-base font-semibold text-primary-foreground shadow-racing hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
           >
             {submitting ? "Opretter..." : "Bekræft hold 🏁"}

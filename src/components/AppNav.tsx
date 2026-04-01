@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Trophy, ListOrdered, Flag, Settings, BookOpen, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Home, Users, Trophy, ListOrdered, Flag, Settings, BookOpen, LogIn, LogOut, Menu, X, HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 
@@ -7,6 +7,7 @@ const navItems = [
   { to: "/", label: "Hjem", icon: Home },
   { to: "/vaelg-hold", label: "Vælg Hold", icon: Users },
   { to: "/mit-hold", label: "Mit Hold", icon: Trophy },
+  { to: "/predictions", label: "Predictions", icon: HelpCircle },
   { to: "/rangering", label: "Leaderboard", icon: ListOrdered },
   { to: "/resultater", label: "Resultater", icon: Flag },
   { to: "/regler", label: "Regler", icon: BookOpen },
@@ -121,6 +122,7 @@ export default function AppNav() {
             onClick={(e) => e.stopPropagation()}
           >
             {[
+              { to: "/predictions", label: "Predictions", icon: HelpCircle },
               { to: "/resultater", label: "Resultater", icon: Flag },
               { to: "/regler", label: "Regler", icon: BookOpen },
               { to: "/admin", label: "Admin", icon: Settings },

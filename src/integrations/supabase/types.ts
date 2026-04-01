@@ -332,6 +332,10 @@ export type Database = {
           correct_answer: string | null
           created_at: string
           id: string
+          option_a: string | null
+          option_b: string | null
+          prediction_deadline: string | null
+          published: boolean
           question_text: string
           question_type: string
           race_id: string
@@ -340,6 +344,10 @@ export type Database = {
           correct_answer?: string | null
           created_at?: string
           id?: string
+          option_a?: string | null
+          option_b?: string | null
+          prediction_deadline?: string | null
+          published?: boolean
           question_text: string
           question_type: string
           race_id: string
@@ -348,6 +356,10 @@ export type Database = {
           correct_answer?: string | null
           created_at?: string
           id?: string
+          option_a?: string | null
+          option_b?: string | null
+          prediction_deadline?: string | null
+          published?: boolean
           question_text?: string
           question_type?: string
           race_id?: string
@@ -356,7 +368,7 @@ export type Database = {
           {
             foreignKeyName: "prediction_questions_race_id_fkey"
             columns: ["race_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "races"
             referencedColumns: ["id"]
           },
