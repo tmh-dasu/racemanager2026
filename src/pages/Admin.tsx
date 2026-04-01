@@ -55,11 +55,14 @@ export default function AdminPage() {
     );
   }
 
+  const [activeTab, setActiveTab] = useState("drivers");
+
   return (
     <PageLayout>
       <div className="container py-6">
         <h1 className="font-display text-2xl font-bold text-foreground mb-4">Admin Panel</h1>
-        <Tabs defaultValue="drivers">
+        <AdminStatusCard onNavigateTab={setActiveTab} />
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-secondary border-border mb-4 flex-wrap">
             <TabsTrigger value="drivers" className="font-display">Kørere</TabsTrigger>
             <TabsTrigger value="races" className="font-display">Løb</TabsTrigger>
