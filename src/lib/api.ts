@@ -351,13 +351,7 @@ export function getNextRaceWithDeadline(races: Race[]): Race | null {
     .sort((a, b) => new Date(a.captain_deadline!).getTime() - new Date(b.captain_deadline!).getTime())[0] || null;
 }
 
-export function getCaptaincyBudget(
-  driverId: string,
-  captainSelections: CaptainSelection[]
-): number {
-  const used = captainSelections.filter((c) => c.driver_id === driverId).length;
-  return Math.max(0, 2 - used);
-}
+// getCaptaincyBudget is now handled in CaptainSelector component (per tier slot, not per driver)
 
 // Prediction types
 export interface PredictionQuestion {
