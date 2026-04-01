@@ -169,9 +169,9 @@ export function generateSlug(teamName: string): string {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-export async function createManager(name: string, email: string, teamName: string, budgetRemaining: number, userId?: string) {
+export async function createManager(name: string, email: string, teamName: string, userId?: string) {
   const slug = generateSlug(teamName);
-  const insertData: any = { name, email, team_name: teamName, budget_remaining: budgetRemaining, slug };
+  const insertData: any = { name, email, team_name: teamName, slug };
   if (userId) insertData.user_id = userId;
   const { data, error } = await supabase.from("managers").insert(insertData).select().single();
   if (error) throw error;
