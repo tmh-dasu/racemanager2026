@@ -232,8 +232,8 @@ function RacesAdmin() {
           <Input type="datetime-local" value={form.race_date} onChange={(e) => setForm({ ...form, race_date: e.target.value })} className="bg-secondary border-border" />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground">Captain deadline</label>
-          <Input type="datetime-local" value={form.captain_deadline} onChange={(e) => setForm({ ...form, captain_deadline: e.target.value })} className="bg-secondary border-border" />
+          <label className="text-xs text-muted-foreground">Deadline (auto: 24t før start)</label>
+          <Input type="text" readOnly value={form.race_date ? new Date(new Date(form.race_date).getTime() - 24 * 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "–"} className="bg-secondary border-border text-muted-foreground cursor-not-allowed" />
         </div>
       </div>
       <Button onClick={handleAdd} className="bg-gradient-racing text-primary-foreground font-display"><Plus className="h-4 w-4 mr-1" />Tilføj løb</Button>
