@@ -20,6 +20,7 @@ export default function AdminPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useIsAdmin();
+  const [activeTab, setActiveTab] = useState("drivers");
 
   if (authLoading || adminLoading) {
     return (
