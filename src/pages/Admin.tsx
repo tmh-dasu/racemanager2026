@@ -56,7 +56,6 @@ export default function AdminPage() {
     );
   }
 
-  const [activeTab, setActiveTab] = useState("drivers");
 
   return (
     <PageLayout>
