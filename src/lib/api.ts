@@ -71,6 +71,7 @@ export interface Settings {
   transfer_window_open: boolean;
   team_registration_open: boolean;
   transfer_cost: number;
+  admin_notification_email: string;
 }
 
 export const SESSION_TYPES = ["qualifying", "heat1", "heat2", "heat3"] as const;
