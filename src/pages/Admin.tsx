@@ -84,7 +84,7 @@ export default function AdminPage() {
   );
 }
 
-const TIER_DEFAULTS: Record<string, number> = { gold: 5000000, silver: 3000000, bronze: 2000000 };
+
 
 function DriversAdmin() {
   const { toast } = useToast();

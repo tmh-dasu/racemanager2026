@@ -65,7 +65,7 @@ export default function PickTeamPage() {
     try {
       const name = user.user_metadata?.full_name || (user.email ? user.email.split('@')[0] : "Ukendt");
       const email = user.email || "";
-      const manager = await createManager(name, email, teamName, 0, user.id);
+      const manager = await createManager(name, email, teamName, user.id);
       for (const dId of Object.values(selectedDriverIds)) {
         if (dId) await addManagerDriver(manager.id, dId);
       }
