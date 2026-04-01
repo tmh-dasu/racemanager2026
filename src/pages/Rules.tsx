@@ -128,8 +128,9 @@ export default function RulesPage() {
             <li>• Hvert transfer koster <strong className="text-foreground">point</strong> der trækkes direkte fra din sæsontotal (standard: 10 point)</li>
             <li>• Der er <strong className="text-foreground">ingen grænse</strong> for antal transfers – men hvert koster point</li>
             <li>• Pointfradraget er <strong className="text-foreground">permanent</strong> og kan ikke fortrydes</li>
-            <li>• Transfervinduet <strong className="text-foreground">åbner</strong> når admin indtaster resultater for et arrangement</li>
-            <li>• Transfervinduet <strong className="text-foreground">lukker</strong> når tidtagning starter ved næste arrangement</li>
+            <li>• Transfervinduet er <strong className="text-foreground">lukket</strong> indtil admin åbner det efter hvert arrangements resultater er indtastet</li>
+            <li>• Vinduet lukker automatisk <strong className="text-foreground">24 timer inden næste arrangement starter</strong></li>
+            <li>• Vinduet kan også <strong className="text-foreground">lukkes manuelt</strong> af admin</li>
             <li>• Captaincy-budgettet følger <strong className="text-foreground">tier-pladsen</strong>, ikke den individuelle kører — se captain-regler nedenfor</li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-accent/10 border border-accent/20 px-3 py-2">
