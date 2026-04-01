@@ -174,7 +174,7 @@ function DriversAdmin() {
               {tierDrivers.map((d: any) => (
                 <div key={d.id} className={`flex items-center justify-between rounded px-3 py-2 text-sm ${d.withdrawn ? "bg-destructive/10 border border-destructive/20" : "bg-secondary/50"}`}>
                   <button onClick={() => startEdit(d)} className="text-left flex-1 min-w-0">
-                    <span className={d.withdrawn ? "text-muted-foreground line-through" : "text-foreground"}>#{d.car_number} {d.name} – {d.team} – {Number(d.price).toLocaleString("da-DK")} DKR</span>
+                    <span className={d.withdrawn ? "text-muted-foreground line-through" : "text-foreground"}>#{d.car_number} {d.name} – {d.team}</span>
                     {d.club && <span className="text-muted-foreground ml-2">• {d.club}</span>}
                     {d.withdrawn && <span className="text-destructive ml-2 text-xs font-bold">UDGÅET</span>}
                   </button>
