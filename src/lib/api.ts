@@ -68,7 +68,6 @@ export interface Transfer {
 }
 
 export interface Settings {
-  budget_limit: number;
   transfer_window_open: boolean;
   team_registration_open: boolean;
   transfer_cost: number;
