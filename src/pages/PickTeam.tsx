@@ -60,7 +60,6 @@ export default function PickTeamPage() {
     if (!user) { navigate("/login"); return; }
     if (!teamName) { toast({ title: "Udfyld holdnavn", variant: "destructive" }); return; }
     if (!allSelected) { toast({ title: "Vælg én kører fra hver tier", variant: "destructive" }); return; }
-    if (!seasonPredictionId) { toast({ title: "Vælg din sæsonprediction", variant: "destructive" }); return; }
 
     setSubmitting(true);
     try {
@@ -70,7 +69,6 @@ export default function PickTeamPage() {
       for (const dId of Object.values(selectedDriverIds)) {
         if (dId) await addManagerDriver(manager.id, dId);
       }
-      await submitSeasonPrediction(manager.id, seasonPredictionId);
       queryClient.invalidateQueries({ queryKey: ["managers"] });
       toast({ title: "Hold oprettet! 🏁" });
       navigate("/mit-hold");
