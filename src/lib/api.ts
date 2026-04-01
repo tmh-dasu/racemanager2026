@@ -198,17 +198,7 @@ export async function performTransfer(managerId: string, oldDriverId: string, ne
   // Log transfer
   const { error: logError } = await supabase.from("transfers").insert({ manager_id: managerId, old_driver_id: oldDriverId, new_driver_id: newDriverId, point_cost: pointCost, is_free: false } as any);
   if (logError) throw logError;
-
-  // Inherit captaincy: update future captain selections from old driver to new driver
-  const { data: futureRaces } = await supabase.from("races").select("id").gt("captain_deadline", new Date().toISOString());
-  if (futureRaces && futureRaces.length > 0) {
-    const futureRaceIds = futureRaces.map((r) => r.id);
-    await supabase.from("captain_selections")
-      .update({ driver_id: newDriverId })
-      .eq("manager_id", managerId)
-      .eq("driver_id", oldDriverId)
-      .in("race_id", futureRaceIds);
-  }
+  // Note: captaincy budget follows tier slot, not individual driver — no captain inheritance needed
 }
 
 // Free emergency transfer (for withdrawn drivers)
@@ -219,17 +209,7 @@ export async function performEmergencyTransfer(managerId: string, oldDriverId: s
   if (insertError) throw insertError;
   const { error: logError } = await supabase.from("transfers").insert({ manager_id: managerId, old_driver_id: oldDriverId, new_driver_id: newDriverId, point_cost: 0, is_free: true } as any);
   if (logError) throw logError;
-
-  // Inherit captaincy
-  const { data: futureRaces } = await supabase.from("races").select("id").gt("captain_deadline", new Date().toISOString());
-  if (futureRaces && futureRaces.length > 0) {
-    const futureRaceIds = futureRaces.map((r) => r.id);
-    await supabase.from("captain_selections")
-      .update({ driver_id: newDriverId })
-      .eq("manager_id", managerId)
-      .eq("driver_id", oldDriverId)
-      .in("race_id", futureRaceIds);
-  }
+  // Note: captaincy budget follows tier slot — no captain inheritance needed
 }
 
 export async function fetchTransfers(managerId?: string): Promise<Transfer[]> {
