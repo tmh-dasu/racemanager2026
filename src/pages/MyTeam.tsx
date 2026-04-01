@@ -205,6 +205,33 @@ export default function MyTeamPage() {
           </div>
         </div>
 
+        {/* Point Breakdown */}
+        {breakdown && (
+          <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+            <p className="text-xs text-muted-foreground mb-2 font-display font-semibold">Pointopdeling</p>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div>
+                <p className="text-xs text-muted-foreground">Race-point</p>
+                <p className="font-display text-lg font-bold text-foreground">{breakdown.racePoints}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Captain-bonus</p>
+                <p className="font-display text-lg font-bold text-gold">+{breakdown.captainBonus}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Predictions</p>
+                <p className="font-display text-lg font-bold text-success">+{breakdown.predictionPoints}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Transfers</p>
+                <p className={`font-display text-lg font-bold ${breakdown.transferCosts > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                  {breakdown.transferCosts > 0 ? `−${breakdown.transferCosts}` : "0"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Share */}
         <ShareTeamCard
           manager={manager}
