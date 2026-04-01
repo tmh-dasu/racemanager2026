@@ -39,6 +39,24 @@ export default function MyTeamPage() {
     queryFn: () => fetchTransfers(manager!.id),
     enabled: !!manager,
   });
+  const { data: captainSelections = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
+  const { data: predAnswers = [] } = useQuery({ queryKey: ["all_prediction_answers"], queryFn: fetchAllPredictionAnswers });
+  const { data: allTransfersData = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
+
+  const completedRounds = useMemo(() => new Set(allResults.map(r => r.race_id)).size, [allResults]);
+
+  const breakdown = useMemo(() => {
+    if (!manager) return null;
+    return computePointBreakdown(
+      manager.id,
+      managerDrivers.map(md => ({ manager_id: md.manager_id, driver_id: md.driver_id })),
+      allResults,
+      captainSelections,
+      predAnswers,
+      allTransfersData,
+      completedRounds,
+    );
+  }, [manager, managerDrivers, allResults, captainSelections, predAnswers, allTransfersData, completedRounds]);
 
   const myRank = manager ? allManagers.findIndex((m) => m.id === manager.id) + 1 : null;
 
