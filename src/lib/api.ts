@@ -47,7 +47,6 @@ export interface Manager {
   name: string;
   email?: string;
   team_name: string;
-  budget_remaining: number;
   total_points: number;
   slug?: string;
 }
