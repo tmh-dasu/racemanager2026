@@ -596,6 +596,65 @@ export type Database = {
         }
         Relationships: []
       }
+      transfers: {
+        Row: {
+          created_at: string
+          id: string
+          is_free: boolean
+          manager_id: string
+          new_driver_id: string
+          old_driver_id: string
+          point_cost: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_free?: boolean
+          manager_id: string
+          new_driver_id: string
+          old_driver_id: string
+          point_cost?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_free?: boolean
+          manager_id?: string
+          new_driver_id?: string
+          old_driver_id?: string
+          point_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfers_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfers_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfers_new_driver_id_fkey"
+            columns: ["new_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfers_old_driver_id_fkey"
+            columns: ["old_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
