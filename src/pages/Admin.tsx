@@ -521,6 +521,32 @@ function SettingsAdmin() {
         </div>
         <p className="text-xs text-muted-foreground">Nuværende: {settings.transfer_cost} point. Ændringer træder i kraft ved næste transfer.</p>
       </div>
+      <div className="rounded bg-secondary/50 px-4 py-3 space-y-2">
+        <span className="text-sm text-foreground">Admin notifikations-email</span>
+        <p className="text-xs text-muted-foreground">Modtager advarsler 72 timer inden arrangement hvis opsætning mangler.</p>
+        <div className="flex gap-2">
+          <Input
+            type="email"
+            placeholder={settings.admin_notification_email || "admin@example.com"}
+            value={adminEmailInput}
+            onChange={(e) => setAdminEmailInput(e.target.value)}
+            className="bg-card border-border flex-1"
+          />
+          <Button size="sm" onClick={async () => {
+            if (!adminEmailInput.trim()) { toast({ title: "Angiv en email", variant: "destructive" }); return; }
+            await updateSetting("admin_notification_email", adminEmailInput.trim());
+            refetch();
+            queryClient.invalidateQueries({ queryKey: ["settings"] });
+            setAdminEmailInput("");
+            toast({ title: "Admin-email opdateret" });
+          }} className="bg-gradient-racing text-primary-foreground font-display">
+            <Save className="h-4 w-4 mr-1" />Gem
+          </Button>
+        </div>
+        {settings.admin_notification_email && (
+          <p className="text-xs text-muted-foreground">Nuværende: {settings.admin_notification_email}</p>
+        )}
+      </div>
     </div>
   );
 }
