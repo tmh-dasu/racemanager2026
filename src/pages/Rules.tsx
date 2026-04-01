@@ -139,6 +139,34 @@ export default function RulesPage() {
           </div>
         </Section>
 
+        {/* Points total */}
+        <Section icon={<Trophy className="h-5 w-5 text-accent" />} title="Din samlede pointtotal 📊">
+          <p className="text-sm text-muted-foreground mb-3">
+            Din samlede pointtotal beregnes automatisk og består af:
+          </p>
+          <div className="space-y-1.5 text-sm">
+            <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
+              <span className="text-success font-bold">+</span>
+              <span className="text-muted-foreground"><strong className="text-foreground">Race-point</strong> (tidtagning + 3 heats per arrangement)</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
+              <span className="text-success font-bold">+</span>
+              <span className="text-muted-foreground"><strong className="text-foreground">Captain-bonus</strong> (dobbelte point for valgt captain)</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
+              <span className="text-success font-bold">+</span>
+              <span className="text-muted-foreground"><strong className="text-foreground">Prediction-point</strong> (op til 15 point per arrangement)</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
+              <span className="text-destructive font-bold">−</span>
+              <span className="text-muted-foreground"><strong className="text-foreground">Transferfradrag</strong> (10 point per gennemført transfer)</span>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground mt-3">
+            Pointopdeling er synlig på din holdside og i rangeringen.
+          </p>
+        </Section>
+
         {/* Driver withdrawal */}
         <Section icon={<ShieldAlert className="h-5 w-5 text-destructive" />} title="Kører udgår af klassen ⚠️">
           <ul className="space-y-2 text-sm text-muted-foreground">
