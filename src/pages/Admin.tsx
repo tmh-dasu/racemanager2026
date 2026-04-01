@@ -208,6 +208,8 @@ function RacesAdmin() {
   const { toast } = useToast();
   const { data: races = [], refetch } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const [form, setForm] = useState({ round_number: "", name: "", location: "", race_date: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", location: "", race_date: "" });
 
   async function handleAdd() {
     if (!form.round_number || !form.name) { toast({ title: "Udfyld runde og navn", variant: "destructive" }); return; }
@@ -221,30 +223,81 @@ function RacesAdmin() {
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
   }
 
+  function startEdit(r: any) {
+    setEditingId(r.id);
+    setEditForm({
+      name: r.name || "",
+      location: r.location || "",
+      race_date: r.race_date ? new Date(r.race_date).toISOString().slice(0, 16) : "",
+    });
+  }
+
+  async function handleSaveEdit(r: any) {
+    try {
+      const raceDate = editForm.race_date || null;
+      const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 24 * 60 * 60 * 1000).toISOString() : null;
+      await upsertRace({ id: r.id, round_number: r.round_number, name: editForm.name, location: editForm.location || null, race_date: raceDate, captain_deadline: captainDeadline } as any);
+      setEditingId(null);
+      refetch();
+      toast({ title: "Løb opdateret" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+  }
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
         <Input placeholder="Runde #" type="number" value={form.round_number} onChange={(e) => setForm({ ...form, round_number: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Navn" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Lokation" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="bg-secondary border-border" />
         <div>
-          <label className="text-xs text-muted-foreground">Løbsdato</label>
+          <label className="text-xs text-muted-foreground">Løbsdato & tid</label>
           <Input type="datetime-local" value={form.race_date} onChange={(e) => setForm({ ...form, race_date: e.target.value })} className="bg-secondary border-border" />
         </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Deadline (auto: 24t før start)</label>
-          <Input type="text" readOnly value={form.race_date ? new Date(new Date(form.race_date).getTime() - 24 * 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "–"} className="bg-secondary border-border text-muted-foreground cursor-not-allowed" />
-        </div>
       </div>
+      {form.race_date && (
+        <p className="text-xs text-muted-foreground">⏰ Deadline (captain + transfer) lukker automatisk: <strong className="text-foreground">{new Date(new Date(form.race_date).getTime() - 24 * 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong></p>
+      )}
       <Button onClick={handleAdd} className="bg-gradient-racing text-primary-foreground font-display"><Plus className="h-4 w-4 mr-1" />Tilføj løb</Button>
-      <div className="space-y-1">
+      <div className="space-y-2">
         {races.map((r) => (
-          <div key={r.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm text-foreground">
-            <span>
-              Runde {r.round_number}: {r.name} {r.location && `– ${r.location}`}
-              {r.race_date && <span className="text-muted-foreground ml-2">• Deadline: {new Date(new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
-            </span>
-            <button onClick={async () => { await deleteRace(r.id); refetch(); toast({ title: "Løb slettet" }); }} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
+          <div key={r.id} className="rounded-lg border border-border bg-secondary/50 p-3 text-sm text-foreground">
+            {editingId === r.id ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground font-display font-bold">Runde {r.round_number}</div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <Input placeholder="Navn" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="bg-card border-border" />
+                  <Input placeholder="Lokation" value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} className="bg-card border-border" />
+                  <div>
+                    <label className="text-xs text-muted-foreground">Løbsdato & tid</label>
+                    <Input type="datetime-local" value={editForm.race_date} onChange={(e) => setEditForm({ ...editForm, race_date: e.target.value })} className="bg-card border-border" />
+                  </div>
+                </div>
+                {editForm.race_date && (
+                  <p className="text-xs text-muted-foreground">⏰ Deadline lukker: <strong className="text-foreground">{new Date(new Date(editForm.race_date).getTime() - 24 * 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong></p>
+                )}
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => handleSaveEdit(r)} className="bg-success text-success-foreground"><Save className="h-3 w-3 mr-1" />Gem</Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Annuller</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-display font-semibold">Runde {r.round_number}: {r.name}</span>
+                  {r.location && <span className="text-muted-foreground"> – {r.location}</span>}
+                  {r.race_date && (
+                    <span className="text-muted-foreground ml-2">
+                      • {new Date(r.race_date).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      <span className="text-xs ml-1">(DL: {new Date(new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})</span>
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => startEdit(r)} className="text-accent hover:text-accent/80 text-xs font-display">Rediger</button>
+                  <button onClick={async () => { await deleteRace(r.id); refetch(); toast({ title: "Løb slettet" }); }} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
