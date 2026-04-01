@@ -12,7 +12,13 @@ interface Props {
   getDriverPoints: (id: string) => number;
 }
 
-const GAME_TITLE = "DASU SuperGT Fantasy Race Manager";
+const GAME_TITLE = "DASU RaceManager";
+
+const TIER_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  gold: { bg: "#3d3419", text: "#d4a843", label: "GULD" },
+  silver: { bg: "#2a2d30", text: "#a8b2bc", label: "SØLV" },
+  bronze: { bg: "#2d2219", text: "#cd7f32", label: "BRONZE" },
+};
 
 export default function ShareTeamCard({ manager, rank, totalManagers, drivers, getDriverPoints }: Props) {
   const [open, setOpen] = useState(false);
@@ -71,32 +77,49 @@ export default function ShareTeamCard({ manager, rank, totalManagers, drivers, g
     ctx.fillStyle = "#2a3a4a";
     ctx.fillRect(32, 110, w - 64, 1);
 
-    drivers.forEach((d, i) => {
-      const y = 130 + i * 52;
+    // Sort drivers by tier
+    const sortedDrivers = [...drivers].sort((a, b) => {
+      const order = { gold: 0, silver: 1, bronze: 2 };
+      return (order[a.tier as keyof typeof order] ?? 3) - (order[b.tier as keyof typeof order] ?? 3);
+    });
 
+    sortedDrivers.forEach((d, i) => {
+      const y = 130 + i * 58;
+      const tierInfo = TIER_COLORS[d.tier] || TIER_COLORS.bronze;
+
+      // Tier badge
+      ctx.fillStyle = tierInfo.bg;
+      ctx.beginPath();
+      ctx.roundRect(32, y, 52, 20, 4);
+      ctx.fill();
+      ctx.fillStyle = tierInfo.text;
+      ctx.font = "bold 9px system-ui, -apple-system, sans-serif";
+      ctx.fillText(tierInfo.label, 40, y + 14);
+
+      // Car number
       ctx.fillStyle = "#1e2d3d";
       ctx.beginPath();
-      ctx.roundRect(32, y, 44, 36, 6);
+      ctx.roundRect(32, y + 24, 44, 20, 4);
       ctx.fill();
       ctx.fillStyle = "#8899aa";
-      ctx.font = "bold 14px system-ui, -apple-system, sans-serif";
-      ctx.fillText(`#${d.car_number}`, 38, y + 24);
+      ctx.font = "bold 11px system-ui, -apple-system, sans-serif";
+      ctx.fillText(`#${d.car_number}`, 38, y + 38);
 
       ctx.fillStyle = "#ffffff";
       ctx.font = "600 16px system-ui, -apple-system, sans-serif";
       ctx.fillText(d.name, 88, y + 18);
       ctx.fillStyle = "#667788";
       ctx.font = "12px system-ui, -apple-system, sans-serif";
-      ctx.fillText(d.team, 88, y + 34);
+      ctx.fillText(d.team, 88, y + 38);
 
       const pts = getDriverPoints(d.id);
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 20px system-ui, -apple-system, sans-serif";
       ctx.textAlign = "right";
-      ctx.fillText(String(pts), w - 40, y + 22);
+      ctx.fillText(String(pts), w - 40, y + 24);
       ctx.fillStyle = "#667788";
       ctx.font = "10px system-ui, -apple-system, sans-serif";
-      ctx.fillText("PTS", w - 40, y + 36);
+      ctx.fillText("PTS", w - 40, y + 40);
       ctx.textAlign = "left";
     });
 
@@ -106,7 +129,7 @@ export default function ShareTeamCard({ manager, rank, totalManagers, drivers, g
     ctx.font = "bold 10px system-ui, -apple-system, sans-serif";
     ctx.fillText(GAME_TITLE, 32, h - 14);
     ctx.textAlign = "right";
-    ctx.fillText("supergt.dasu.dk", w - 32, h - 14);
+    ctx.fillText("dasuracemanager.lovable.app", w - 32, h - 14);
     ctx.textAlign = "left";
 
     return canvas;
