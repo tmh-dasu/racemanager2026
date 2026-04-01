@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Crown } from "lucide-react";
-import { fetchCaptainSelections, type Driver, type CaptainSelection } from "@/lib/api";
+import { fetchCaptainSelections, type Driver } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
 const TIER_LABELS: Record<string, string> = { gold: "Guld", silver: "Sølv", bronze: "Bronze" };
