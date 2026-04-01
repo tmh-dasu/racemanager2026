@@ -153,7 +153,7 @@ function DriversAdmin() {
           <option value="silver">🥈 Sølv</option>
           <option value="bronze">🥉 Bronze</option>
         </select>
-        <Input placeholder="Børsværdi" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="bg-secondary border-border" />
+        <Input placeholder="Klub" value={form.club} onChange={(e) => setForm({ ...form, club: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Klub" value={form.club} onChange={(e) => setForm({ ...form, club: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Citat" value={form.quote} onChange={(e) => setForm({ ...form, quote: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Bio (maks 100 tegn)" maxLength={100} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} className="bg-secondary border-border" />
