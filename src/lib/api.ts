@@ -288,7 +288,6 @@ export async function recalculateManagerPoints() {
   const { data: allMDs } = await supabase.from("manager_drivers").select("manager_id, driver_id");
   const { data: allCaptains } = await supabase.from("captain_selections").select("manager_id, race_id, driver_id");
   const { data: allPredAnswers } = await supabase.from("prediction_answers").select("manager_id, is_correct");
-  const { data: allSeasonPreds } = await supabase.from("season_predictions").select("manager_id, is_correct");
   const { data: allTransfers } = await supabase.from("transfers").select("manager_id, point_cost");
 
   for (const mgr of managerRows) {
@@ -312,16 +311,15 @@ export async function recalculateManagerPoints() {
       });
     const { total } = applyDropWorst(sessionPoints, completedRounds);
 
-    // Prediction bonuses
-    const predictionBonus = (allPredAnswers || []).filter((a: any) => a.manager_id === mgr.id && a.is_correct === true).length * 10;
-    const seasonBonus = (allSeasonPreds || []).find((s: any) => s.manager_id === mgr.id && s.is_correct === true) ? 15 : 0;
+    // Prediction bonuses: 5 points per correct answer
+    const predictionBonus = (allPredAnswers || []).filter((a: any) => a.manager_id === mgr.id && a.is_correct === true).length * 5;
 
     // Transfer costs (deducted from total)
     const transferCosts = (allTransfers || [])
       .filter((t: any) => t.manager_id === mgr.id)
       .reduce((sum: number, t: any) => sum + (t.point_cost || 0), 0);
 
-    await supabase.from("managers").update({ total_points: total + predictionBonus + seasonBonus - transferCosts }).eq("id", mgr.id);
+    await supabase.from("managers").update({ total_points: total + predictionBonus - transferCosts }).eq("id", mgr.id);
   }
 }
 
