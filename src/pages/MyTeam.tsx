@@ -250,7 +250,7 @@ export default function MyTeamPage() {
         )}
 
         {/* Predictions */}
-        <PredictionPanel managerId={manager.id} races={races} />
+        <PredictionPanel managerId={manager.id} />
 
         {/* Drivers */}
         <div className="space-y-3">

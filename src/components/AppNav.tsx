@@ -122,6 +122,7 @@ export default function AppNav() {
             onClick={(e) => e.stopPropagation()}
           >
             {[
+              { to: "/predictions", label: "Predictions", icon: HelpCircle },
               { to: "/resultater", label: "Resultater", icon: Flag },
               { to: "/regler", label: "Regler", icon: BookOpen },
               { to: "/admin", label: "Admin", icon: Settings },
