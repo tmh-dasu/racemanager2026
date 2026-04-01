@@ -65,8 +65,8 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
     setSubmitting(false);
   }
 
-  const deadlineStr = nextRace?.captain_deadline
-    ? new Date(nextRace.captain_deadline).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+  const deadlineStr = effectiveDeadline
+    ? effectiveDeadline.toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
     : null;
 
   const tiers = ["gold", "silver", "bronze"] as const;

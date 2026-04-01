@@ -407,8 +407,11 @@ export async function setCaptainSelection(managerId: string, raceId: string, dri
 export function getNextRaceWithDeadline(races: Race[]): Race | null {
   const now = new Date();
   return races
-    .filter((r) => r.captain_deadline && new Date(r.captain_deadline) > now)
-    .sort((a, b) => new Date(a.captain_deadline!).getTime() - new Date(b.captain_deadline!).getTime())[0] || null;
+    .filter((r) => {
+      const dl = getEffectiveDeadline(r);
+      return dl && dl > now;
+    })
+    .sort((a, b) => getEffectiveDeadline(a)!.getTime() - getEffectiveDeadline(b)!.getTime())[0] || null;
 }
 
 // getCaptaincyBudget is now handled in CaptainSelector component (per tier slot, not per driver)

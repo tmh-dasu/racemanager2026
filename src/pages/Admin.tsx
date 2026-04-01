@@ -242,7 +242,7 @@ function RacesAdmin() {
           <div key={r.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm text-foreground">
             <span>
               Runde {r.round_number}: {r.name} {r.location && `– ${r.location}`}
-              {r.captain_deadline && <span className="text-muted-foreground ml-2">• Captain DL: {new Date(r.captain_deadline).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
+              {r.race_date && <span className="text-muted-foreground ml-2">• Deadline: {new Date(new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
             </span>
             <button onClick={async () => { await deleteRace(r.id); refetch(); toast({ title: "Løb slettet" }); }} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
           </div>

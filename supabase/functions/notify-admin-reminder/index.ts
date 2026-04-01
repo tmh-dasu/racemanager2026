@@ -64,10 +64,7 @@ Deno.serve(async (req) => {
         issues.push({ level: '🔴', message: 'Arrangementsdato mangler' })
       }
 
-      // Check captain deadline
-      if (!race.captain_deadline) {
-        issues.push({ level: '🔴', message: 'Captain-deadline er ikke sat' })
-      }
+      // Captain/transfer deadline is auto-calculated from race_date - no manual check needed
 
       // Check predictions
       const raceQuestions = (allQuestions || []).filter((q: any) => q.race_id === race.id)
