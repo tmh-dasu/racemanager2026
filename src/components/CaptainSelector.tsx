@@ -35,7 +35,8 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
 
   const nextRace = getNextRaceWithDeadline(races);
   const now = new Date();
-  const isLocked = !nextRace || (nextRace.captain_deadline && new Date(nextRace.captain_deadline) <= now);
+  const effectiveDeadline = nextRace ? getEffectiveDeadline(nextRace) : null;
+  const isLocked = !nextRace || (effectiveDeadline && effectiveDeadline <= now);
 
   const currentCaptainForNextRace = nextRace
     ? captainSelections.find((c) => c.race_id === nextRace.id)?.driver_id || null
