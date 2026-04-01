@@ -187,7 +187,7 @@ export default function RulesPage() {
             <li className="ml-4">– Guld-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
             <li className="ml-4">– Sølv-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
             <li className="ml-4">– Bronze-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
-            <li>• Deadline for captain-valg: <strong className="text-foreground">når tidtagning starter</strong></li>
+            <li>• Deadline for captain-valg: <strong className="text-foreground">24 timer inden arrangementet starter</strong></li>
             <li>• Hvis du ikke vælger captain inden deadline, tæller alle point <strong className="text-foreground">normalt</strong> (ingen bonus) — systemet tildeler <strong className="text-foreground">ikke</strong> automatisk en captain</li>
             <li>• Ved transfer: captaincy-budgettet følger <strong className="text-foreground">tier-pladsen</strong> — hvis begge sølv-captaincies er brugt, kan den nye sølvkører ikke captaines</li>
           </ul>
