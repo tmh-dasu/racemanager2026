@@ -225,7 +225,7 @@ export async function updateSetting(key: string, value: string) {
   if (error) throw error;
 }
 
-export async function upsertDriver(driver: Partial<Driver> & { name: string; car_number: number; team: string; price: number }) {
+export async function upsertDriver(driver: Partial<Driver> & { name: string; car_number: number; team: string }) {
   if (driver.id) {
     const { error } = await supabase.from("drivers").update(driver).eq("id", driver.id);
     if (error) throw error;
