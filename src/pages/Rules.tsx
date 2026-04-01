@@ -1,5 +1,5 @@
 import PageLayout from "@/components/PageLayout";
-import { Trophy, Zap, Target, Calendar, ArrowRightLeft, AlertTriangle, ListMinus, Crown, Brain, ShieldAlert } from "lucide-react";
+import { Trophy, Zap, Target, Calendar, ArrowRightLeft, ListMinus, Crown, Brain, ShieldAlert } from "lucide-react";
 
 const pointsTable = [
   { pos: "1.", pts: 25 }, { pos: "2.", pts: 22 }, { pos: "3.", pts: 20 },
@@ -58,7 +58,7 @@ export default function RulesPage() {
             <li>Opret dit hold med et holdnavn, dit navn og din e-mail</li>
             <li>Vælg <strong className="text-foreground">3 kørere</strong>: én fra <strong className="text-gold">Guld</strong>, én fra <strong className="text-silver">Sølv</strong> og én fra <strong className="text-bronze">Bronze</strong>-tier</li>
             <li>Vælg din <strong className="text-foreground">sæsonprediction</strong> (gæt den samlede sæsonvinder)</li>
-            <li>Når holdet er valgt, er det låst for resten af sæsonen – med én undtagelse (se Joker nedenfor)</li>
+            <li>Du kan løbende justere dit hold via transfers (se nedenfor)</li>
           </ol>
         </Section>
 
@@ -122,20 +122,20 @@ export default function RulesPage() {
           </div>
         </Section>
 
-        {/* Joker */}
-        <Section icon={<ArrowRightLeft className="h-5 w-5 text-accent" />} title="Joker-transfer 🃏">
+        {/* Transfers */}
+        <Section icon={<ArrowRightLeft className="h-5 w-5 text-accent" />} title="Transfer-system 🔄">
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• Du har <strong className="text-foreground">én</strong> Joker-transfer i hele sæsonen</li>
-            <li>• Jokeren lader dig udskifte <strong className="text-foreground">én kører</strong> med en anden <strong className="text-foreground">inden for samme tier</strong></li>
-            <li>• Erstatter du din guldkører, skal den nye kører også være guld – og tilsvarende for sølv og bronze</li>
-            <li>• Den nye kører skal kunne passe inden for dit resterende budget</li>
-            <li>• Transfervinduet åbner <strong className="text-foreground">24 timer efter</strong> et løbs resultater offentliggøres</li>
-            <li>• Transfervinduet lukker <strong className="text-foreground">24 timer før</strong> næste løb</li>
-            <li>• Ved joker-transfer arver den nye kører den udgående kørers <strong className="text-foreground">resterende captaincy-budget</strong></li>
+            <li>• Du kan til enhver tid skifte <strong className="text-foreground">én kører</strong> ud mod en anden <strong className="text-foreground">inden for samme tier</strong></li>
+            <li>• Hvert transfer koster <strong className="text-foreground">point</strong> der trækkes direkte fra din sæsontotal (standard: 10 point)</li>
+            <li>• Der er <strong className="text-foreground">ingen grænse</strong> for antal transfers – men hvert koster point</li>
+            <li>• Pointfradraget er <strong className="text-foreground">permanent</strong> og kan ikke fortrydes</li>
+            <li>• Transfervinduet <strong className="text-foreground">åbner</strong> når admin indtaster resultater for et arrangement</li>
+            <li>• Transfervinduet <strong className="text-foreground">lukker</strong> når tidtagning starter ved næste arrangement</li>
+            <li>• Ved transfer arver den nye kører den udgående kørers <strong className="text-foreground">resterende captaincy-budget</strong></li>
           </ul>
-          <div className="mt-3 flex items-start gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2">
-            <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-            <p className="text-xs text-destructive">Brug den med omtanke – du har kun én!</p>
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-accent/10 border border-accent/20 px-3 py-2">
+            <ArrowRightLeft className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+            <p className="text-xs text-accent-foreground">Overvej nøje – hvert transfer koster point!</p>
           </div>
         </Section>
 
@@ -143,8 +143,8 @@ export default function RulesPage() {
         <Section icon={<ShieldAlert className="h-5 w-5 text-destructive" />} title="Kører udgår af klassen ⚠️">
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>• Hvis en kører officielt udgår af klassen, markeres det af admin i systemet</li>
-            <li>• Berørte hold får automatisk <strong className="text-foreground">joker-restitution</strong> – uanset om jokeren allerede er brugt</li>
-            <li>• Hvis jokeren allerede er brugt, får du én ekstraordinær <strong className="text-foreground">nødtransfer</strong> inden for samme tier</li>
+            <li>• Berørte hold får automatisk ét <strong className="text-foreground">gratis ekstraordinært transfer</strong> inden for samme tier – uden pointfradrag</li>
+            <li>• Det gratis transfer gælder kun til erstatning af den udgåede kører</li>
             <li>• Du modtager en <strong className="text-foreground">email-notifikation</strong> når en af dine kørere udgår</li>
             <li>• Den nye kører arver den udgåede kørers resterende captaincy-budget</li>
           </ul>
@@ -158,7 +158,7 @@ export default function RulesPage() {
             <li>• Hver kører kan vælges som captain <strong className="text-foreground">max 2 gange</strong> i løbet af de 6 afdelinger</li>
             <li>• Deadline for captain-valg: <strong className="text-foreground">når tidtagning starter</strong></li>
             <li>• Hvis du ikke vælger captain inden deadline, tæller alle point <strong className="text-foreground">normalt</strong> (ingen bonus)</li>
-            <li>• Ved joker-transfer arver den nye kører den udgående kørers <strong className="text-foreground">resterende captaincy-budget</strong></li>
+            <li>• Ved transfer arver den nye kører den udgående kørers <strong className="text-foreground">resterende captaincy-budget</strong></li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-gold/10 border border-gold/20 px-3 py-2">
             <Crown className="h-4 w-4 text-gold mt-0.5 shrink-0" />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Zap, ChevronDown, ChevronUp, Crown } from "lucide-react";
+import { ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, type Manager, type Driver, type CaptainSelection, type Race } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
@@ -53,11 +53,6 @@ function ExpandableTeam({ manager, rank, allResults, allDrivers, captainSelectio
           <p className="text-xs text-muted-foreground truncate">{manager.name}</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          {!manager.joker_used ? (
-            <span title="Joker tilgængelig"><Zap className="h-4 w-4 text-success" /></span>
-          ) : (
-            <span title="Joker brugt"><Zap className="h-4 w-4 text-muted-foreground" /></span>
-          )}
           <span className="font-display text-xl font-bold text-foreground">{manager.total_points}</span>
           {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         </div>

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Zap, ArrowLeftRight, AlertTriangle, LogOut, Share2, ShieldAlert } from "lucide-react";
-import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, useJoker, useEmergencyTransfer, fetchManagerByUserId, type Manager, type Driver } from "@/lib/api";
+import { ArrowLeftRight, AlertTriangle, LogOut, ShieldAlert, History } from "lucide-react";
+import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers } from "@/lib/api";
 import { formatDKR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
@@ -34,23 +34,37 @@ export default function MyTeamPage() {
   const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
   const { data: allManagers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+  const { data: myTransfers = [] } = useQuery({
+    queryKey: ["transfers", manager?.id],
+    queryFn: () => fetchTransfers(manager!.id),
+    enabled: !!manager,
+  });
 
   const myRank = manager ? allManagers.findIndex((m) => m.id === manager.id) + 1 : null;
 
-  const [jokerOpen, setJokerOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [swapOutId, setSwapOutId] = useState<string | null>(null);
   const [swapInId, setSwapInId] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const myDriverIds = managerDrivers.map((md) => md.driver_id);
   const myDrivers = drivers.filter((d) => myDriverIds.includes(d.id));
   const withdrawnDrivers = myDrivers.filter((d) => d.withdrawn);
   const hasWithdrawnDriver = withdrawnDrivers.length > 0;
-  const canEmergencyTransfer = hasWithdrawnDriver && manager?.joker_used && !(manager as any).emergency_transfer_used;
 
-  // For joker/emergency: only show same-tier drivers that aren't withdrawn
+  // Check if a withdrawn driver has already been replaced with a free transfer
+  const hasUsedFreeTransferFor = (driverId: string) =>
+    myTransfers.some((t) => t.old_driver_id === driverId && t.is_free);
+
+  const unreplacedWithdrawn = withdrawnDrivers.filter((d) => !hasUsedFreeTransferFor(d.id));
+  const canEmergencyTransfer = unreplacedWithdrawn.length > 0;
+
+  // For transfer: only show same-tier drivers that aren't withdrawn
   const swapOutDriver = drivers.find((d) => d.id === swapOutId);
   const availableDrivers = drivers.filter((d) => !myDriverIds.includes(d.id) && !d.withdrawn && (!swapOutDriver || d.tier === swapOutDriver.tier));
+
+  const transferCost = settings?.transfer_cost ?? 10;
 
   function getDriverPoints(driverId: string) {
     return allResults.filter((r) => r.driver_id === driverId).reduce((s, r) => s + r.points, 0);
@@ -61,31 +75,25 @@ export default function MyTeamPage() {
     return r?.points || 0;
   }
 
-  async function handleJoker() {
+  async function handleTransfer() {
     if (!manager || !swapOutId || !swapInId) return;
     const oldDriver = drivers.find((d) => d.id === swapOutId);
     const newDriver = drivers.find((d) => d.id === swapInId);
-    if (!oldDriver || !newDriver) return;
-    if (oldDriver.tier !== newDriver.tier) {
+    if (!oldDriver || !newDriver || oldDriver.tier !== newDriver.tier) {
       toast({ title: "Du kan kun bytte til en kører i samme tier", variant: "destructive" });
       return;
     }
 
-    const priceDiff = newDriver.price - oldDriver.price;
-    const newBudget = manager.budget_remaining - priceDiff;
-    if (newBudget < 0) {
-      toast({ title: "Ikke nok budget til dette skifte", variant: "destructive" });
-      return;
-    }
-
     try {
-      await useJoker(manager.id, swapOutId, swapInId, newBudget);
+      await performTransfer(manager.id, swapOutId, swapInId, transferCost);
       queryClient.invalidateQueries({ queryKey: ["manager", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["manager_drivers", manager.id] });
-      setJokerOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["transfers", manager.id] });
+      setTransferOpen(false);
+      setConfirmOpen(false);
       setSwapOutId(null);
       setSwapInId(null);
-      toast({ title: "Joker brugt! Kører skiftet 🃏" });
+      toast({ title: `Transfer gennemført! ${transferCost} point fratrukket 🔄` });
       refetchManager();
     } catch (err: any) {
       toast({ title: "Fejl: " + err.message, variant: "destructive" });
@@ -94,25 +102,16 @@ export default function MyTeamPage() {
 
   async function handleEmergencyTransfer() {
     if (!manager || !swapOutId || !swapInId) return;
-    const oldDriver = drivers.find((d) => d.id === swapOutId);
-    const newDriver = drivers.find((d) => d.id === swapInId);
-    if (!oldDriver || !newDriver) return;
-
-    const priceDiff = newDriver.price - oldDriver.price;
-    const newBudget = manager.budget_remaining - priceDiff;
-    if (newBudget < 0) {
-      toast({ title: "Ikke nok budget til dette skifte", variant: "destructive" });
-      return;
-    }
 
     try {
-      await useEmergencyTransfer(manager.id, swapOutId, swapInId, newBudget);
+      await performEmergencyTransfer(manager.id, swapOutId, swapInId);
       queryClient.invalidateQueries({ queryKey: ["manager", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["manager_drivers", manager.id] });
+      queryClient.invalidateQueries({ queryKey: ["transfers", manager.id] });
       setEmergencyOpen(false);
       setSwapOutId(null);
       setSwapInId(null);
-      toast({ title: "Nødtransfer gennemført! Kører erstattet 🔄" });
+      toast({ title: "Gratis nødtransfer gennemført! Kører erstattet 🔄" });
       refetchManager();
     } catch (err: any) {
       toast({ title: "Fejl: " + err.message, variant: "destructive" });
@@ -199,7 +198,7 @@ export default function MyTeamPage() {
 
         {/* Transfer Window Status */}
         <div className="flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm">
-          <span className={`relative flex h-2.5 w-2.5`}>
+          <span className="relative flex h-2.5 w-2.5">
             <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${settings?.transfer_window_open ? "bg-success animate-ping" : "bg-muted-foreground"}`}></span>
             <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${settings?.transfer_window_open ? "bg-success" : "bg-muted-foreground"}`}></span>
           </span>
@@ -216,40 +215,32 @@ export default function MyTeamPage() {
               <p className="font-display font-semibold text-foreground">Kører udgået af klassen</p>
               <p className="text-sm text-muted-foreground mt-1">
                 {withdrawnDrivers.map(d => d.name).join(", ")} er officielt udgået.
-                {canEmergencyTransfer && " Du har fået en ekstraordinær erstatnings-transfer."}
-                {!manager.joker_used && " Du kan bruge din joker til at erstatte køreren."}
+                {canEmergencyTransfer && " Du har et gratis nødtransfer til rådighed."}
               </p>
               {canEmergencyTransfer && (
                 <Button
-                  onClick={() => { setSwapOutId(withdrawnDrivers[0]?.id || null); setEmergencyOpen(true); }}
+                  onClick={() => { setSwapOutId(unreplacedWithdrawn[0]?.id || null); setEmergencyOpen(true); }}
                   className="mt-2 bg-destructive text-destructive-foreground font-display font-semibold hover:bg-destructive/90"
                   size="sm"
                 >
                   <ArrowLeftRight className="mr-2 h-4 w-4" />
-                  Nødtransfer
+                  Gratis nødtransfer
                 </Button>
               )}
             </div>
           </div>
         )}
 
-        {/* Joker Status */}
+        {/* Transfer Button */}
         <div className="flex items-center gap-3">
-          {!manager.joker_used ? (
-            <Button
-              onClick={() => settings?.transfer_window_open ? setJokerOpen(true) : toast({ title: "Transfervinduet er lukket" })}
-              className="bg-success text-success-foreground font-display font-semibold hover:bg-success/90"
-            >
-              <Zap className="mr-2 h-4 w-4" />
-              Joker tilgængelig
-            </Button>
-          ) : (
-            <div className="flex items-center gap-2 rounded-md bg-muted px-4 py-2 text-sm text-muted-foreground">
-              <Zap className="h-4 w-4" />
-              Joker brugt
-            </div>
-          )}
-          <span className="text-xs text-muted-foreground">Budget: {formatDKR(Number(manager.budget_remaining))}</span>
+          <Button
+            onClick={() => settings?.transfer_window_open ? setTransferOpen(true) : toast({ title: "Transfervinduet er lukket" })}
+            className="bg-accent text-accent-foreground font-display font-semibold hover:bg-accent/90"
+          >
+            <ArrowLeftRight className="mr-2 h-4 w-4" />
+            Transfer ({transferCost} point)
+          </Button>
+          <span className="text-xs text-muted-foreground">Ubegrænset antal transfers • {transferCost} point per transfer</span>
         </div>
 
         {/* Captain Selector */}
@@ -294,20 +285,53 @@ export default function MyTeamPage() {
             </div>
           ))}
         </div>
+
+        {/* Transfer History */}
+        {myTransfers.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <History className="h-4 w-4 text-muted-foreground" />
+              <h2 className="font-display font-semibold text-foreground">Transfer-historik</h2>
+            </div>
+            <div className="space-y-1">
+              {myTransfers.map((t) => {
+                const oldD = drivers.find((d) => d.id === t.old_driver_id);
+                const newD = drivers.find((d) => d.id === t.new_driver_id);
+                return (
+                  <div key={t.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="text-destructive">#{oldD?.car_number} {oldD?.name}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="text-success">#{newD?.car_number} {newD?.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className={`font-display font-bold ${t.is_free ? "text-success" : "text-destructive"}`}>
+                        {t.is_free ? "Gratis" : `−${t.point_cost} pts`}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(t.created_at).toLocaleDateString("da-DK")}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Joker Dialog */}
-      <Dialog open={jokerOpen} onOpenChange={setJokerOpen}>
+      {/* Transfer Dialog */}
+      <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
         <DialogContent className="bg-card border-border max-w-lg">
           <DialogHeader>
-            <DialogTitle className="font-display text-foreground">Brug Joker – Skift kører</DialogTitle>
+            <DialogTitle className="font-display text-foreground">Transfer – Skift kører</DialogTitle>
+            <DialogDescription>Du kan kun bytte til en kører inden for samme tier. Koster {transferCost} point.</DialogDescription>
           </DialogHeader>
-          <p className="text-xs text-muted-foreground">Du kan kun bytte til en kører inden for samme tier.</p>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground mb-2">Vælg kører at fjerne:</p>
               <div className="space-y-2">
-                {myDrivers.map((d) => (
+                {myDrivers.filter(d => !d.withdrawn).map((d) => (
                   <button
                     key={d.id}
                     onClick={() => { setSwapOutId(d.id); setSwapInId(null); }}
@@ -316,7 +340,6 @@ export default function MyTeamPage() {
                     <span className="font-display font-bold text-foreground">#{d.car_number}</span>
                     <span className="text-sm text-foreground">{d.name}</span>
                     <span className="text-xs text-muted-foreground capitalize">{d.tier === "gold" ? "🥇" : d.tier === "silver" ? "🥈" : "🥉"} {d.tier}</span>
-                    <span className="ml-auto text-sm text-gold">{formatDKR(d.price)}</span>
                   </button>
                 ))}
               </div>
@@ -326,33 +349,64 @@ export default function MyTeamPage() {
                 <p className="text-sm text-muted-foreground mb-2">Vælg ny kører ({swapOutDriver?.tier === "gold" ? "🥇 Guld" : swapOutDriver?.tier === "silver" ? "🥈 Sølv" : "🥉 Bronze"}):</p>
                 <div className="max-h-48 space-y-2 overflow-y-auto">
                   {availableDrivers.length === 0 && <p className="text-xs text-muted-foreground">Ingen ledige kørere i denne tier.</p>}
-                  {availableDrivers.map((d) => {
-                    const oldDriver = drivers.find((x) => x.id === swapOutId);
-                    const priceDiff = d.price - (oldDriver?.price || 0);
-                    const canAfford = manager.budget_remaining - priceDiff >= 0;
-                    return (
-                      <button
-                        key={d.id}
-                        onClick={() => canAfford && setSwapInId(d.id)}
-                        disabled={!canAfford}
-                        className={`w-full flex items-center gap-3 rounded-md border p-2 text-left transition ${
-                          swapInId === d.id ? "border-success bg-success/10" : !canAfford ? "border-border opacity-40" : "border-border hover:border-success/50"
-                        }`}
-                      >
-                        <span className="font-display font-bold text-foreground">#{d.car_number}</span>
-                        <span className="text-sm text-foreground">{d.name}</span>
-                        <span className="ml-auto text-sm text-gold">{formatDKR(d.price)}</span>
-                        {!canAfford && <span className="text-xs text-destructive">For dyr</span>}
-                      </button>
-                    );
-                  })}
+                  {availableDrivers.map((d) => (
+                    <button
+                      key={d.id}
+                      onClick={() => setSwapInId(d.id)}
+                      className={`w-full flex items-center gap-3 rounded-md border p-2 text-left transition ${
+                        swapInId === d.id ? "border-success bg-success/10" : "border-border hover:border-success/50"
+                      }`}
+                    >
+                      <span className="font-display font-bold text-foreground">#{d.car_number}</span>
+                      <span className="text-sm text-foreground">{d.name}</span>
+                      <span className="ml-auto text-sm text-gold">{formatDKR(d.price)}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
-            <Button onClick={handleJoker} disabled={!swapOutId || !swapInId} className="w-full bg-gradient-racing text-primary-foreground font-display shadow-racing">
+            <Button
+              onClick={() => setConfirmOpen(true)}
+              disabled={!swapOutId || !swapInId}
+              className="w-full bg-gradient-racing text-primary-foreground font-display shadow-racing"
+            >
               <ArrowLeftRight className="mr-2 h-4 w-4" />
-              Bekræft joker-skifte
+              Fortsæt til bekræftelse
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer Confirmation Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="bg-card border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-foreground">Bekræft transfer</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-border bg-secondary/50 p-4 space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-destructive font-semibold">Ud:</span>
+                <span className="text-foreground">#{swapOutDriver?.car_number} {swapOutDriver?.name}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-success font-semibold">Ind:</span>
+                <span className="text-foreground">#{drivers.find(d => d.id === swapInId)?.car_number} {drivers.find(d => d.id === swapInId)?.name}</span>
+              </div>
+            </div>
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
+              <p className="text-sm text-muted-foreground">Pointfradrag</p>
+              <p className="font-display text-2xl font-bold text-destructive">−{transferCost} point</p>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Fradraget er permanent og kan ikke fortrydes.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setConfirmOpen(false)} className="flex-1">Annuller</Button>
+              <Button onClick={handleTransfer} className="flex-1 bg-gradient-racing text-primary-foreground font-display">
+                Bekræft transfer
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -361,9 +415,9 @@ export default function MyTeamPage() {
       <Dialog open={emergencyOpen} onOpenChange={setEmergencyOpen}>
         <DialogContent className="bg-card border-border max-w-lg">
           <DialogHeader>
-            <DialogTitle className="font-display text-foreground">Nødtransfer – Erstat udgået kører</DialogTitle>
+            <DialogTitle className="font-display text-foreground">Gratis nødtransfer – Erstat udgået kører</DialogTitle>
+            <DialogDescription>Du kan kun vælge en kører inden for samme tier som den udgåede kører. Ingen pointfradrag.</DialogDescription>
           </DialogHeader>
-          <p className="text-xs text-muted-foreground">Du kan kun vælge en kører inden for samme tier som den udgåede kører.</p>
           <div className="space-y-4">
             {swapOutId && swapOutDriver && (
               <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm">
@@ -375,26 +429,23 @@ export default function MyTeamPage() {
               <p className="text-sm text-muted-foreground mb-2">Vælg erstatningskører:</p>
               <div className="max-h-48 space-y-2 overflow-y-auto">
                 {availableDrivers.length === 0 && <p className="text-xs text-muted-foreground">Ingen ledige kørere i denne tier.</p>}
-                {availableDrivers.map((d) => {
-                  const priceDiff = d.price - (swapOutDriver?.price || 0);
-                  const canAfford = manager.budget_remaining - priceDiff >= 0;
-                  return (
-                    <button
-                      key={d.id}
-                      onClick={() => canAfford && setSwapInId(d.id)}
-                      disabled={!canAfford}
-                      className={`w-full flex items-center gap-3 rounded-md border p-2 text-left transition ${
-                        swapInId === d.id ? "border-success bg-success/10" : !canAfford ? "border-border opacity-40" : "border-border hover:border-success/50"
-                      }`}
-                    >
-                      <span className="font-display font-bold text-foreground">#{d.car_number}</span>
-                      <span className="text-sm text-foreground">{d.name}</span>
-                      <span className="ml-auto text-sm text-gold">{formatDKR(d.price)}</span>
-                      {!canAfford && <span className="text-xs text-destructive">For dyr</span>}
-                    </button>
-                  );
-                })}
+                {availableDrivers.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => setSwapInId(d.id)}
+                    className={`w-full flex items-center gap-3 rounded-md border p-2 text-left transition ${
+                      swapInId === d.id ? "border-success bg-success/10" : "border-border hover:border-success/50"
+                    }`}
+                  >
+                    <span className="font-display font-bold text-foreground">#{d.car_number}</span>
+                    <span className="text-sm text-foreground">{d.name}</span>
+                    <span className="ml-auto text-sm text-gold">{formatDKR(d.price)}</span>
+                  </button>
+                ))}
               </div>
+            </div>
+            <div className="rounded-md border border-success/30 bg-success/10 p-3 text-center">
+              <p className="text-sm font-display font-semibold text-success">Gratis – ingen pointfradrag</p>
             </div>
             <Button onClick={handleEmergencyTransfer} disabled={!swapOutId || !swapInId} className="w-full bg-destructive text-destructive-foreground font-display">
               <ArrowLeftRight className="mr-2 h-4 w-4" />

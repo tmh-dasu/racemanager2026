@@ -49,10 +49,8 @@ export interface Manager {
   email?: string;
   team_name: string;
   budget_remaining: number;
-  joker_used: boolean;
   total_points: number;
   slug?: string;
-  emergency_transfer_used?: boolean;
 }
 
 export interface ManagerDriver {
@@ -61,10 +59,21 @@ export interface ManagerDriver {
   driver_id: string;
 }
 
+export interface Transfer {
+  id: string;
+  manager_id: string;
+  old_driver_id: string;
+  new_driver_id: string;
+  point_cost: number;
+  is_free: boolean;
+  created_at: string;
+}
+
 export interface Settings {
   budget_limit: number;
   transfer_window_open: boolean;
   team_registration_open: boolean;
+  transfer_cost: number;
 }
 
 export const SESSION_TYPES = ["qualifying", "heat1", "heat2", "heat3"] as const;
@@ -94,12 +103,10 @@ export function applyDropWorst(sessionPoints: number[], completedRounds: number)
   if (completedRounds >= 7) dropCount = 4;
   else if (completedRounds >= 6) dropCount = 3;
   else if (completedRounds >= 4) dropCount = 2;
-  else dropCount = 0; // No drops before round 4
+  else dropCount = 0;
 
-  // Never drop more results than available (keep at least 1)
   dropCount = Math.min(dropCount, Math.max(0, sessionPoints.length - 1));
 
-  // Sort ascending to find worst individual results
   const sorted = [...sessionPoints].sort((a, b) => a - b);
   const kept = sorted.slice(dropCount);
   const total = kept.reduce((sum, pts) => sum + pts, 0);
@@ -114,6 +121,7 @@ export async function fetchSettings(): Promise<Settings> {
     budget_limit: Number(map.budget_limit || 100),
     transfer_window_open: map.transfer_window_open === "true",
     team_registration_open: map.team_registration_open === "true",
+    transfer_cost: Number(map.transfer_cost || 10),
   };
 }
 
@@ -135,12 +143,12 @@ export async function fetchRaceResults(raceId?: string): Promise<RaceResult[]> {
 }
 
 export async function fetchManagers(): Promise<Manager[]> {
-  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at, slug, emergency_transfer_used").order("total_points", { ascending: false });
+  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, budget_remaining, created_at, slug").order("total_points", { ascending: false });
   return (data || []) as Manager[];
 }
 
 export async function fetchManagerBySlug(slug: string): Promise<Manager | null> {
-  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, joker_used, budget_remaining, created_at, slug, emergency_transfer_used").eq("slug", slug).maybeSingle();
+  const { data } = await supabase.from("managers_public").select("id, name, team_name, total_points, budget_remaining, created_at, slug").eq("slug", slug).maybeSingle();
   return data as Manager | null;
 }
 
@@ -179,17 +187,19 @@ export async function addManagerDriver(managerId: string, driverId: string) {
   if (error) throw error;
 }
 
-export async function useJoker(managerId: string, oldDriverId: string, newDriverId: string, newBudget: number) {
+// Transfer system
+export async function performTransfer(managerId: string, oldDriverId: string, newDriverId: string, pointCost: number) {
+  // Remove old driver
   const { error: deleteError } = await supabase.from("manager_drivers").delete().eq("manager_id", managerId).eq("driver_id", oldDriverId);
   if (deleteError) throw deleteError;
+  // Add new driver
   const { error: insertError } = await supabase.from("manager_drivers").insert({ manager_id: managerId, driver_id: newDriverId });
   if (insertError) throw insertError;
-  const { error: updateError } = await supabase.from("managers").update({ joker_used: true, budget_remaining: newBudget }).eq("id", managerId);
-  if (updateError) throw updateError;
-  await supabase.from("joker_transfers").insert({ manager_id: managerId, old_driver_id: oldDriverId, new_driver_id: newDriverId });
+  // Log transfer
+  const { error: logError } = await supabase.from("transfers").insert({ manager_id: managerId, old_driver_id: oldDriverId, new_driver_id: newDriverId, point_cost: pointCost, is_free: false } as any);
+  if (logError) throw logError;
 
   // Inherit captaincy: update future captain selections from old driver to new driver
-  // Only for races where captain_deadline hasn't passed yet
   const { data: futureRaces } = await supabase.from("races").select("id").gt("captain_deadline", new Date().toISOString());
   if (futureRaces && futureRaces.length > 0) {
     const futureRaceIds = futureRaces.map((r) => r.id);
@@ -199,6 +209,39 @@ export async function useJoker(managerId: string, oldDriverId: string, newDriver
       .eq("driver_id", oldDriverId)
       .in("race_id", futureRaceIds);
   }
+}
+
+// Free emergency transfer (for withdrawn drivers)
+export async function performEmergencyTransfer(managerId: string, oldDriverId: string, newDriverId: string) {
+  const { error: deleteError } = await supabase.from("manager_drivers").delete().eq("manager_id", managerId).eq("driver_id", oldDriverId);
+  if (deleteError) throw deleteError;
+  const { error: insertError } = await supabase.from("manager_drivers").insert({ manager_id: managerId, driver_id: newDriverId });
+  if (insertError) throw insertError;
+  const { error: logError } = await supabase.from("transfers").insert({ manager_id: managerId, old_driver_id: oldDriverId, new_driver_id: newDriverId, point_cost: 0, is_free: true } as any);
+  if (logError) throw logError;
+
+  // Inherit captaincy
+  const { data: futureRaces } = await supabase.from("races").select("id").gt("captain_deadline", new Date().toISOString());
+  if (futureRaces && futureRaces.length > 0) {
+    const futureRaceIds = futureRaces.map((r) => r.id);
+    await supabase.from("captain_selections")
+      .update({ driver_id: newDriverId })
+      .eq("manager_id", managerId)
+      .eq("driver_id", oldDriverId)
+      .in("race_id", futureRaceIds);
+  }
+}
+
+export async function fetchTransfers(managerId?: string): Promise<Transfer[]> {
+  let query = supabase.from("transfers").select("*").order("created_at", { ascending: false });
+  if (managerId) query = query.eq("manager_id", managerId);
+  const { data } = await query;
+  return (data || []) as Transfer[];
+}
+
+export async function fetchAllTransfers(): Promise<Transfer[]> {
+  const { data } = await supabase.from("transfers").select("*").order("created_at", { ascending: false });
+  return (data || []) as Transfer[];
 }
 
 export async function updateSetting(key: string, value: string) {
@@ -230,7 +273,7 @@ export async function deleteRace(id: string) {
 
 export async function deleteManager(id: string) {
   await supabase.from("manager_drivers").delete().eq("manager_id", id);
-  await supabase.from("joker_transfers").delete().eq("manager_id", id);
+  await supabase.from("transfers").delete().eq("manager_id", id);
   const { error } = await supabase.from("managers").delete().eq("id", id);
   if (error) throw error;
 }
@@ -266,6 +309,7 @@ export async function recalculateManagerPoints() {
   const { data: allCaptains } = await supabase.from("captain_selections").select("manager_id, race_id, driver_id");
   const { data: allPredAnswers } = await supabase.from("prediction_answers").select("manager_id, is_correct");
   const { data: allSeasonPreds } = await supabase.from("season_predictions").select("manager_id, is_correct");
+  const { data: allTransfers } = await supabase.from("transfers").select("manager_id, point_cost");
 
   for (const mgr of managerRows) {
     const driverIds = (allMDs || []).filter((md: any) => md.manager_id === mgr.id).map((md: any) => md.driver_id);
@@ -288,11 +332,16 @@ export async function recalculateManagerPoints() {
       });
     const { total } = applyDropWorst(sessionPoints, completedRounds);
 
-    // Prediction bonuses: +10 per correct race prediction, +15 for correct season prediction
+    // Prediction bonuses
     const predictionBonus = (allPredAnswers || []).filter((a: any) => a.manager_id === mgr.id && a.is_correct === true).length * 10;
     const seasonBonus = (allSeasonPreds || []).find((s: any) => s.manager_id === mgr.id && s.is_correct === true) ? 15 : 0;
 
-    await supabase.from("managers").update({ total_points: total + predictionBonus + seasonBonus }).eq("id", mgr.id);
+    // Transfer costs (deducted from total)
+    const transferCosts = (allTransfers || [])
+      .filter((t: any) => t.manager_id === mgr.id)
+      .reduce((sum: number, t: any) => sum + (t.point_cost || 0), 0);
+
+    await supabase.from("managers").update({ total_points: total + predictionBonus + seasonBonus - transferCosts }).eq("id", mgr.id);
   }
 }
 
@@ -323,7 +372,7 @@ export function getNextRaceWithDeadline(races: Race[]): Race | null {
 }
 
 export function getCaptaincyBudget(
-  driverId: string, 
+  driverId: string,
   captainSelections: CaptainSelection[]
 ): number {
   const used = captainSelections.filter((c) => c.driver_id === driverId).length;
@@ -364,7 +413,6 @@ export const QUESTION_TYPE_LABELS: Record<string, string> = {
   most_points: "Gæt kører med flest point",
 };
 
-// Prediction API functions
 export async function fetchPredictionQuestions(): Promise<PredictionQuestion[]> {
   const { data } = await supabase.from("prediction_questions").select("*").order("created_at");
   return (data || []) as PredictionQuestion[];
@@ -404,11 +452,9 @@ export async function upsertPredictionQuestion(q: { id?: string; race_id: string
 }
 
 export async function resolvePredictions(questionId: string, correctAnswer: string) {
-  // Update the question with correct answer
   const { error: qErr } = await supabase.from("prediction_questions").update({ correct_answer: correctAnswer }).eq("id", questionId);
   if (qErr) throw qErr;
 
-  // Fetch all answers and mark correct/incorrect
   const { data: answers } = await supabase.from("prediction_answers").select("id, answer").eq("question_id", questionId);
   for (const a of (answers || [])) {
     const isCorrect = a.answer.toLowerCase() === correctAnswer.toLowerCase();
@@ -416,9 +462,8 @@ export async function resolvePredictions(questionId: string, correctAnswer: stri
   }
 }
 
-// Driver withdrawal: mark driver as withdrawn, restore joker for affected managers, send notifications
+// Driver withdrawal: mark driver as withdrawn, notify affected managers
 export async function withdrawDriver(driverId: string) {
-  // Mark driver as withdrawn
   const { error: wErr } = await supabase.from("drivers").update({ withdrawn: true } as any).eq("id", driverId);
   if (wErr) throw wErr;
 
@@ -427,38 +472,23 @@ export async function withdrawDriver(driverId: string) {
   if (!affectedMDs || affectedMDs.length === 0) return { affectedCount: 0 };
 
   const managerIds = affectedMDs.map((md: any) => md.manager_id);
+  const { data: affectedManagers } = await supabase.from("managers").select("id, email, team_name").in("id", managerIds);
 
-  // For each affected manager: if joker_used=false, just reset; if joker_used=true, give emergency transfer
-  const { data: affectedManagers } = await supabase.from("managers").select("id, joker_used, email, team_name").in("id", managerIds);
-
-  for (const mgr of (affectedManagers || [])) {
-    if (mgr.joker_used) {
-      // Joker was already used — grant emergency transfer
-      await supabase.from("managers").update({ emergency_transfer_used: false } as any).eq("id", mgr.id);
-    } else {
-      // Joker not used — keep it available (it already is)
-    }
-  }
-
-  // Send email notifications via edge function
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  // Send email notifications
   for (const mgr of (affectedManagers || [])) {
     if (mgr.email) {
       try {
         await supabase.functions.invoke("send-email", {
           body: {
             to: mgr.email,
-            subject: "⚠️ Kører udgået – DASU Race Manager",
+            subject: "⚠️ Kører udgået – DASU RaceManager",
             html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
               <h2 style="color:#e11d48;">Kører udgået af klassen</h2>
               <p>Hej ${mgr.team_name},</p>
               <p>En kører på dit hold er officielt udgået af klassen.</p>
-              <p>${mgr.joker_used
-                ? "Da du allerede har brugt din joker, har du fået en <strong>ekstraordinær erstatnings-transfer</strong>. Du kan nu bytte den udgåede kører med en ny kører inden for samme tier."
-                : "Din joker er stadig tilgængelig, og du kan bruge den til at erstatte køreren."
-              }</p>
+              <p>Du har fået et <strong>gratis ekstraordinært transfer</strong> til at erstatte den udgåede kører med en ny kører inden for samme tier – uden pointfradrag.</p>
               <p>Gå til <a href="https://dasuracemanager.lovable.app/mit-hold" style="color:#2563eb;">Mit Hold</a> for at foretage skiftet.</p>
-              <p>Med venlig hilsen,<br/>DASU Race Manager</p>
+              <p>Med venlig hilsen,<br/>DASU RaceManager</p>
             </div>`,
           },
         });
@@ -469,25 +499,4 @@ export async function withdrawDriver(driverId: string) {
   }
 
   return { affectedCount: affectedManagers?.length || 0 };
-}
-
-// Emergency transfer (same as joker but for withdrawn driver replacement)
-export async function useEmergencyTransfer(managerId: string, oldDriverId: string, newDriverId: string, newBudget: number) {
-  const { error: deleteError } = await supabase.from("manager_drivers").delete().eq("manager_id", managerId).eq("driver_id", oldDriverId);
-  if (deleteError) throw deleteError;
-  const { error: insertError } = await supabase.from("manager_drivers").insert({ manager_id: managerId, driver_id: newDriverId });
-  if (insertError) throw insertError;
-  const { error: updateError } = await supabase.from("managers").update({ emergency_transfer_used: true, budget_remaining: newBudget } as any).eq("id", managerId);
-  if (updateError) throw updateError;
-
-  // Inherit captaincy from old driver to new driver for future races
-  const { data: futureRaces } = await supabase.from("races").select("id").gt("captain_deadline", new Date().toISOString());
-  if (futureRaces && futureRaces.length > 0) {
-    const futureRaceIds = futureRaces.map((r) => r.id);
-    await supabase.from("captain_selections")
-      .update({ driver_id: newDriverId })
-      .eq("manager_id", managerId)
-      .eq("driver_id", oldDriverId)
-      .in("race_id", futureRaceIds);
-  }
 }

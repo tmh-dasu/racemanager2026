@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Shield, Users, Flag, Settings as SettingsIcon, Plus, Trash2, Save, AlertTriangle, Ticket, Copy } from "lucide-react";
-import { fetchDrivers, fetchRaces, fetchRaceResults, fetchSettings, fetchManagers, fetchManagerDrivers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, fetchPredictionQuestions, upsertPredictionQuestion, resolvePredictions, withdrawDriver, QUESTION_TYPE_LABELS, type Driver, type Race, type Manager } from "@/lib/api";
+import { Shield, Plus, Trash2, Save, AlertTriangle, Ticket, Copy } from "lucide-react";
+import { fetchDrivers, fetchRaces, fetchSettings, fetchManagers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, fetchPredictionQuestions, upsertPredictionQuestion, resolvePredictions, withdrawDriver, fetchAllTransfers, QUESTION_TYPE_LABELS } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 
 import ResultsAdmin from "@/components/admin/ResultsAdmin";
@@ -16,8 +16,6 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import PageLayout from "@/components/PageLayout";
 
 export default function AdminPage() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useIsAdmin();
@@ -67,6 +65,7 @@ export default function AdminPage() {
             <TabsTrigger value="results" className="font-display">Resultater</TabsTrigger>
             <TabsTrigger value="predictions" className="font-display">Predictions</TabsTrigger>
             <TabsTrigger value="managers" className="font-display">Managers</TabsTrigger>
+            <TabsTrigger value="transfers" className="font-display">Transfers</TabsTrigger>
             <TabsTrigger value="vouchers" className="font-display">Vouchers</TabsTrigger>
             <TabsTrigger value="settings" className="font-display">Indstillinger</TabsTrigger>
           </TabsList>
@@ -76,6 +75,7 @@ export default function AdminPage() {
           <TabsContent value="results"><ResultsAdmin /></TabsContent>
           <TabsContent value="predictions"><PredictionsAdmin /></TabsContent>
           <TabsContent value="managers"><ManagersAdmin /></TabsContent>
+          <TabsContent value="transfers"><TransfersAdmin /></TabsContent>
           <TabsContent value="vouchers"><VouchersAdmin /></TabsContent>
           <TabsContent value="settings"><SettingsAdmin /></TabsContent>
         </Tabs>
@@ -129,7 +129,7 @@ function DriversAdmin() {
   }
 
   async function handleWithdraw(d: any) {
-    if (!confirm(`Er du sikker på at markere ${d.name} som udgået af klassen? Berørte hold får joker/nødtransfer tilbage og notificeres via email.`)) return;
+    if (!confirm(`Er du sikker på at markere ${d.name} som udgået af klassen? Berørte hold får et gratis nødtransfer og notificeres via email.`)) return;
     setWithdrawing(true);
     try {
       const result = await withdrawDriver(d.id);
@@ -361,12 +361,22 @@ function SettingsAdmin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: settings, refetch } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
+  const [transferCostInput, setTransferCostInput] = useState("");
 
   async function toggle(key: string, current: boolean) {
     await updateSetting(key, (!current).toString());
     refetch();
     queryClient.invalidateQueries({ queryKey: ["settings"] });
     toast({ title: "Indstilling opdateret" });
+  }
+
+  async function saveTransferCost() {
+    const val = Number(transferCostInput);
+    if (isNaN(val) || val < 0) { toast({ title: "Angiv et gyldigt tal", variant: "destructive" }); return; }
+    await updateSetting("transfer_cost", String(val));
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ["settings"] });
+    toast({ title: "Transaktionsomkostning opdateret" });
   }
 
   if (!settings) return null;
@@ -380,6 +390,22 @@ function SettingsAdmin() {
       <div className="flex items-center justify-between rounded bg-secondary/50 px-4 py-3">
         <span className="text-sm text-foreground">Transfervindue åbent</span>
         <Switch checked={settings.transfer_window_open} onCheckedChange={() => toggle("transfer_window_open", settings.transfer_window_open)} />
+      </div>
+      <div className="rounded bg-secondary/50 px-4 py-3 space-y-2">
+        <span className="text-sm text-foreground">Transaktionsomkostning per transfer (point)</span>
+        <div className="flex gap-2">
+          <Input
+            type="number"
+            placeholder={String(settings.transfer_cost)}
+            value={transferCostInput}
+            onChange={(e) => setTransferCostInput(e.target.value)}
+            className="bg-card border-border w-32"
+          />
+          <Button size="sm" onClick={saveTransferCost} className="bg-gradient-racing text-primary-foreground font-display">
+            <Save className="h-4 w-4 mr-1" />Gem
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">Nuværende: {settings.transfer_cost} point. Ændringer træder i kraft ved næste transfer.</p>
       </div>
     </div>
   );
@@ -409,11 +435,50 @@ function ManagersAdmin() {
             <span className="font-medium text-foreground">{m.team_name}</span>
             <span className="text-muted-foreground ml-2">({m.name})</span>
             <span className="text-muted-foreground ml-2">• {m.total_points} point</span>
-            {m.joker_used && <span className="text-muted-foreground ml-2">• Joker brugt</span>}
+            
           </div>
           <button onClick={() => handleDelete(m.id, m.team_name)} className="text-destructive hover:text-destructive/80 shrink-0 ml-2"><Trash2 className="h-4 w-4" /></button>
         </div>
       ))}
+    </div>
+  );
+}
+
+function TransfersAdmin() {
+  const { data: transfers = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
+  const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
+  const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">{transfers.length} transfers i alt</p>
+      {transfers.length === 0 && <p className="text-sm text-muted-foreground">Ingen transfers endnu.</p>}
+      <div className="space-y-1">
+        {transfers.map((t: any) => {
+          const oldD = drivers.find((d: any) => d.id === t.old_driver_id);
+          const newD = drivers.find((d: any) => d.id === t.new_driver_id);
+          const mgr = managers.find((m: any) => m.id === t.manager_id);
+          return (
+            <div key={t.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span className="font-medium text-foreground truncate">{mgr?.team_name || "?"}</span>
+                <span className="text-muted-foreground">:</span>
+                <span className="text-destructive">#{oldD?.car_number} {oldD?.name}</span>
+                <span className="text-muted-foreground">→</span>
+                <span className="text-success">#{newD?.car_number} {newD?.name}</span>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className={`font-display font-bold ${t.is_free ? "text-success" : "text-destructive"}`}>
+                  {t.is_free ? "Gratis" : `−${t.point_cost} pts`}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(t.created_at).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
