@@ -115,7 +115,6 @@ export async function fetchSettings(): Promise<Settings> {
   const map: Record<string, string> = {};
   data?.forEach((s: any) => { map[s.key] = s.value; });
   return {
-    budget_limit: Number(map.budget_limit || 100),
     transfer_window_open: map.transfer_window_open === "true",
     team_registration_open: map.team_registration_open === "true",
     transfer_cost: Number(map.transfer_cost || 10),
