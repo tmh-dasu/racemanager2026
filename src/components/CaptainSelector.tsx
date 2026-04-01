@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, Clock, Lock } from "lucide-react";
-import { fetchCaptainSelections, setCaptainSelection, getNextRaceWithDeadline, getCaptaincyBudget, type Driver, type Race, type CaptainSelection } from "@/lib/api";
+import { fetchCaptainSelections, setCaptainSelection, getNextRaceWithDeadline, type Driver, type Race, type CaptainSelection } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
@@ -9,6 +9,17 @@ interface CaptainSelectorProps {
   managerId: string;
   drivers: Driver[];
   races: Race[];
+}
+
+const TIER_LABELS: Record<string, string> = { gold: "Guld", silver: "Sølv", bronze: "Bronze" };
+const TIER_EMOJI: Record<string, string> = { gold: "🥇", silver: "🥈", bronze: "🥉" };
+
+function getTierBudget(tier: string, captainSelections: CaptainSelection[], drivers: Driver[], excludeRaceId?: string): number {
+  const driverIdsInTier = drivers.filter((d) => d.tier === tier).map((d) => d.id);
+  const used = captainSelections
+    .filter((c) => driverIdsInTier.includes(c.driver_id) && (!excludeRaceId || c.race_id !== excludeRaceId))
+    .length;
+  return Math.max(0, 2 - used);
 }
 
 export default function CaptainSelector({ managerId, drivers, races }: CaptainSelectorProps) {
@@ -32,10 +43,13 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
 
   async function handleSelect(driverId: string) {
     if (!nextRace || isLocked || submitting) return;
-    
-    const budget = getCaptaincyBudget(driverId, captainSelections.filter((c) => c.race_id !== nextRace.id));
-    if (budget <= 0) {
-      toast({ title: "Denne kører har brugt alle 2 captaincies", variant: "destructive" });
+
+    const driver = drivers.find((d) => d.id === driverId);
+    if (!driver) return;
+
+    const tierRemaining = getTierBudget(driver.tier, captainSelections, drivers, nextRace.id);
+    if (tierRemaining <= 0) {
+      toast({ title: `${TIER_LABELS[driver.tier]}-pladsen har brugt alle 2 captaincies`, variant: "destructive" });
       return;
     }
 
@@ -43,8 +57,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
     try {
       await setCaptainSelection(managerId, nextRace.id, driverId);
       queryClient.invalidateQueries({ queryKey: ["captain_selections", managerId] });
-      const driverName = drivers.find((d) => d.id === driverId)?.name || "";
-      toast({ title: `${driverName} valgt som captain! 👑` });
+      toast({ title: `${driver.name} valgt som captain! 👑` });
     } catch (err: any) {
       toast({ title: "Fejl: " + err.message, variant: "destructive" });
     }
@@ -54,6 +67,8 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
   const deadlineStr = nextRace?.captain_deadline
     ? new Date(nextRace.captain_deadline).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
     : null;
+
+  const tiers = ["gold", "silver", "bronze"] as const;
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 shadow-card space-y-3">
@@ -75,7 +90,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
 
       {nextRace ? (
         <p className="text-sm text-muted-foreground">
-          {isLocked 
+          {isLocked
             ? `Captain-valg for ${nextRace.name} er lukket.`
             : `Vælg captain for ${nextRace.name} — kørers point tæller dobbelt!`}
         </p>
@@ -87,14 +102,25 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
         <p className="text-xs text-yellow-400">⚠️ Du har ikke valgt captain endnu — ingen bonus uden valg!</p>
       )}
 
+      {/* Tier budget summary */}
+      <div className="flex gap-3">
+        {tiers.map((tier) => {
+          const remaining = getTierBudget(tier, captainSelections, drivers, nextRace?.id);
+          return (
+            <div key={tier} className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1.5 text-xs">
+              <span>{TIER_EMOJI[tier]}</span>
+              <span className="text-muted-foreground">{TIER_LABELS[tier]}:</span>
+              <span className="font-display font-bold text-foreground">{remaining}/2</span>
+            </div>
+          );
+        })}
+      </div>
+
       <div className="grid gap-2">
         {drivers.map((d) => {
-          const remaining = getCaptaincyBudget(
-            d.id,
-            captainSelections.filter((c) => nextRace ? c.race_id !== nextRace.id : true)
-          );
+          const tierRemaining = getTierBudget(d.tier, captainSelections, drivers, nextRace?.id);
           const isCaptain = currentCaptainForNextRace === d.id;
-          const canSelect = !isLocked && remaining > 0 && !submitting;
+          const canSelect = !isLocked && tierRemaining > 0 && !submitting;
 
           return (
             <button
@@ -118,17 +144,17 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
                 <p className="text-xs text-muted-foreground">{d.team}</p>
               </div>
               <div className="text-right shrink-0">
-                <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground">{TIER_EMOJI[d.tier]} {TIER_LABELS[d.tier]}</span>
+                <div className="flex items-center gap-1 mt-0.5 justify-end">
                   {Array.from({ length: 2 }).map((_, i) => (
                     <span
                       key={i}
                       className={`inline-block h-2 w-2 rounded-full ${
-                        i < remaining ? "bg-gold" : "bg-muted"
+                        i < tierRemaining ? "bg-gold" : "bg-muted"
                       }`}
                     />
                   ))}
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{remaining}/2 tilbage</p>
               </div>
             </button>
           );
