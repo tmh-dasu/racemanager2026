@@ -294,6 +294,21 @@ function PredictionsAdmin() {
       if (error) throw error;
       refetch();
       toast({ title: published ? "Spørgsmål publiceret" : "Spørgsmål skjult" });
+      
+      // Send notification when publishing
+      if (published) {
+        const question = questions.find(q => q.id === id);
+        if (question) {
+          try {
+            await supabase.functions.invoke("notify-predictions", {
+              body: { race_id: question.race_id },
+            });
+            toast({ title: "Prediction-notifikation sendt til alle spillere" });
+          } catch (e) {
+            console.error("Failed to send prediction notification:", e);
+          }
+        }
+      }
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
     setSaving(false);
   }
@@ -453,6 +468,18 @@ function SettingsAdmin() {
     refetch();
     queryClient.invalidateQueries({ queryKey: ["settings"] });
     toast({ title: "Indstilling opdateret" });
+    
+    // Send transfer window notification
+    if (key === "transfer_window_open") {
+      try {
+        await supabase.functions.invoke("notify-transfer-window", {
+          body: { action: !current ? "opened" : "closing" },
+        });
+        toast({ title: `Transfer-notifikation sendt til alle spillere` });
+      } catch (e) {
+        console.error("Failed to send transfer notification:", e);
+      }
+    }
   }
 
   async function saveTransferCost() {

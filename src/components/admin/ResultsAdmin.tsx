@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Upload, CheckCircle2, AlertCircle } from "lucide-react";
+import { Save, Upload, CheckCircle2, AlertCircle, Mail } from "lucide-react";
 import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, SESSION_TYPES, SESSION_LABELS, type Driver, type Race } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,7 @@ export default function ResultsAdmin() {
   const [selectedRace, setSelectedRace] = useState("");
   const [grid, setGrid] = useState<GridData>({});
   const [saving, setSaving] = useState(false);
+  const [notifying, setNotifying] = useState(false);
 
   // Track which rounds have results
   const roundsWithResults = new Set(allResults.map(r => r.race_id));
@@ -89,6 +91,21 @@ export default function ResultsAdmin() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleNotifyResults() {
+    if (!selectedRace) return;
+    setNotifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("notify-results", {
+        body: { race_id: selectedRace },
+      });
+      if (error) throw error;
+      toast({ title: `Resultat-notifikation sendt til ${data?.sent || 0} spillere ✅` });
+    } catch (err: any) {
+      toast({ title: "Fejl ved afsendelse: " + err.message, variant: "destructive" });
+    }
+    setNotifying(false);
   }
 
   function handleCSVUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -185,6 +202,11 @@ export default function ResultsAdmin() {
             <Button onClick={handleSaveAll} disabled={saving} className="bg-gradient-racing text-primary-foreground font-display" size="sm">
               <Save className="h-4 w-4 mr-2" />{saving ? "Gemmer..." : "Gem alle sessioner"}
             </Button>
+            {roundsWithResults.has(selectedRace) && (
+              <Button onClick={handleNotifyResults} disabled={notifying} variant="outline" size="sm" className="font-display">
+                <Mail className="h-4 w-4 mr-2" />{notifying ? "Sender..." : "Send resultat-email"}
+              </Button>
+            )}
             <span className="text-xs text-muted-foreground ml-auto">
               CSV-format: bil_nr, tidtagning, heat1, heat2, heat3 (brug "DNF" for udgåede)
             </span>
