@@ -392,8 +392,7 @@ export default function MyTeamPage() {
             onConfirm={handleTransfer}
           />
         </DialogContent>
-
-
+      </Dialog>
 
       {/* Emergency Transfer Dialog */}
       <Dialog open={emergencyOpen} onOpenChange={setEmergencyOpen}>
