@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { HelpCircle, Check, X, Lock, Clock, AlertTriangle } from "lucide-react";
+import { HelpCircle, Lock, Clock, AlertTriangle } from "lucide-react";
 import { fetchPublishedPredictionQuestions, fetchPredictionAnswers, submitPredictionAnswer, fetchRaces, fetchManagerByUserId, fetchDrivers, QUESTION_TYPE_LABELS, type PredictionQuestion, type Race } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

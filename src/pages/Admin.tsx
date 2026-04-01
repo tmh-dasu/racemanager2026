@@ -289,9 +289,8 @@ function PredictionsAdmin() {
   async function handlePublish(id: string, published: boolean) {
     setSaving(true);
     try {
-      await upsertPredictionQuestion({ id, race_id: "", question_type: "", question_text: "", published } as any);
-      // Direct update since upsertPredictionQuestion handles id-based updates
-      const { error } = await (await import("@/integrations/supabase/client")).supabase.from("prediction_questions").update({ published }).eq("id", id);
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.from("prediction_questions").update({ published } as any).eq("id", id);
       if (error) throw error;
       refetch();
       toast({ title: published ? "Spørgsmål publiceret" : "Spørgsmål skjult" });
