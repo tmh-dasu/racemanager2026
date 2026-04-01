@@ -207,13 +207,15 @@ function DriversAdmin() {
 function RacesAdmin() {
   const { toast } = useToast();
   const { data: races = [], refetch } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
-  const [form, setForm] = useState({ round_number: "", name: "", location: "", race_date: "", captain_deadline: "" });
+  const [form, setForm] = useState({ round_number: "", name: "", location: "", race_date: "" });
 
   async function handleAdd() {
     if (!form.round_number || !form.name) { toast({ title: "Udfyld runde og navn", variant: "destructive" }); return; }
     try {
-      await upsertRace({ round_number: Number(form.round_number), name: form.name, location: form.location || null, race_date: form.race_date || null, captain_deadline: form.captain_deadline || null } as any);
-      setForm({ round_number: "", name: "", location: "", race_date: "", captain_deadline: "" });
+      const raceDate = form.race_date || null;
+      const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 24 * 60 * 60 * 1000).toISOString() : null;
+      await upsertRace({ round_number: Number(form.round_number), name: form.name, location: form.location || null, race_date: raceDate, captain_deadline: captainDeadline } as any);
+      setForm({ round_number: "", name: "", location: "", race_date: "" });
       refetch();
       toast({ title: "Løb tilføjet" });
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
