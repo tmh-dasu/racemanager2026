@@ -66,6 +66,7 @@ export default function AdminPage() {
             <TabsTrigger value="results" className="font-display">Resultater</TabsTrigger>
             <TabsTrigger value="predictions" className="font-display">Predictions</TabsTrigger>
             <TabsTrigger value="managers" className="font-display">Managers</TabsTrigger>
+            <TabsTrigger value="transfers" className="font-display">Transfers</TabsTrigger>
             <TabsTrigger value="vouchers" className="font-display">Vouchers</TabsTrigger>
             <TabsTrigger value="settings" className="font-display">Indstillinger</TabsTrigger>
           </TabsList>
@@ -75,6 +76,7 @@ export default function AdminPage() {
           <TabsContent value="results"><ResultsAdmin /></TabsContent>
           <TabsContent value="predictions"><PredictionsAdmin /></TabsContent>
           <TabsContent value="managers"><ManagersAdmin /></TabsContent>
+          <TabsContent value="transfers"><TransfersAdmin /></TabsContent>
           <TabsContent value="vouchers"><VouchersAdmin /></TabsContent>
           <TabsContent value="settings"><SettingsAdmin /></TabsContent>
         </Tabs>
