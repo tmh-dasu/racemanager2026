@@ -193,7 +193,7 @@ export default function RulesPage() {
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-gold/10 border border-gold/20 px-3 py-2">
             <Crown className="h-4 w-4 text-gold mt-0.5 shrink-0" />
-            <p className="text-xs text-gold">Du får en påmindelse 24 timer inden deadline!</p>
+            <p className="text-xs text-gold">Du får en påmindelse 48 timer inden deadline!</p>
           </div>
         </Section>
 
