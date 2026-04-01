@@ -444,7 +444,46 @@ function ManagersAdmin() {
   );
 }
 
-function VouchersAdmin() {
+function TransfersAdmin() {
+  const { data: transfers = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
+  const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
+  const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">{transfers.length} transfers i alt</p>
+      {transfers.length === 0 && <p className="text-sm text-muted-foreground">Ingen transfers endnu.</p>}
+      <div className="space-y-1">
+        {transfers.map((t: any) => {
+          const oldD = drivers.find((d: any) => d.id === t.old_driver_id);
+          const newD = drivers.find((d: any) => d.id === t.new_driver_id);
+          const mgr = managers.find((m: any) => m.id === t.manager_id);
+          return (
+            <div key={t.id} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 text-sm">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span className="font-medium text-foreground truncate">{mgr?.team_name || "?"}</span>
+                <span className="text-muted-foreground">:</span>
+                <span className="text-destructive">#{oldD?.car_number} {oldD?.name}</span>
+                <span className="text-muted-foreground">→</span>
+                <span className="text-success">#{newD?.car_number} {newD?.name}</span>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className={`font-display font-bold ${t.is_free ? "text-success" : "text-destructive"}`}>
+                  {t.is_free ? "Gratis" : `−${t.point_cost} pts`}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(t.created_at).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
   const { toast } = useToast();
   const [newCode, setNewCode] = useState("");
   const [bulkCount, setBulkCount] = useState("");
