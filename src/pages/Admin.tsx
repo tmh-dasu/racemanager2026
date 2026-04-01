@@ -90,32 +90,30 @@ function DriversAdmin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: drivers = [], refetch } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
-  const [form, setForm] = useState({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
+  const [form, setForm] = useState({ name: "", car_number: "", team: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
   const [editId, setEditId] = useState<string | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
 
   function startEdit(d: any) {
     setEditId(d.id);
-    setForm({ name: d.name, car_number: String(d.car_number), team: d.team, price: String(d.price), photo_url: d.photo_url || "", bio: d.bio || "", club: d.club || "", quote: d.quote || "", tier: d.tier || "bronze" });
+    setForm({ name: d.name, car_number: String(d.car_number), team: d.team, photo_url: d.photo_url || "", bio: d.bio || "", club: d.club || "", quote: d.quote || "", tier: d.tier || "bronze" });
   }
 
   function resetForm() {
     setEditId(null);
-    setForm({ name: "", car_number: "", team: "", price: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
+    setForm({ name: "", car_number: "", team: "", photo_url: "", bio: "", club: "", quote: "", tier: "bronze" });
   }
 
   function handleTierChange(tier: string) {
-    const autoPrice = !form.price || Object.values(TIER_DEFAULTS).includes(Number(form.price));
-    setForm({ ...form, tier, ...(autoPrice ? { price: String(TIER_DEFAULTS[tier] || 2000000) } : {}) });
+    setForm({ ...form, tier });
   }
 
   async function handleSave() {
     if (!form.name || !form.car_number || !form.team) {
       toast({ title: "Udfyld alle påkrævede felter", variant: "destructive" }); return;
     }
-    const price = Number(form.price) || TIER_DEFAULTS[form.tier] || 2000000;
     try {
-      await upsertDriver({ id: editId || undefined, name: form.name, car_number: Number(form.car_number), team: form.team, price, photo_url: form.photo_url || null, bio: form.bio, club: form.club, quote: form.quote, tier: form.tier } as any);
+      await upsertDriver({ id: editId || undefined, name: form.name, car_number: Number(form.car_number), team: form.team, photo_url: form.photo_url || null, bio: form.bio, club: form.club, quote: form.quote, tier: form.tier } as any);
       resetForm();
       refetch();
       toast({ title: editId ? "Kører opdateret" : "Kører tilføjet" });
