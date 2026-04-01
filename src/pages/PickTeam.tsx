@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, AlertTriangle } from "lucide-react";
-import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByUserId, submitSeasonPrediction, type Driver } from "@/lib/api";
+import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByUserId, type Driver } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
