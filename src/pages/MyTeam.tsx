@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, AlertTriangle, LogOut, ShieldAlert, History } from "lucide-react";
-import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers } from "@/lib/api";
+import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers, fetchCaptainSelections } from "@/lib/api";
 import { formatDKR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
