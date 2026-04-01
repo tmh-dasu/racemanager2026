@@ -93,6 +93,21 @@ export default function ResultsAdmin() {
     }
   }
 
+  async function handleNotifyResults() {
+    if (!selectedRace) return;
+    setNotifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("notify-results", {
+        body: { race_id: selectedRace },
+      });
+      if (error) throw error;
+      toast({ title: `Resultat-notifikation sendt til ${data?.sent || 0} spillere ✅` });
+    } catch (err: any) {
+      toast({ title: "Fejl ved afsendelse: " + err.message, variant: "destructive" });
+    }
+    setNotifying(false);
+  }
+
   function handleCSVUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedRace) return;
