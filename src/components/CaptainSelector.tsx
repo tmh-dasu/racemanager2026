@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, Clock, Lock } from "lucide-react";
-import { fetchCaptainSelections, setCaptainSelection, getNextRaceWithDeadline, type Driver, type Race, type CaptainSelection } from "@/lib/api";
+import { fetchCaptainSelections, setCaptainSelection, getNextRaceWithDeadline, getEffectiveDeadline, type Driver, type Race, type CaptainSelection } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,7 +35,8 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
 
   const nextRace = getNextRaceWithDeadline(races);
   const now = new Date();
-  const isLocked = !nextRace || (nextRace.captain_deadline && new Date(nextRace.captain_deadline) <= now);
+  const effectiveDeadline = nextRace ? getEffectiveDeadline(nextRace) : null;
+  const isLocked = !nextRace || (effectiveDeadline && effectiveDeadline <= now);
 
   const currentCaptainForNextRace = nextRace
     ? captainSelections.find((c) => c.race_id === nextRace.id)?.driver_id || null
@@ -64,8 +65,8 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
     setSubmitting(false);
   }
 
-  const deadlineStr = nextRace?.captain_deadline
-    ? new Date(nextRace.captain_deadline).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+  const deadlineStr = effectiveDeadline
+    ? effectiveDeadline.toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
     : null;
 
   const tiers = ["gold", "silver", "bronze"] as const;

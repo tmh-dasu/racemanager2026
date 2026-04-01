@@ -27,7 +27,7 @@ export default function PredictionPanel({ managerId }: PredictionPanelProps) {
   for (const q of questions) {
     const race = races.find((r) => r.id === q.race_id);
     if (!race) continue;
-    const deadline = q.prediction_deadline ? new Date(q.prediction_deadline) : (race.captain_deadline ? new Date(race.captain_deadline) : null);
+    const deadline = q.prediction_deadline ? new Date(q.prediction_deadline) : (race.race_date ? new Date(new Date(race.race_date).getTime() - 24 * 60 * 60 * 1000) : null);
     const isOpen = deadline ? now < deadline : true;
     const hasAnswer = answers.some((a) => a.question_id === q.id);
     

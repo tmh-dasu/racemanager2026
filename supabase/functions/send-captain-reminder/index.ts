@@ -23,16 +23,17 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   try {
+    // Deadline = race_date - 24h. We send reminders 48h before deadline (= 72h before race).
+    // Find races where race_date is between now+24h and now+72h+1h (so deadline is 0-48h away).
     const now = new Date()
-    const target = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-    const windowStart = new Date(target.getTime() - 30 * 60 * 1000)
-    const windowEnd = new Date(target.getTime() + 30 * 60 * 1000)
+    const minRaceDate = new Date(now.getTime() + 24 * 60 * 60 * 1000) // deadline = now
+    const maxRaceDate = new Date(now.getTime() + 72 * 60 * 60 * 1000 + 60 * 60 * 1000) // deadline ~48h away + buffer
 
     const { data: races } = await supabase
       .from('races')
-      .select('id, name, captain_deadline')
-      .gte('captain_deadline', windowStart.toISOString())
-      .lte('captain_deadline', windowEnd.toISOString())
+      .select('id, name, race_date')
+      .gte('race_date', minRaceDate.toISOString())
+      .lte('race_date', maxRaceDate.toISOString())
 
     if (!races || races.length === 0) {
       return new Response(JSON.stringify({ message: 'No upcoming deadlines' }), {
@@ -73,7 +74,8 @@ Deno.serve(async (req) => {
     const siteUrl = 'https://dasuracemanager.lovable.app'
 
     for (const race of races) {
-      const deadlineStr = new Date(race.captain_deadline!).toLocaleString('da-DK', {
+      const deadline = new Date(new Date(race.race_date!).getTime() - 24 * 60 * 60 * 1000)
+      const deadlineStr = deadline.toLocaleString('da-DK', {
         day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
       })
 
@@ -91,14 +93,14 @@ Deno.serve(async (req) => {
           reminderItems += '<li>🏆 <strong>Captain-valg</strong> — din captains point tæller dobbelt!</li>'
         }
         if (needsPrediction && raceQuestion) {
-          reminderItems += `<li>🔮 <strong>Prediction</strong> — "${raceQuestion.question_text}" (10 bonuspoint)</li>`
+          reminderItems += `<li>🔮 <strong>Prediction</strong> — "${raceQuestion.question_text}" (5 bonuspoint)</li>`
         }
 
         const html = `
           <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #e53e3e;">🏎️ Husk inden ${race.name}!</h2>
             <p>Hej ${mgr.team_name},</p>
-            <p>Deadline er <strong>${deadlineStr}</strong>. Du mangler:</p>
+            <p>Deadline er <strong>${deadlineStr}</strong> (24 timer inden arrangementet starter). Du mangler:</p>
             <ul style="margin: 16px 0; padding-left: 20px;">
               ${reminderItems}
             </ul>

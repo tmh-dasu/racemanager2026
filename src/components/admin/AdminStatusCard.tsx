@@ -10,9 +10,8 @@ interface StatusItem {
   tab?: string;
 }
 
-function getStatusItems(nextRace: Race | null, questions: PredictionQuestion[], settings: { transfer_window_open: boolean } | undefined): StatusItem[] {
+function getStatusItems(nextRace: Race | null, questions: PredictionQuestion[], _settings: { transfer_window_open: boolean } | undefined): StatusItem[] {
   const items: StatusItem[] = [];
-  const now = new Date();
 
   if (!nextRace) {
     items.push({ level: "red", message: "Næste arrangement er ikke oprettet", tab: "races" });
@@ -26,16 +25,10 @@ function getStatusItems(nextRace: Race | null, questions: PredictionQuestion[], 
     items.push({ level: "green", message: `Arrangementsdato sat: ${new Date(nextRace.race_date).toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}` });
   }
 
-  // Captain deadline
-  if (!nextRace.captain_deadline) {
-    const hoursUntilRace = nextRace.race_date ? (new Date(nextRace.race_date).getTime() - now.getTime()) / (1000 * 60 * 60) : Infinity;
-    if (hoursUntilRace < 48) {
-      items.push({ level: "red", message: `Captain-deadline IKKE sat – arrangement starter om mindre end 48 timer!`, tab: "races" });
-    } else {
-      items.push({ level: "yellow", message: `Captain-deadline mangler for Runde ${nextRace.round_number}`, tab: "races" });
-    }
-  } else {
-    items.push({ level: "green", message: `Captain-deadline sat: ${new Date(nextRace.captain_deadline).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` });
+  // Captain/transfer deadline (auto-calculated: race_date - 24h)
+  if (nextRace.race_date) {
+    const deadline = new Date(new Date(nextRace.race_date).getTime() - 24 * 60 * 60 * 1000);
+    items.push({ level: "green", message: `Deadline (captain + transfer): ${deadline.toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` });
   }
 
   // Predictions

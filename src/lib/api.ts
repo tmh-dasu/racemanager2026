@@ -22,6 +22,17 @@ export interface Race {
   captain_deadline: string | null;
 }
 
+/** Derive the effective deadline (24h before race_date). Falls back to captain_deadline for legacy data. */
+export function getEffectiveDeadline(race: Race): Date | null {
+  if (race.race_date) {
+    return new Date(new Date(race.race_date).getTime() - 24 * 60 * 60 * 1000);
+  }
+  if (race.captain_deadline) {
+    return new Date(race.captain_deadline);
+  }
+  return null;
+}
+
 export interface CaptainSelection {
   id: string;
   manager_id: string;
@@ -396,8 +407,11 @@ export async function setCaptainSelection(managerId: string, raceId: string, dri
 export function getNextRaceWithDeadline(races: Race[]): Race | null {
   const now = new Date();
   return races
-    .filter((r) => r.captain_deadline && new Date(r.captain_deadline) > now)
-    .sort((a, b) => new Date(a.captain_deadline!).getTime() - new Date(b.captain_deadline!).getTime())[0] || null;
+    .filter((r) => {
+      const dl = getEffectiveDeadline(r);
+      return dl && dl > now;
+    })
+    .sort((a, b) => getEffectiveDeadline(a)!.getTime() - getEffectiveDeadline(b)!.getTime())[0] || null;
 }
 
 // getCaptaincyBudget is now handled in CaptainSelector component (per tier slot, not per driver)
