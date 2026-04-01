@@ -17,7 +17,6 @@ import PageLayout from "@/components/PageLayout";
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useIsAdmin();
 
