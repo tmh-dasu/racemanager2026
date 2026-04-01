@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, ChevronDown, ChevronUp, Crown } from "lucide-react";
+import { ChevronDown, ChevronUp, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, type Manager, type Driver, type CaptainSelection, type Race } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
