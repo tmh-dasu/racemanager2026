@@ -16,8 +16,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import PageLayout from "@/components/PageLayout";
 
 export default function AdminPage() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useIsAdmin();
