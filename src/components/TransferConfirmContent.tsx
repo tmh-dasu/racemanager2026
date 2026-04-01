@@ -25,7 +25,7 @@ export default function TransferConfirmContent({ swapOutDriver, swapInDriver, tr
   const tier = swapOutDriver?.tier || "bronze";
   const tierCaptainCount = captainSelections.filter((c) => c.driver_id === swapOutDriver?.id).length;
 
-  const tierCaptainCount = captainSelections.filter((c) => c.driver_id === swapOutDriver?.id).length;
+  const tierRemaining = Math.max(0, 2 - tierCaptainCount);
   const tierRemaining = Math.max(0, 2 - tierCaptainCount);
 
   return (
