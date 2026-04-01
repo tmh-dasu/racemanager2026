@@ -10,9 +10,8 @@ interface StatusItem {
   tab?: string;
 }
 
-function getStatusItems(nextRace: Race | null, questions: PredictionQuestion[], settings: { transfer_window_open: boolean } | undefined): StatusItem[] {
+function getStatusItems(nextRace: Race | null, questions: PredictionQuestion[], _settings: { transfer_window_open: boolean } | undefined): StatusItem[] {
   const items: StatusItem[] = [];
-  const now = new Date();
 
   if (!nextRace) {
     items.push({ level: "red", message: "Næste arrangement er ikke oprettet", tab: "races" });
