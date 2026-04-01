@@ -131,7 +131,7 @@ export default function RulesPage() {
             <li>• Pointfradraget er <strong className="text-foreground">permanent</strong> og kan ikke fortrydes</li>
             <li>• Transfervinduet <strong className="text-foreground">åbner</strong> når admin indtaster resultater for et arrangement</li>
             <li>• Transfervinduet <strong className="text-foreground">lukker</strong> når tidtagning starter ved næste arrangement</li>
-            <li>• Ved transfer arver den nye kører den udgående kørers <strong className="text-foreground">resterende captaincy-budget</strong></li>
+            <li>• Captaincy-budgettet følger <strong className="text-foreground">tier-pladsen</strong>, ikke den individuelle kører — se captain-regler nedenfor</li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-accent/10 border border-accent/20 px-3 py-2">
             <ArrowRightLeft className="h-4 w-4 text-accent mt-0.5 shrink-0" />
@@ -146,7 +146,7 @@ export default function RulesPage() {
             <li>• Berørte hold får automatisk ét <strong className="text-foreground">gratis ekstraordinært transfer</strong> inden for samme tier – uden pointfradrag</li>
             <li>• Det gratis transfer gælder kun til erstatning af den udgåede kører</li>
             <li>• Du modtager en <strong className="text-foreground">email-notifikation</strong> når en af dine kørere udgår</li>
-            <li>• Den nye kører arver den udgåede kørers resterende captaincy-budget</li>
+            <li>• Captaincy-budgettet følger tier-pladsen — den nye kører har samme resterende budget som pladsen</li>
           </ul>
         </Section>
 
@@ -155,10 +155,13 @@ export default function RulesPage() {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>• Inden hvert arrangement vælger du <strong className="text-foreground">én kører som captain</strong></li>
             <li>• Captainens point for <strong className="text-foreground">hele arrangementet</strong> (alle 4 sessioner) tæller <strong className="text-foreground">dobbelt</strong></li>
-            <li>• Hver kører kan vælges som captain <strong className="text-foreground">max 2 gange</strong> i løbet af de 6 afdelinger</li>
+            <li>• Captaincy-budgettet er fordelt per <strong className="text-foreground">tier-plads</strong>, ikke per kører:</li>
+            <li className="ml-4">– Guld-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
+            <li className="ml-4">– Sølv-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
+            <li className="ml-4">– Bronze-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
             <li>• Deadline for captain-valg: <strong className="text-foreground">når tidtagning starter</strong></li>
-            <li>• Hvis du ikke vælger captain inden deadline, tæller alle point <strong className="text-foreground">normalt</strong> (ingen bonus)</li>
-            <li>• Ved transfer arver den nye kører den udgående kørers <strong className="text-foreground">resterende captaincy-budget</strong></li>
+            <li>• Hvis du ikke vælger captain inden deadline, tæller alle point <strong className="text-foreground">normalt</strong> (ingen bonus) — systemet tildeler <strong className="text-foreground">ikke</strong> automatisk en captain</li>
+            <li>• Ved transfer: captaincy-budgettet følger <strong className="text-foreground">tier-pladsen</strong> — hvis begge sølv-captaincies er brugt, kan den nye sølvkører ikke captaines</li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-gold/10 border border-gold/20 px-3 py-2">
             <Crown className="h-4 w-4 text-gold mt-0.5 shrink-0" />

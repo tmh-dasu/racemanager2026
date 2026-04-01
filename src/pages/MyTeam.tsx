@@ -12,6 +12,7 @@ import PageLayout from "@/components/PageLayout";
 import ShareTeamCard from "@/components/ShareTeamCard";
 import CaptainSelector from "@/components/CaptainSelector";
 import PredictionPanel from "@/components/PredictionPanel";
+import TransferConfirmContent from "@/components/TransferConfirmContent";
 
 export default function MyTeamPage() {
   const { toast } = useToast();
@@ -383,31 +384,14 @@ export default function MyTeamPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">Bekræft transfer</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="rounded-lg border border-border bg-secondary/50 p-4 space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-destructive font-semibold">Ud:</span>
-                <span className="text-foreground">#{swapOutDriver?.car_number} {swapOutDriver?.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-success font-semibold">Ind:</span>
-                <span className="text-foreground">#{drivers.find(d => d.id === swapInId)?.car_number} {drivers.find(d => d.id === swapInId)?.name}</span>
-              </div>
-            </div>
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
-              <p className="text-sm text-muted-foreground">Pointfradrag</p>
-              <p className="font-display text-2xl font-bold text-destructive">−{transferCost} point</p>
-            </div>
-            <p className="text-xs text-muted-foreground text-center">
-              Fradraget er permanent og kan ikke fortrydes.
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setConfirmOpen(false)} className="flex-1">Annuller</Button>
-              <Button onClick={handleTransfer} className="flex-1 bg-gradient-racing text-primary-foreground font-display">
-                Bekræft transfer
-              </Button>
-            </div>
-          </div>
+          <TransferConfirmContent
+            swapOutDriver={swapOutDriver}
+            swapInDriver={drivers.find(d => d.id === swapInId)}
+            transferCost={transferCost}
+            managerId={manager?.id}
+            onCancel={() => setConfirmOpen(false)}
+            onConfirm={handleTransfer}
+          />
         </DialogContent>
       </Dialog>
 
