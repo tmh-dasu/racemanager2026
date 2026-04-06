@@ -122,6 +122,16 @@ export function applyDropWorst(sessionPoints: number[], completedRounds: number)
   return { total, dropCount };
 }
 
+export const TRANSFER_COST_BY_TIER: Record<string, number> = {
+  gold: 15,
+  silver: 10,
+  bronze: 5,
+};
+
+export function getTransferCostForTier(tier: string): number {
+  return TRANSFER_COST_BY_TIER[tier] ?? 10;
+}
+
 export async function fetchSettings(): Promise<Settings> {
   const { data } = await supabase.from("settings").select("*");
   const map: Record<string, string> = {};
