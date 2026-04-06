@@ -160,7 +160,7 @@ export default function RulesPage() {
             </div>
             <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
               <span className="text-destructive font-bold">−</span>
-              <span className="text-muted-foreground"><strong className="text-foreground">Transferfradrag</strong> (5/10/15 point afhængigt af tier)</span>
+              <span className="text-muted-foreground"><strong className="text-foreground">Transferfradrag</strong> (5/10/15 point afhængigt af kategori)</span>
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-3">

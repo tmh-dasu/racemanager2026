@@ -445,7 +445,7 @@ export default function MyTeamPage() {
         <DialogContent className="bg-card border-border max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">Gratis nødtransfer – Erstat udgået kører</DialogTitle>
-            <DialogDescription>Du kan kun vælge en kører inden for samme tier som den udgåede kører. Ingen pointfradrag.</DialogDescription>
+            <DialogDescription>Du kan kun vælge en kører inden for samme kategori som den udgåede kører. Ingen pointfradrag.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {swapOutId && swapOutDriver && (
