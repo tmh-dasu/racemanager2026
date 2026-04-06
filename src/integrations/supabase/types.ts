@@ -464,27 +464,33 @@ export type Database = {
       }
       races: {
         Row: {
+          address: string | null
           captain_deadline: string | null
           created_at: string
           id: string
+          links: Json | null
           location: string | null
           name: string
           race_date: string | null
           round_number: number
         }
         Insert: {
+          address?: string | null
           captain_deadline?: string | null
           created_at?: string
           id?: string
+          links?: Json | null
           location?: string | null
           name: string
           race_date?: string | null
           round_number: number
         }
         Update: {
+          address?: string | null
           captain_deadline?: string | null
           created_at?: string
           id?: string
+          links?: Json | null
           location?: string | null
           name?: string
           race_date?: string | null
