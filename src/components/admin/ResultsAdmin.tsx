@@ -216,7 +216,7 @@ export default function ResultsAdmin() {
               </Button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              CSV-format: placering, bil_nr (brug "DNF" for udgåede)
+              CSV-format: Pos, No., Name, ... (standardformat fra tidtagning)
             </span>
           </div>
 
