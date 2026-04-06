@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
 
         let reminderItems = ''
         if (needsCaptain) {
-          reminderItems += '<li>🏆 <strong>Captain-valg</strong> — din captains point tæller dobbelt!</li>'
+          reminderItems += '<li>🏆 <strong>Holdkaptajn</strong> — din holdkaptajns point tæller dobbelt!</li>'
         }
         if (needsPrediction && raceQuestion) {
           reminderItems += `<li>🔮 <strong>Prediction</strong> — "${raceQuestion.question_text}" (5 bonuspoint)</li>`

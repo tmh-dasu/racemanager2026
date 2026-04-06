@@ -50,7 +50,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
 
     const tierRemaining = getTierBudget(driver.tier, captainSelections, drivers, nextRace.id);
     if (tierRemaining <= 0) {
-      toast({ title: `${TIER_LABELS[driver.tier]}-pladsen har brugt alle 2 captaincies`, variant: "destructive" });
+      toast({ title: `${TIER_LABELS[driver.tier]}-pladsen har brugt alle 2 holdkaptajner`, variant: "destructive" });
       return;
     }
 
@@ -58,7 +58,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
     try {
       await setCaptainSelection(managerId, nextRace.id, driverId);
       queryClient.invalidateQueries({ queryKey: ["captain_selections", managerId] });
-      toast({ title: `${driver.name} valgt som captain! 👑` });
+      toast({ title: `${driver.name} valgt som holdkaptajn! 👑` });
     } catch (err: any) {
       toast({ title: "Fejl: " + err.message, variant: "destructive" });
     }
@@ -76,7 +76,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Crown className="h-5 w-5 text-gold" />
-          <h2 className="font-display font-bold text-foreground">Captain-valg</h2>
+          <h2 className="font-display font-bold text-foreground">Holdkaptajn</h2>
         </div>
         {isLocked ? (
           <Badge className="bg-muted text-muted-foreground border-border">
@@ -92,15 +92,15 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
       {nextRace ? (
         <p className="text-sm text-muted-foreground">
           {isLocked
-            ? `Captain-valg for ${nextRace.name} er lukket.`
-            : `Vælg captain for ${nextRace.name} — kørers point tæller dobbelt!`}
+            ? `Holdkaptajn-valg for ${nextRace.name} er lukket.`
+            : `Vælg holdkaptajn for ${nextRace.name} — kørers point tæller dobbelt!`}
         </p>
       ) : (
-        <p className="text-sm text-muted-foreground">Intet kommende arrangement med captain-valg.</p>
+        <p className="text-sm text-muted-foreground">Intet kommende arrangement med holdkaptajn-valg.</p>
       )}
 
       {!currentCaptainForNextRace && !isLocked && nextRace && (
-        <p className="text-xs text-yellow-400">⚠️ Du har ikke valgt captain endnu — ingen bonus uden valg!</p>
+        <p className="text-xs text-yellow-400">⚠️ Du har ikke valgt holdkaptajn endnu — ingen bonus uden valg!</p>
       )}
 
       {/* Tier budget summary */}

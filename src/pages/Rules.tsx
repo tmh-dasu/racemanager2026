@@ -131,7 +131,7 @@ export default function RulesPage() {
             <li>• Transfervinduet er <strong className="text-foreground">lukket</strong> indtil admin åbner det efter hvert arrangements resultater er indtastet</li>
             <li>• Vinduet lukker automatisk <strong className="text-foreground">24 timer inden næste arrangement starter</strong></li>
             <li>• Vinduet kan også <strong className="text-foreground">lukkes manuelt</strong> af admin</li>
-            <li>• Captaincy-budgettet følger <strong className="text-foreground">kategoripladsen</strong>, ikke den individuelle kører — se captain-regler nedenfor</li>
+            <li>• Holdkaptajn-budgettet følger <strong className="text-foreground">kategoripladsen</strong>, ikke den individuelle kører — se holdkaptajn-regler nedenfor</li>
             <li>• <strong className="text-foreground">Gæstekørere</strong> er ikke en del af spillet — kun kørere tilmeldt den fulde sæson kan vælges</li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-secondary/50 border border-border px-3 py-2">
@@ -152,7 +152,7 @@ export default function RulesPage() {
             </div>
             <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
               <span className="text-success font-bold">+</span>
-              <span className="text-muted-foreground"><strong className="text-foreground">Captain-bonus</strong> (dobbelte point for valgt captain)</span>
+              <span className="text-muted-foreground"><strong className="text-foreground">Holdkaptajn-bonus</strong> (dobbelte point for valgt holdkaptajn)</span>
             </div>
             <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
               <span className="text-success font-bold">+</span>
@@ -175,22 +175,22 @@ export default function RulesPage() {
             <li>• Berørte hold får automatisk ét <strong className="text-foreground">gratis ekstraordinært transfer</strong> inden for samme kategori – uden pointfradrag</li>
             <li>• Det gratis transfer gælder kun til erstatning af den udgåede kører</li>
             <li>• Du modtager en <strong className="text-foreground">email-notifikation</strong> når en af dine kørere udgår</li>
-            <li>• Captaincy-budgettet følger kategoripladsen — den nye kører har samme resterende budget som pladsen</li>
+            <li>• Holdkaptajn-budgettet følger kategoripladsen — den nye kører har samme resterende budget som pladsen</li>
           </ul>
         </Section>
 
-        {/* Captain */}
-        <Section icon={<Crown className="h-5 w-5 text-gold" />} title="Captain-valg 👑">
+        {/* Holdkaptajn */}
+        <Section icon={<Crown className="h-5 w-5 text-gold" />} title="Holdkaptajn 👑">
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• Inden hvert arrangement vælger du <strong className="text-foreground">én kører som captain</strong></li>
-            <li>• Captainens point for <strong className="text-foreground">hele arrangementet</strong> (alle 4 sessioner) tæller <strong className="text-foreground">dobbelt</strong></li>
-            <li>• Captaincy-budgettet er fordelt per <strong className="text-foreground">kategoriplads</strong>, ikke per kører:</li>
-            <li className="ml-4">– Guld-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
-            <li className="ml-4">– Sølv-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
-            <li className="ml-4">– Bronze-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
-            <li>• Deadline for captain-valg: <strong className="text-foreground">24 timer inden arrangementet starter</strong></li>
-            <li>• Hvis du ikke vælger captain inden deadline, tæller alle point <strong className="text-foreground">normalt</strong> (ingen bonus) — systemet tildeler <strong className="text-foreground">ikke</strong> automatisk en captain</li>
-            <li>• Ved transfer: captaincy-budgettet følger <strong className="text-foreground">kategoripladsen</strong> — hvis begge sølv-captaincies er brugt, kan den nye sølvkører ikke captaines</li>
+            <li>• Inden hvert arrangement vælger du <strong className="text-foreground">én kører som holdkaptajn</strong></li>
+            <li>• Holdkaptajnens point for <strong className="text-foreground">hele arrangementet</strong> (alle 4 sessioner) tæller <strong className="text-foreground">dobbelt</strong></li>
+            <li>• Holdkaptajn-budgettet er fordelt per <strong className="text-foreground">kategoriplads</strong>, ikke per kører:</li>
+            <li className="ml-4">– Guld-pladsen: præcis <strong className="text-foreground">2 holdkaptajner</strong> hele sæsonen</li>
+            <li className="ml-4">– Sølv-pladsen: præcis <strong className="text-foreground">2 holdkaptajner</strong> hele sæsonen</li>
+            <li className="ml-4">– Bronze-pladsen: præcis <strong className="text-foreground">2 holdkaptajner</strong> hele sæsonen</li>
+            <li>• Deadline for holdkaptajn: <strong className="text-foreground">24 timer inden arrangementet starter</strong></li>
+            <li>• Hvis du ikke vælger holdkaptajn inden deadline, tæller alle point <strong className="text-foreground">normalt</strong> (ingen bonus) — systemet tildeler <strong className="text-foreground">ikke</strong> automatisk en holdkaptajn</li>
+            <li>• Ved transfer: holdkaptajn-budgettet følger <strong className="text-foreground">kategoripladsen</strong> — hvis begge sølv-holdkaptajner er brugt, kan den nye sølvkører ikke vælges som holdkaptajn</li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-gold/10 border border-gold/20 px-3 py-2">
             <Crown className="h-4 w-4 text-gold mt-0.5 shrink-0" />

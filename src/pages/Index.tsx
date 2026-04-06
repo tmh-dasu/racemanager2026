@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Trophy, Clock, ChevronRight, Flag, Crown, ArrowLeftRight, HelpCircle } from "lucide-react";
+import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle } from "lucide-react";
 import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 
@@ -111,7 +111,7 @@ export default function HomePage() {
                 <CountdownTimer deadline={nextRace.race_date} label="Arrangement" />
               )}
               {nextRace.race_date && (
-                <CountdownTimer deadline={new Date(new Date(nextRace.race_date).getTime() - 24 * 60 * 60 * 1000).toISOString()} label="Captain/transfer deadline" />
+                <CountdownTimer deadline={new Date(new Date(nextRace.race_date).getTime() - 24 * 60 * 60 * 1000).toISOString()} label="Holdkaptajn/transfer deadline" />
               )}
             </div>
 

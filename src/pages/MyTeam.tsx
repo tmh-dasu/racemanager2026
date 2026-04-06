@@ -216,7 +216,7 @@ export default function MyTeamPage() {
                 <p className="font-display text-lg font-bold text-foreground">{breakdown.racePoints}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Captain-bonus</p>
+                <p className="text-xs text-muted-foreground">Holdkaptajn</p>
                 <p className="font-display text-lg font-bold text-gold">+{breakdown.captainBonus}</p>
               </div>
               <div>
