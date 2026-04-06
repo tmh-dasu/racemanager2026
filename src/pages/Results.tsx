@@ -122,11 +122,11 @@ export default function ResultsPage() {
                   </div>
 
                   <div className="space-y-1">
-                    {driverSummaries.map(({ driverId, sessions, total }) => {
+                    {driverSummaries.map(({ driverId, sessions, total }, idx) => {
                       const cc = captainCount(driverId, race.id);
                       return (
                         <div key={driverId} className="grid gap-1 items-center rounded bg-secondary/50 px-2 py-1.5 text-sm" style={{ gridTemplateColumns: "1.5rem 1fr repeat(4, 1.5rem) 2.5rem 1.5rem" }}>
-                          <span className="text-[10px] text-muted-foreground font-display">{driverNumber(driverId)}</span>
+                          <span className="text-[10px] text-muted-foreground font-display">{idx + 1}</span>
                           <span className="font-medium text-foreground truncate text-xs">{driverName(driverId)}</span>
                           {SESSION_TYPES.map((s) => {
                             const r = sessions[s];
