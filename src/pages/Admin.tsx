@@ -664,6 +664,9 @@ function SettingsAdmin() {
           <p className="text-xs text-muted-foreground">Nuværende: {settings.admin_notification_email}</p>
         )}
       </div>
+
+      {/* Sponsor settings */}
+      <SponsorSettings settings={settings} refetch={refetch} queryClient={queryClient} />
     </div>
   );
 }
