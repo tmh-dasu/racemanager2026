@@ -314,16 +314,26 @@ function PredictionsAdmin() {
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const { data: questions = [], refetch } = useQuery({ queryKey: ["prediction_questions"], queryFn: fetchPredictionQuestions });
+  const { data: categories = [], refetch: refetchCats } = useQuery({ queryKey: ["prediction_categories"], queryFn: fetchPredictionCategories });
 
-  const [form, setForm] = useState({ race_id: "", question_type: "duel", question_text: "", option_a: "", option_b: "", prediction_deadline: "" });
+  const [form, setForm] = useState({ race_id: "", question_type: "", question_text: "", option_a: "", option_b: "", prediction_deadline: "" });
   const [resolveId, setResolveId] = useState<string | null>(null);
   const [resolveAnswer, setResolveAnswer] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const isDuel = form.question_type === "duel" || form.question_type === "point_duel";
+  // Category management
+  const [catForm, setCatForm] = useState({ key: "", label: "", is_duel: false });
+  const [showCatForm, setShowCatForm] = useState(false);
+
+  const selectedCat = categories.find(c => c.key === form.question_type);
+  const isDuel = selectedCat?.is_duel ?? false;
+
+  // Build labels map from dynamic categories
+  const categoryLabels: Record<string, string> = {};
+  for (const c of categories) categoryLabels[c.key] = c.label;
 
   async function handleCreate() {
-    if (!form.race_id || !form.question_text) { toast({ title: "Vælg løb og skriv spørgsmål", variant: "destructive" }); return; }
+    if (!form.race_id || !form.question_text || !form.question_type) { toast({ title: "Vælg løb, kategori og skriv spørgsmål", variant: "destructive" }); return; }
     if (isDuel && (!form.option_a || !form.option_b)) { toast({ title: "Vælg begge kørere for duel", variant: "destructive" }); return; }
     setSaving(true);
     try {
@@ -331,11 +341,11 @@ function PredictionsAdmin() {
         race_id: form.race_id,
         question_type: form.question_type,
         question_text: form.question_text,
-        option_a: isDuel ? `driver:${form.option_a}` : form.question_type === "yes_no" ? "ja" : null,
-        option_b: isDuel ? `driver:${form.option_b}` : form.question_type === "yes_no" ? "nej" : null,
+        option_a: isDuel ? `driver:${form.option_a}` : !isDuel ? (selectedCat ? null : null) : null,
+        option_b: isDuel ? `driver:${form.option_b}` : null,
         prediction_deadline: form.prediction_deadline || null,
       });
-      setForm({ race_id: "", question_type: "duel", question_text: "", option_a: "", option_b: "", prediction_deadline: "" });
+      setForm({ race_id: "", question_type: "", question_text: "", option_a: "", option_b: "", prediction_deadline: "" });
       refetch();
       toast({ title: "Prediction-spørgsmål oprettet" });
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
@@ -351,7 +361,6 @@ function PredictionsAdmin() {
       refetch();
       toast({ title: published ? "Spørgsmål publiceret" : "Spørgsmål skjult" });
       
-      // Send notification when publishing
       if (published) {
         const question = questions.find(q => q.id === id);
         if (question) {
@@ -374,7 +383,6 @@ function PredictionsAdmin() {
     setSaving(true);
     try {
       await resolvePredictions(resolveId, resolveAnswer);
-      // Recalculate points
       const { recalculateManagerPoints } = await import("@/lib/api");
       await recalculateManagerPoints();
       queryClient.invalidateQueries({ queryKey: ["managers"] });
@@ -395,13 +403,54 @@ function PredictionsAdmin() {
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
   }
 
+  async function handleCreateCategory() {
+    if (!catForm.key || !catForm.label) { toast({ title: "Udfyld nøgle og label", variant: "destructive" }); return; }
+    try {
+      await upsertPredictionCategory({ key: catForm.key, label: catForm.label, is_duel: catForm.is_duel, sort_order: categories.length + 1 });
+      setCatForm({ key: "", label: "", is_duel: false });
+      setShowCatForm(false);
+      refetchCats();
+      toast({ title: "Kategori oprettet" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+  }
+
+  async function handleDeleteCategory(id: string) {
+    if (!confirm("Slet denne kategori? Eksisterende spørgsmål beholdes.")) return;
+    try {
+      await deletePredictionCategory(id);
+      refetchCats();
+      toast({ title: "Kategori slettet" });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+  }
+
   function getDriverName(val: string) {
     const id = val.replace("driver:", "");
     const d = drivers.find((d) => d.id === id);
     return d ? `#${d.car_number} ${d.name}` : val;
   }
 
-  // Group questions by race
+  function getResolveOptions(q: any) {
+    const cat = categories.find(c => c.key === q.question_type);
+    if (cat?.is_duel) {
+      return (
+        <select value={resolveId === q.id ? resolveAnswer : ""} onChange={(e) => { setResolveId(q.id); setResolveAnswer(e.target.value); }} className="rounded-md bg-card border border-border px-2 py-1 text-sm text-foreground">
+          <option value="">Vælg korrekt svar</option>
+          {q.option_a && <option value={q.option_a}>{getDriverName(q.option_a)}</option>}
+          {q.option_b && <option value={q.option_b}>{getDriverName(q.option_b)}</option>}
+        </select>
+      );
+    }
+    // Free text / yes-no style – admin types the correct answer
+    return (
+      <Input
+        placeholder="Korrekt svar"
+        value={resolveId === q.id ? resolveAnswer : ""}
+        onChange={(e) => { setResolveId(q.id); setResolveAnswer(e.target.value); }}
+        className="bg-card border-border w-40 text-sm"
+      />
+    );
+  }
+
   const questionsByRace = new Map<string, typeof questions>();
   for (const q of questions) {
     if (!questionsByRace.has(q.race_id)) questionsByRace.set(q.race_id, []);
@@ -410,6 +459,38 @@ function PredictionsAdmin() {
 
   return (
     <div className="space-y-6">
+      {/* Category management */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="font-display font-semibold text-foreground">Kategorier</h3>
+          <Button size="sm" variant="outline" onClick={() => setShowCatForm(!showCatForm)}>
+            <Plus className="h-4 w-4 mr-1" />{showCatForm ? "Annuller" : "Tilføj kategori"}
+          </Button>
+        </div>
+        {showCatForm && (
+          <div className="flex flex-wrap gap-2 items-end">
+            <Input placeholder="Nøgle (f.eks. top_speed)" value={catForm.key} onChange={(e) => setCatForm({ ...catForm, key: e.target.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') })} className="bg-secondary border-border w-40" />
+            <Input placeholder="Label (f.eks. Topfart-gæt)" value={catForm.label} onChange={(e) => setCatForm({ ...catForm, label: e.target.value })} className="bg-secondary border-border w-64" />
+            <label className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Switch checked={catForm.is_duel} onCheckedChange={(v) => setCatForm({ ...catForm, is_duel: v })} />
+              Duel (vælg 2 kørere)
+            </label>
+            <Button size="sm" onClick={handleCreateCategory} className="bg-gradient-racing text-primary-foreground font-display">Opret</Button>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {categories.map((c) => (
+            <div key={c.id} className="flex items-center gap-1 rounded bg-secondary/50 px-3 py-1 text-sm">
+              <span className="text-foreground">{c.label}</span>
+              {c.is_duel && <span className="text-xs text-muted-foreground">(duel)</span>}
+              <button onClick={() => handleDeleteCategory(c.id)} className="text-destructive hover:text-destructive/80 ml-1">
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Create question */}
       <div className="space-y-2">
         <h3 className="font-display font-semibold text-foreground">Opret prediction-spørgsmål</h3>
@@ -419,7 +500,8 @@ function PredictionsAdmin() {
             {races.map((r) => <option key={r.id} value={r.id}>R{r.round_number}: {r.name}</option>)}
           </select>
           <select value={form.question_type} onChange={(e) => setForm({ ...form, question_type: e.target.value })} className="rounded-md bg-secondary border border-border px-3 py-2 text-sm text-foreground">
-            {Object.entries(QUESTION_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            <option value="">Vælg kategori</option>
+            {categories.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
           <div>
             <label className="text-xs text-muted-foreground">Deadline</label>
@@ -450,13 +532,13 @@ function PredictionsAdmin() {
         if (raceQs.length === 0) return null;
         return (
           <div key={race.id} className="space-y-2">
-            <h3 className="font-display font-semibold text-foreground">R{race.round_number}: {race.name} ({raceQs.length}/3)</h3>
+            <h3 className="font-display font-semibold text-foreground">R{race.round_number}: {race.name} ({raceQs.length})</h3>
             {raceQs.map((q: any) => (
               <div key={q.id} className="rounded bg-secondary/50 px-3 py-3 text-sm space-y-2">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex-1 min-w-0">
                     <span className="text-foreground">{q.question_text}</span>
-                    <span className="text-xs text-muted-foreground ml-2">({QUESTION_TYPE_LABELS[q.question_type]})</span>
+                    <span className="text-xs text-muted-foreground ml-2">({categoryLabels[q.question_type] || q.question_type})</span>
                     {q.option_a && <span className="text-xs text-muted-foreground ml-2">• {getDriverName(q.option_a)} vs {getDriverName(q.option_b)}</span>}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -481,19 +563,7 @@ function PredictionsAdmin() {
                   )}
                   {!q.correct_answer && (
                     <>
-                      {q.question_type === "yes_no" ? (
-                        <select value={resolveId === q.id ? resolveAnswer : ""} onChange={(e) => { setResolveId(q.id); setResolveAnswer(e.target.value); }} className="rounded-md bg-card border border-border px-2 py-1 text-sm text-foreground">
-                          <option value="">Vælg korrekt svar</option>
-                          <option value="ja">Ja</option>
-                          <option value="nej">Nej</option>
-                        </select>
-                      ) : (
-                        <select value={resolveId === q.id ? resolveAnswer : ""} onChange={(e) => { setResolveId(q.id); setResolveAnswer(e.target.value); }} className="rounded-md bg-card border border-border px-2 py-1 text-sm text-foreground">
-                          <option value="">Vælg korrekt svar</option>
-                          {q.option_a && <option value={q.option_a}>{getDriverName(q.option_a)}</option>}
-                          {q.option_b && <option value={q.option_b}>{getDriverName(q.option_b)}</option>}
-                        </select>
-                      )}
+                      {getResolveOptions(q)}
                       <Button size="sm" onClick={handleResolve} disabled={resolveId !== q.id || !resolveAnswer || saving} className="bg-gradient-racing text-primary-foreground font-display text-xs">
                         Afgør
                       </Button>
