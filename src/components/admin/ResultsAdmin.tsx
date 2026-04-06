@@ -143,7 +143,7 @@ export default function ResultsAdmin() {
 
         if (!pos) continue;
 
-        if (pos === "DNF") {
+        if (pos === "DNF" || pos === "DNS" || pos === "DSQ") {
           newGrid[driver.id][uploadSession] = { position: "", dnf: true };
         } else {
           const p = parseInt(pos);
