@@ -455,6 +455,34 @@ export const QUESTION_TYPE_LABELS: Record<string, string> = {
   yes_no: "Ja/Nej-spørgsmål",
 };
 
+export interface PredictionCategory {
+  id: string;
+  key: string;
+  label: string;
+  is_duel: boolean;
+  sort_order: number;
+}
+
+export async function fetchPredictionCategories(): Promise<PredictionCategory[]> {
+  const { data } = await supabase.from("prediction_categories").select("*").order("sort_order");
+  return (data || []) as unknown as PredictionCategory[];
+}
+
+export async function upsertPredictionCategory(cat: { id?: string; key: string; label: string; is_duel: boolean; sort_order: number }) {
+  if (cat.id) {
+    const { error } = await supabase.from("prediction_categories").update(cat as any).eq("id", cat.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("prediction_categories").insert(cat as any);
+    if (error) throw error;
+  }
+}
+
+export async function deletePredictionCategory(id: string) {
+  const { error } = await supabase.from("prediction_categories").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function fetchPredictionQuestions(): Promise<PredictionQuestion[]> {
   const { data } = await supabase.from("prediction_questions").select("*").order("created_at");
   return (data || []) as unknown as PredictionQuestion[];
