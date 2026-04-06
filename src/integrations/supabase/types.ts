@@ -325,6 +325,13 @@ export type Database = {
             referencedRelation: "prediction_questions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "prediction_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_questions_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       prediction_categories: {
@@ -662,6 +669,50 @@ export type Database = {
           total_points?: number | null
         }
         Relationships: []
+      }
+      prediction_questions_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          option_a: string | null
+          option_b: string | null
+          prediction_deadline: string | null
+          published: boolean | null
+          question_text: string | null
+          question_type: string | null
+          race_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          option_a?: string | null
+          option_b?: string | null
+          prediction_deadline?: string | null
+          published?: boolean | null
+          question_text?: string | null
+          question_type?: string | null
+          race_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          option_a?: string | null
+          option_b?: string | null
+          prediction_deadline?: string | null
+          published?: boolean | null
+          question_text?: string | null
+          question_type?: string | null
+          race_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_questions_race_id_fkey"
+            columns: ["race_id"]
+            isOneToOne: false
+            referencedRelation: "races"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {

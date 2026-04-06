@@ -489,7 +489,7 @@ export async function fetchPredictionQuestions(): Promise<PredictionQuestion[]> 
 }
 
 export async function fetchPublishedPredictionQuestions(): Promise<PredictionQuestion[]> {
-  const { data } = await supabase.from("prediction_questions").select("*").eq("published", true).order("created_at");
+  const { data } = await supabase.from("prediction_questions_public").select("*").eq("published", true).order("created_at");
   return (data || []) as unknown as PredictionQuestion[];
 }
 
