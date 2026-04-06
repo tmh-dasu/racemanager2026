@@ -284,9 +284,9 @@ export default function MyTeamPage() {
             className="bg-accent text-accent-foreground font-display font-semibold hover:bg-accent/90"
           >
             <ArrowLeftRight className="mr-2 h-4 w-4" />
-            Transfer ({transferCost} point)
+            Transfer
           </Button>
-          <span className="text-xs text-muted-foreground">Ubegrænset antal transfers • {transferCost} point per transfer</span>
+          <span className="text-xs text-muted-foreground">🥇 15 pts • 🥈 10 pts • 🥉 5 pts</span>
         </div>
 
         {/* Captain Selector */}
