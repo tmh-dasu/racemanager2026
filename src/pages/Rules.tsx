@@ -132,8 +132,7 @@ export default function RulesPage() {
             <li>• Vinduet lukker automatisk <strong className="text-foreground">24 timer inden næste arrangement starter</strong></li>
             <li>• Vinduet kan også <strong className="text-foreground">lukkes manuelt</strong> af admin</li>
             <li>• Captaincy-budgettet følger <strong className="text-foreground">tier-pladsen</strong>, ikke den individuelle kører — se captain-regler nedenfor</li>
-          </ul>
-          <li>• <strong className="text-foreground">Gæstekørere</strong> er ikke en del af spillet — kun kørere tilmeldt den fulde sæson kan vælges</li>
+            <li>• <strong className="text-foreground">Gæstekørere</strong> er ikke en del af spillet — kun kørere tilmeldt den fulde sæson kan vælges</li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-accent/10 border border-accent/20 px-3 py-2">
             <ArrowRightLeft className="h-4 w-4 text-accent mt-0.5 shrink-0" />
