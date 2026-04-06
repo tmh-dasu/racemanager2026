@@ -106,6 +106,18 @@ export default function HomePage() {
               Runde {nextRace.round_number}: {nextRace.name}
             </h2>
             {nextRace.location && <p className="text-sm text-muted-foreground">{nextRace.location}</p>}
+            {nextRace.address && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nextRace.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+              >
+                <MapPin className="h-3 w-3 text-racing-red" />
+                {nextRace.address}
+                <ExternalLink className="h-2.5 w-2.5" />
+              </a>
+            )}
 
             <div className="mt-3 space-y-2">
               {nextRace.race_date && (
