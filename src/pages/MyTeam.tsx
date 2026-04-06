@@ -99,7 +99,7 @@ export default function MyTeamPage() {
     const oldDriver = drivers.find((d) => d.id === swapOutId);
     const newDriver = drivers.find((d) => d.id === swapInId);
     if (!oldDriver || !newDriver || oldDriver.tier !== newDriver.tier) {
-      toast({ title: "Du kan kun bytte til en kører i samme tier", variant: "destructive" });
+      toast({ title: "Du kan kun bytte til en kører i samme kategori", variant: "destructive" });
       return;
     }
 
@@ -371,7 +371,7 @@ export default function MyTeamPage() {
         <DialogContent className="bg-card border-border max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">Transfer – Skift kører</DialogTitle>
-            <DialogDescription>Du kan kun bytte til en kører inden for samme tier. Koster 🥇 15 / 🥈 10 / 🥉 5 point.</DialogDescription>
+            <DialogDescription>Du kan kun bytte til en kører inden for samme kategori. Koster 🥇 15 / 🥈 10 / 🥉 5 point.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -385,7 +385,7 @@ export default function MyTeamPage() {
                   >
                     <span className="font-display font-bold text-foreground">#{d.car_number}</span>
                     <span className="text-sm text-foreground">{d.name}</span>
-                    <span className="text-xs text-muted-foreground capitalize">{d.tier === "gold" ? "🥇" : d.tier === "silver" ? "🥈" : "🥉"} {d.tier}</span>
+                    <span className="text-xs text-muted-foreground capitalize">{d.tier === "gold" ? "🥇 Guld" : d.tier === "silver" ? "🥈 Sølv" : "🥉 Bronze"}</span>
                   </button>
                 ))}
               </div>
@@ -394,7 +394,7 @@ export default function MyTeamPage() {
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Vælg ny kører ({swapOutDriver?.tier === "gold" ? "🥇 Guld" : swapOutDriver?.tier === "silver" ? "🥈 Sølv" : "🥉 Bronze"}):</p>
                 <div className="max-h-48 space-y-2 overflow-y-auto">
-                  {availableDrivers.length === 0 && <p className="text-xs text-muted-foreground">Ingen ledige kørere i denne tier.</p>}
+                  {availableDrivers.length === 0 && <p className="text-xs text-muted-foreground">Ingen ledige kørere i denne kategori.</p>}
                   {availableDrivers.map((d) => (
                     <button
                       key={d.id}
@@ -445,7 +445,7 @@ export default function MyTeamPage() {
         <DialogContent className="bg-card border-border max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">Gratis nødtransfer – Erstat udgået kører</DialogTitle>
-            <DialogDescription>Du kan kun vælge en kører inden for samme tier som den udgåede kører. Ingen pointfradrag.</DialogDescription>
+            <DialogDescription>Du kan kun vælge en kører inden for samme kategori som den udgåede kører. Ingen pointfradrag.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {swapOutId && swapOutDriver && (

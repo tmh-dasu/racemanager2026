@@ -56,7 +56,7 @@ export default function RulesPage() {
         <Section icon={<Zap className="h-5 w-5 text-accent" />} title="Sådan deltager du">
           <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
             <li>Opret dit hold med et holdnavn, dit navn og din e-mail</li>
-            <li>Vælg <strong className="text-foreground">3 kørere</strong>: én fra <strong className="text-gold">Guld</strong>, én fra <strong className="text-silver">Sølv</strong> og én fra <strong className="text-bronze">Bronze</strong>-tier</li>
+            <li>Vælg <strong className="text-foreground">3 kørere</strong>: én fra <strong className="text-gold">Guld</strong>, én fra <strong className="text-silver">Sølv</strong> og én fra <strong className="text-bronze">Bronze</strong>-kategorien</li>
             <li>Du kan løbende justere dit hold via transfers (se nedenfor)</li>
           </ol>
         </Section>
@@ -124,14 +124,14 @@ export default function RulesPage() {
         {/* Transfers */}
         <Section icon={<ArrowRightLeft className="h-5 w-5 text-accent" />} title="Transfer-system 🔄">
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• Du kan til enhver tid skifte <strong className="text-foreground">én kører</strong> ud mod en anden <strong className="text-foreground">inden for samme tier</strong></li>
-            <li>• Transfers koster point afhængigt af tieren på den kører, du henter ind: en <strong className="text-gold">guldkører koster 15 point</strong>, en <strong className="text-silver">sølvkører koster 10 point</strong> og en <strong className="text-bronze">bronzekører koster 5 point</strong>. Pointomkostningen trækkes fra din pointsaldo ved bekræftelse.</li>
+            <li>• Du kan til enhver tid skifte <strong className="text-foreground">én kører</strong> ud mod en anden <strong className="text-foreground">inden for samme kategori</strong></li>
+            <li>• Transfers koster point afhængigt af kategorien på den kører, du henter ind: en <strong className="text-gold">guldkører koster 15 point</strong>, en <strong className="text-silver">sølvkører koster 10 point</strong> og en <strong className="text-bronze">bronzekører koster 5 point</strong>. Pointomkostningen trækkes fra din pointsaldo ved bekræftelse.</li>
             <li>• Der er <strong className="text-foreground">ingen grænse</strong> for antal transfers – men hvert koster point</li>
             <li>• Pointfradraget er <strong className="text-foreground">permanent</strong> og kan ikke fortrydes</li>
             <li>• Transfervinduet er <strong className="text-foreground">lukket</strong> indtil admin åbner det efter hvert arrangements resultater er indtastet</li>
             <li>• Vinduet lukker automatisk <strong className="text-foreground">24 timer inden næste arrangement starter</strong></li>
             <li>• Vinduet kan også <strong className="text-foreground">lukkes manuelt</strong> af admin</li>
-            <li>• Captaincy-budgettet følger <strong className="text-foreground">tier-pladsen</strong>, ikke den individuelle kører — se captain-regler nedenfor</li>
+            <li>• Captaincy-budgettet følger <strong className="text-foreground">kategoripladsen</strong>, ikke den individuelle kører — se captain-regler nedenfor</li>
             <li>• <strong className="text-foreground">Gæstekørere</strong> er ikke en del af spillet — kun kørere tilmeldt den fulde sæson kan vælges</li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-accent/10 border border-accent/20 px-3 py-2">
@@ -160,7 +160,7 @@ export default function RulesPage() {
             </div>
             <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
               <span className="text-destructive font-bold">−</span>
-              <span className="text-muted-foreground"><strong className="text-foreground">Transferfradrag</strong> (5/10/15 point afhængigt af tier)</span>
+              <span className="text-muted-foreground"><strong className="text-foreground">Transferfradrag</strong> (5/10/15 point afhængigt af kategori)</span>
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-3">
@@ -172,10 +172,10 @@ export default function RulesPage() {
         <Section icon={<ShieldAlert className="h-5 w-5 text-destructive" />} title="Kører udgår af klassen ⚠️">
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>• Hvis en kører officielt udgår af klassen, markeres det af admin i systemet</li>
-            <li>• Berørte hold får automatisk ét <strong className="text-foreground">gratis ekstraordinært transfer</strong> inden for samme tier – uden pointfradrag</li>
+            <li>• Berørte hold får automatisk ét <strong className="text-foreground">gratis ekstraordinært transfer</strong> inden for samme kategori – uden pointfradrag</li>
             <li>• Det gratis transfer gælder kun til erstatning af den udgåede kører</li>
             <li>• Du modtager en <strong className="text-foreground">email-notifikation</strong> når en af dine kørere udgår</li>
-            <li>• Captaincy-budgettet følger tier-pladsen — den nye kører har samme resterende budget som pladsen</li>
+            <li>• Captaincy-budgettet følger kategoripladsen — den nye kører har samme resterende budget som pladsen</li>
           </ul>
         </Section>
 
@@ -184,13 +184,13 @@ export default function RulesPage() {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>• Inden hvert arrangement vælger du <strong className="text-foreground">én kører som captain</strong></li>
             <li>• Captainens point for <strong className="text-foreground">hele arrangementet</strong> (alle 4 sessioner) tæller <strong className="text-foreground">dobbelt</strong></li>
-            <li>• Captaincy-budgettet er fordelt per <strong className="text-foreground">tier-plads</strong>, ikke per kører:</li>
+            <li>• Captaincy-budgettet er fordelt per <strong className="text-foreground">kategoriplads</strong>, ikke per kører:</li>
             <li className="ml-4">– Guld-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
             <li className="ml-4">– Sølv-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
             <li className="ml-4">– Bronze-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
             <li>• Deadline for captain-valg: <strong className="text-foreground">24 timer inden arrangementet starter</strong></li>
             <li>• Hvis du ikke vælger captain inden deadline, tæller alle point <strong className="text-foreground">normalt</strong> (ingen bonus) — systemet tildeler <strong className="text-foreground">ikke</strong> automatisk en captain</li>
-            <li>• Ved transfer: captaincy-budgettet følger <strong className="text-foreground">tier-pladsen</strong> — hvis begge sølv-captaincies er brugt, kan den nye sølvkører ikke captaines</li>
+            <li>• Ved transfer: captaincy-budgettet følger <strong className="text-foreground">kategoripladsen</strong> — hvis begge sølv-captaincies er brugt, kan den nye sølvkører ikke captaines</li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-gold/10 border border-gold/20 px-3 py-2">
             <Crown className="h-4 w-4 text-gold mt-0.5 shrink-0" />

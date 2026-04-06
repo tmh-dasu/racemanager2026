@@ -59,7 +59,7 @@ export default function PickTeamPage() {
   async function handleSubmit() {
     if (!user) { navigate("/login"); return; }
     if (!teamName) { toast({ title: "Udfyld holdnavn", variant: "destructive" }); return; }
-    if (!allSelected) { toast({ title: "Vælg én kører fra hver tier", variant: "destructive" }); return; }
+    if (!allSelected) { toast({ title: "Vælg én kører fra hver kategori", variant: "destructive" }); return; }
 
     setSubmitting(true);
     try {
@@ -124,7 +124,7 @@ export default function PickTeamPage() {
       <div className="container py-6 space-y-8">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Vælg dit hold</h1>
-          <p className="text-sm text-muted-foreground">Vælg præcis 1 kører fra hver tier: Guld, Sølv og Bronze</p>
+          <p className="text-sm text-muted-foreground">Vælg præcis 1 kører fra hver kategori: Guld, Sølv og Bronze</p>
         </div>
 
         <div className="max-w-md">
