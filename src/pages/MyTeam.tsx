@@ -371,7 +371,7 @@ export default function MyTeamPage() {
         <DialogContent className="bg-card border-border max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">Transfer – Skift kører</DialogTitle>
-            <DialogDescription>Du kan kun bytte til en kører inden for samme tier. Koster 🥇 15 / 🥈 10 / 🥉 5 point.</DialogDescription>
+            <DialogDescription>Du kan kun bytte til en kører inden for samme kategori. Koster 🥇 15 / 🥈 10 / 🥉 5 point.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
