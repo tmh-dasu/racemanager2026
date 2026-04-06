@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
             </p>
           </div>
           <div style="padding:12px 24px;text-align:center;font-size:11px;color:#64748b;">
-            DASU Race Manager – Automatisk admin-påmindelse
+            DASU RaceManager – Automatisk admin-påmindelse
           </div>
         </div>
       `
