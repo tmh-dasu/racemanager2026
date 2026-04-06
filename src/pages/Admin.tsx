@@ -664,6 +664,47 @@ function SettingsAdmin() {
           <p className="text-xs text-muted-foreground">Nuværende: {settings.admin_notification_email}</p>
         )}
       </div>
+
+      {/* Sponsor settings */}
+      <SponsorSettings settings={settings} refetch={refetch} queryClient={queryClient} />
+    </div>
+  );
+}
+
+function SponsorSettings({ settings, refetch, queryClient }: { settings: any; refetch: () => void; queryClient: any }) {
+  const { toast } = useToast();
+  const [sponsorName, setSponsorName] = useState(settings.sponsor_name || "");
+  const [sponsorLogo, setSponsorLogo] = useState(settings.sponsor_logo_url || "");
+  const [sponsorUrl, setSponsorUrl] = useState(settings.sponsor_website_url || "");
+  const [sponsorTagline, setSponsorTagline] = useState(settings.sponsor_tagline || "");
+
+  async function handleSaveSponsor() {
+    try {
+      await Promise.all([
+        updateSetting("sponsor_name", sponsorName.trim()),
+        updateSetting("sponsor_logo_url", sponsorLogo.trim()),
+        updateSetting("sponsor_website_url", sponsorUrl.trim()),
+        updateSetting("sponsor_tagline", sponsorTagline.trim()),
+      ]);
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      toast({ title: "Sponsor-indstillinger gemt" });
+    } catch (err: any) {
+      toast({ title: err.message, variant: "destructive" });
+    }
+  }
+
+  return (
+    <div className="rounded bg-secondary/50 px-4 py-3 space-y-3">
+      <span className="text-sm font-medium text-foreground">Præmiesponsorer (forside)</span>
+      <p className="text-xs text-muted-foreground">Vises som et kort på forsiden. Lad felterne stå tomme for at skjule kortet.</p>
+      <Input placeholder="Sponsor-navn" value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} className="bg-card border-border" />
+      <Input placeholder="Logo-URL (billede)" value={sponsorLogo} onChange={(e) => setSponsorLogo(e.target.value)} className="bg-card border-border" />
+      <Input placeholder="Website-URL" value={sponsorUrl} onChange={(e) => setSponsorUrl(e.target.value)} className="bg-card border-border" />
+      <Input placeholder="Tagline / beskrivelse (valgfri)" value={sponsorTagline} onChange={(e) => setSponsorTagline(e.target.value)} className="bg-card border-border" />
+      <Button size="sm" onClick={handleSaveSponsor} className="bg-gradient-racing text-primary-foreground font-display">
+        <Save className="h-4 w-4 mr-1" />Gem sponsor
+      </Button>
     </div>
   );
 }
