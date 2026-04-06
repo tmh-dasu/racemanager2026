@@ -19,6 +19,17 @@ Deno.serve(async (req) => {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+  // Only allow service_role access
+  const authHeader = req.headers.get('Authorization')
+  const apiKeyHeader = req.headers.get('apikey')
+  const isServiceRole =
+    apiKeyHeader === supabaseServiceKey ||
+    (authHeader && authHeader.replace('Bearer ', '') === supabaseServiceKey)
+  if (!isServiceRole) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
