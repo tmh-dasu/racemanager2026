@@ -82,6 +82,10 @@ export interface Settings {
   transfer_window_open: boolean;
   team_registration_open: boolean;
   admin_notification_email: string;
+  sponsor_name: string;
+  sponsor_logo_url: string;
+  sponsor_website_url: string;
+  sponsor_tagline: string;
 }
 
 export const SESSION_TYPES = ["qualifying", "heat1", "heat2", "heat3"] as const;
