@@ -327,6 +327,33 @@ export type Database = {
           },
         ]
       }
+      prediction_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_duel: boolean
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_duel?: boolean
+          key: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_duel?: boolean
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       prediction_questions: {
         Row: {
           correct_answer: string | null
