@@ -92,8 +92,8 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
       {nextRace ? (
         <p className="text-sm text-muted-foreground">
           {isLocked
-            ? `Captain-valg for ${nextRace.name} er lukket.`
-            : `Vælg captain for ${nextRace.name} — kørers point tæller dobbelt!`}
+            ? `Holdkaptajn-valg for ${nextRace.name} er lukket.`
+            : `Vælg holdkaptajn for ${nextRace.name} — kørers point tæller dobbelt!`}
         </p>
       ) : (
         <p className="text-sm text-muted-foreground">Intet kommende arrangement med captain-valg.</p>
