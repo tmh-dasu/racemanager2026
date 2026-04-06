@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { HelpCircle, Lock, Clock, AlertTriangle } from "lucide-react";
-import { fetchPublishedPredictionQuestions, fetchPredictionAnswers, submitPredictionAnswer, fetchRaces, fetchManagerByUserId, fetchDrivers, QUESTION_TYPE_LABELS, type PredictionQuestion, type Race } from "@/lib/api";
+import { fetchPublishedPredictionQuestions, fetchPredictionAnswers, submitPredictionAnswer, fetchRaces, fetchManagerByUserId, fetchDrivers, fetchPredictionCategories, type PredictionQuestion, type Race } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -62,6 +62,10 @@ export default function PredictionsPage() {
   });
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
+  const { data: categories = [] } = useQuery({ queryKey: ["prediction_categories"], queryFn: fetchPredictionCategories });
+
+  const categoryLabels: Record<string, string> = {};
+  for (const c of categories) categoryLabels[c.key] = c.label;
 
   const now = new Date();
 
@@ -113,11 +117,40 @@ export default function PredictionsPage() {
     const existingAnswer = q.myAnswer?.answer;
     const localAnswer = answers[q.id];
     const selected = localAnswer || existingAnswer;
+    const cat = categories.find(c => c.key === q.question_type);
 
-    if (q.question_type === "yes_no") {
+    if (cat?.is_duel || (q.option_a?.startsWith("driver:") && q.option_b?.startsWith("driver:"))) {
+      const optionA = q.option_a || "";
+      const optionB = q.option_b || "";
       const options = [
-        { value: "ja", label: "Ja" },
-        { value: "nej", label: "Nej" },
+        { value: optionA, label: optionA.startsWith("driver:") ? getDriverName(optionA.replace("driver:", "")) : optionA },
+        { value: optionB, label: optionB.startsWith("driver:") ? getDriverName(optionB.replace("driver:", "")) : optionB },
+      ];
+      return (
+        <div className="flex gap-2 flex-wrap">
+          {options.map((o) => (
+            <button
+              key={o.value}
+              onClick={() => !q.isLocked && setLocalAnswers((prev) => ({ ...prev, [q.id]: o.value }))}
+              disabled={q.isLocked}
+              className={`rounded-lg border px-4 py-2.5 font-display font-semibold text-sm transition-all flex-1 min-w-[120px] ${
+                selected === o.value
+                  ? "border-gold bg-gold/10 text-foreground shadow-md"
+                  : "border-border bg-card hover:border-gold/30 text-muted-foreground"
+              } ${q.isLocked ? "cursor-not-allowed opacity-60" : ""}`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    // Non-duel with predefined options (e.g. ja/nej or custom)
+    if (q.option_a && q.option_b) {
+      const options = [
+        { value: q.option_a, label: q.option_a.charAt(0).toUpperCase() + q.option_a.slice(1) },
+        { value: q.option_b, label: q.option_b.charAt(0).toUpperCase() + q.option_b.slice(1) },
       ];
       return (
         <div className="flex gap-2">
@@ -139,31 +172,16 @@ export default function PredictionsPage() {
       );
     }
 
-    // Duel or point_duel
-    const optionA = q.option_a || "";
-    const optionB = q.option_b || "";
-    const options = [
-      { value: optionA, label: optionA.startsWith("driver:") ? getDriverName(optionA.replace("driver:", "")) : optionA },
-      { value: optionB, label: optionB.startsWith("driver:") ? getDriverName(optionB.replace("driver:", "")) : optionB },
-    ];
-
+    // Free text input
     return (
-      <div className="flex gap-2 flex-wrap">
-        {options.map((o) => (
-          <button
-            key={o.value}
-            onClick={() => !q.isLocked && setLocalAnswers((prev) => ({ ...prev, [q.id]: o.value }))}
-            disabled={q.isLocked}
-            className={`rounded-lg border px-4 py-2.5 font-display font-semibold text-sm transition-all flex-1 min-w-[120px] ${
-              selected === o.value
-                ? "border-gold bg-gold/10 text-foreground shadow-md"
-                : "border-border bg-card hover:border-gold/30 text-muted-foreground"
-            } ${q.isLocked ? "cursor-not-allowed opacity-60" : ""}`}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
+      <input
+        type="text"
+        value={localAnswer ?? existingAnswer ?? ""}
+        onChange={(e) => !q.isLocked && setLocalAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+        disabled={q.isLocked}
+        placeholder="Skriv dit svar..."
+        className={`rounded-lg border px-4 py-2.5 text-sm bg-card text-foreground border-border w-full ${q.isLocked ? "cursor-not-allowed opacity-60" : ""}`}
+      />
     );
   }
 
@@ -245,7 +263,7 @@ export default function PredictionsPage() {
                 <div key={q.id} className="space-y-2 rounded-md bg-secondary/30 p-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-display font-bold text-muted-foreground">#{i + 1}</span>
-                    <span className="text-xs text-muted-foreground">{QUESTION_TYPE_LABELS[q.question_type]}</span>
+                    <span className="text-xs text-muted-foreground">{categoryLabels[q.question_type] || q.question_type}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{q.question_text}</p>
 
