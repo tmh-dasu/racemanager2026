@@ -58,13 +58,28 @@ export default function AppNav() {
               );
             })}
             {user ? (
-              <button
-                onClick={signOut}
-                className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="font-medium">Log ud</span>
-              </button>
+              <>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors ${
+                      location.pathname === "/admin"
+                        ? "text-accent-foreground bg-accent/20"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span className="font-medium">Admin</span>
+                  </Link>
+                )}
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="font-medium">Log ud</span>
+                </button>
+              </>
             ) : (
               <Link
                 to="/login"
