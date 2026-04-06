@@ -164,7 +164,7 @@ export async function fetchDrivers(): Promise<Driver[]> {
 
 export async function fetchRaces(): Promise<Race[]> {
   const { data } = await supabase.from("races").select("*").order("round_number");
-  return (data || []) as Race[];
+  return ((data || []) as any[]).map(r => ({ ...r, links: Array.isArray(r.links) ? r.links : [] })) as Race[];
 }
 
 export async function fetchRaceResults(raceId?: string): Promise<RaceResult[]> {
