@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'DASU RaceManager <noreply@racemanager.dasu.dk>',,
+            from: 'DASU RaceManager <noreply@racemanager.dasu.dk>',
             to: [adminEmail],
             subject: `⚠️ Runde ${race.round_number} mangler opsætning – ${issues.length} problem${issues.length > 1 ? 'er' : ''}`,
             html,
