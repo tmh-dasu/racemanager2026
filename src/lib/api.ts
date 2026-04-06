@@ -291,11 +291,12 @@ export async function deleteManager(id: string) {
 }
 
 export async function upsertRace(race: Partial<Race> & { round_number: number; name: string }) {
+  const payload: any = { ...race };
   if (race.id) {
-    const { error } = await supabase.from("races").update(race).eq("id", race.id);
+    const { error } = await supabase.from("races").update(payload).eq("id", race.id);
     if (error) throw error;
   } else {
-    const { error } = await supabase.from("races").insert(race);
+    const { error } = await supabase.from("races").insert(payload);
     if (error) throw error;
   }
 }
