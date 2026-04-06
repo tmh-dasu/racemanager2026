@@ -637,20 +637,16 @@ function SettingsAdmin() {
         <Switch checked={settings.transfer_window_open} onCheckedChange={() => toggle("transfer_window_open", settings.transfer_window_open)} />
       </div>
       <div className="rounded bg-secondary/50 px-4 py-3 space-y-2">
-        <span className="text-sm text-foreground">Transaktionsomkostning per transfer (point)</span>
-        <div className="flex gap-2">
-          <Input
-            type="number"
-            placeholder={String(settings.transfer_cost)}
-            value={transferCostInput}
-            onChange={(e) => setTransferCostInput(e.target.value)}
-            className="bg-card border-border w-32"
-          />
-          <Button size="sm" onClick={saveTransferCost} className="bg-gradient-racing text-primary-foreground font-display">
-            <Save className="h-4 w-4 mr-1" />Gem
-          </Button>
+        <span className="text-sm text-foreground">Transaktionsomkostning per transfer</span>
+        <div className="text-xs text-muted-foreground space-y-1">
+          <p>Omkostningen beregnes automatisk ud fra kørerens kategori:</p>
+          <ul className="list-disc list-inside">
+            <li><span className="text-gold font-medium">Guld</span>: 15 point</li>
+            <li><span className="text-silver font-medium">Sølv</span>: 10 point</li>
+            <li><span className="text-bronze font-medium">Bronze</span>: 5 point</li>
+          </ul>
+          <p>Gratis transfer ved udskiftning af udgåede kørere.</p>
         </div>
-        <p className="text-xs text-muted-foreground">Nuværende: {settings.transfer_cost} point. Ændringer træder i kraft ved næste transfer.</p>
       </div>
       <div className="rounded bg-secondary/50 px-4 py-3 space-y-2">
         <span className="text-sm text-foreground">Admin notifikations-email</span>
