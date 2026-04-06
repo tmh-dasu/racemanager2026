@@ -6,7 +6,6 @@ import { useState } from "react";
 
 const navItems = [
   { to: "/", label: "Hjem", icon: Home },
-  { to: "/vaelg-hold", label: "Vælg Hold", icon: Users },
   { to: "/mit-hold", label: "Mit Hold", icon: Trophy },
   { to: "/predictions", label: "Predictions", icon: HelpCircle },
   { to: "/rangering", label: "Leaderboard", icon: ListOrdered },
