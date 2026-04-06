@@ -76,7 +76,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Crown className="h-5 w-5 text-gold" />
-          <h2 className="font-display font-bold text-foreground">Captain-valg</h2>
+          <h2 className="font-display font-bold text-foreground">Holdkaptajn</h2>
         </div>
         {isLocked ? (
           <Badge className="bg-muted text-muted-foreground border-border">
