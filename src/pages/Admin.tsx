@@ -521,6 +521,12 @@ function PredictionsAdmin() {
             </select>
           </div>
         )}
+        {!isDuel && form.question_type && (
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Input placeholder="Svarmulighed A (valgfrit, f.eks. Ja)" value={form.option_a} onChange={(e) => setForm({ ...form, option_a: e.target.value })} className="bg-secondary border-border" />
+            <Input placeholder="Svarmulighed B (valgfrit, f.eks. Nej)" value={form.option_b} onChange={(e) => setForm({ ...form, option_b: e.target.value })} className="bg-secondary border-border" />
+          </div>
+        )}
         <Button onClick={handleCreate} disabled={saving} className="bg-gradient-racing text-primary-foreground font-display">
           <Plus className="h-4 w-4 mr-1" />Opret spørgsmål
         </Button>
