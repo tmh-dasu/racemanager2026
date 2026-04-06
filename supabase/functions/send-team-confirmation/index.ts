@@ -50,40 +50,40 @@ serve(async (req) => {
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background-color:#0f172a;font-family:Arial,sans-serif;">
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Arial,sans-serif;">
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-    <div style="background:#1e293b;border-radius:12px;padding:32px;border:1px solid #334155;">
-      <h1 style="color:#ffffff;font-size:24px;margin:0 0 8px;">Dit hold er klar! 🏁</h1>
-      <p style="color:#94a3b8;margin:0 0 24px;">Tillykke ${fullName}, dit fantasy-hold er nu oprettet.</p>
-      
-      <div style="background:#0f172a;border-radius:8px;padding:20px;margin-bottom:24px;">
-        <table style="width:100%;border-collapse:collapse;">
-          <tr>
-            <td style="color:#94a3b8;padding:8px 0;">Holdnavn</td>
-            <td style="color:#ffffff;text-align:right;padding:8px 0;font-weight:bold;">${teamName}</td>
-          </tr>
-          <tr>
-            <td style="color:#94a3b8;padding:8px 0;">Manager</td>
-            <td style="color:#ffffff;text-align:right;padding:8px 0;">${fullName}</td>
-          </tr>
-          <tr>
-            <td style="color:#94a3b8;padding:8px 0;">Kørere</td>
-            <td style="color:#ffffff;text-align:right;padding:8px 0;">${driverNames || "–"}</td>
-          </tr>
-        </table>
+    <div style="background:#ffffff;border-radius:12px;padding:32px;border:1px solid #e4e4e7;">
+      <div style="border-bottom:3px solid #dc2626;padding-bottom:16px;margin-bottom:24px;">
+        <h1 style="color:#18181b;font-size:24px;margin:0;">Dit hold er klar! 🏁</h1>
+        <p style="color:#71717a;margin:8px 0 0;">Tillykke ${fullName}, dit fantasy-hold er nu oprettet.</p>
       </div>
+      
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+        <tr>
+          <td style="color:#71717a;padding:10px 0;border-bottom:1px solid #f4f4f5;">Holdnavn</td>
+          <td style="color:#18181b;text-align:right;padding:10px 0;border-bottom:1px solid #f4f4f5;font-weight:bold;">${teamName}</td>
+        </tr>
+        <tr>
+          <td style="color:#71717a;padding:10px 0;border-bottom:1px solid #f4f4f5;">Manager</td>
+          <td style="color:#18181b;text-align:right;padding:10px 0;border-bottom:1px solid #f4f4f5;">${fullName}</td>
+        </tr>
+        <tr>
+          <td style="color:#71717a;padding:10px 0;">Kørere</td>
+          <td style="color:#18181b;text-align:right;padding:10px 0;">${driverNames || "–"}</td>
+        </tr>
+      </table>
 
-      <p style="color:#94a3b8;font-size:14px;margin:0 0 16px;">
+      <p style="color:#52525b;font-size:14px;margin:0 0 16px;">
         Du kan se dit hold, vælge kaptajn og følge med i point på din holdside.
       </p>
       
       <a href="https://dasuracemanager.lovable.app/mit-hold" 
-         style="display:inline-block;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">
+         style="display:inline-block;background:#dc2626;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">
         Se dit hold →
       </a>
 
-      <hr style="border:none;border-top:1px solid #334155;margin:24px 0;">
-      <p style="color:#64748b;font-size:12px;margin:0;"><p style="color:#64748b;font-size:12px;margin:0;">DASU RaceManager 2026 – racemanager.dasu.dk</p></p>
+      <hr style="border:none;border-top:1px solid #e4e4e7;margin:24px 0;">
+      <p style="color:#a1a1aa;font-size:12px;margin:0;">DASU RaceManager 2026 – racemanager.dasu.dk</p>
     </div>
   </div>
 </body>
