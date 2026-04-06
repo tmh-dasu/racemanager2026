@@ -62,6 +62,10 @@ export default function PredictionsPage() {
   });
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
+  const { data: categories = [] } = useQuery({ queryKey: ["prediction_categories"], queryFn: fetchPredictionCategories });
+
+  const categoryLabels: Record<string, string> = {};
+  for (const c of categories) categoryLabels[c.key] = c.label;
 
   const now = new Date();
 
