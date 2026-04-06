@@ -121,7 +121,7 @@ export default function HomePage() {
 
             <div className="mt-3 space-y-2">
               {nextRace.race_date && (
-                <CountdownTimer deadline={nextRace.race_date} label="Arrangement" />
+                <CountdownTimer deadline={nextRace.race_date} label="Arrangementet starter om" />
               )}
               {nextRace.race_date && (
                 <CountdownTimer deadline={new Date(new Date(nextRace.race_date).getTime() - 24 * 60 * 60 * 1000).toISOString()} label="Holdkaptajn/transfer deadline" />
