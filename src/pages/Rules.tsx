@@ -175,7 +175,7 @@ export default function RulesPage() {
             <li>• Berørte hold får automatisk ét <strong className="text-foreground">gratis ekstraordinært transfer</strong> inden for samme kategori – uden pointfradrag</li>
             <li>• Det gratis transfer gælder kun til erstatning af den udgåede kører</li>
             <li>• Du modtager en <strong className="text-foreground">email-notifikation</strong> når en af dine kørere udgår</li>
-            <li>• Captaincy-budgettet følger kategoripladsen — den nye kører har samme resterende budget som pladsen</li>
+            <li>• Holdkaptajn-budgettet følger kategoripladsen — den nye kører har samme resterende budget som pladsen</li>
           </ul>
         </Section>
 
