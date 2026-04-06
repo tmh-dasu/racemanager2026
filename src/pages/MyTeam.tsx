@@ -82,7 +82,8 @@ export default function MyTeamPage() {
   const swapOutDriver = drivers.find((d) => d.id === swapOutId);
   const availableDrivers = drivers.filter((d) => !myDriverIds.includes(d.id) && !d.withdrawn && (!swapOutDriver || d.tier === swapOutDriver.tier));
 
-  const transferCost = settings?.transfer_cost ?? 10;
+  const swapInDriver = drivers.find(d => d.id === swapInId);
+  const transferCost = swapInDriver ? getTransferCostForTier(swapInDriver.tier) : 10;
 
   function getDriverPoints(driverId: string) {
     return allResults.filter((r) => r.driver_id === driverId).reduce((s, r) => s + r.points, 0);
