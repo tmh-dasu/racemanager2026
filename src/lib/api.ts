@@ -143,6 +143,10 @@ export async function fetchSettings(): Promise<Settings> {
     transfer_window_open: map.transfer_window_open === "true",
     team_registration_open: map.team_registration_open === "true",
     admin_notification_email: map.admin_notification_email || "",
+    sponsor_name: map.sponsor_name || "",
+    sponsor_logo_url: map.sponsor_logo_url || "",
+    sponsor_website_url: map.sponsor_website_url || "",
+    sponsor_tagline: map.sponsor_tagline || "",
   };
 }
 

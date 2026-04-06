@@ -166,6 +166,37 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+
+        {/* Sponsor Card */}
+        {settings?.sponsor_name && (
+          <a
+            href={settings.sponsor_website_url || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-lg border border-border bg-card p-5 shadow-card hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Gift className="h-4 w-4 text-gold" />
+              <span className="font-display text-lg font-bold text-foreground">Præmiesponsorer</span>
+            </div>
+            {settings.sponsor_logo_url && (
+              <div className="flex justify-center mb-4">
+                <img
+                  src={settings.sponsor_logo_url}
+                  alt={settings.sponsor_name}
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+            )}
+            <h3 className="text-center font-display text-lg font-bold text-foreground">{settings.sponsor_name}</h3>
+            {settings.sponsor_tagline && (
+              <p className="text-center text-sm text-muted-foreground mt-1">{settings.sponsor_tagline}</p>
+            )}
+            <p className="text-center text-xs text-muted-foreground mt-3 border-t border-border pt-3">
+              Vinderens præmie leveres af {settings.sponsor_name}
+            </p>
+          </a>
+        )}
       </div>
     </PageLayout>
   );
