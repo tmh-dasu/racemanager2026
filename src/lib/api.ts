@@ -81,7 +81,6 @@ export interface Transfer {
 export interface Settings {
   transfer_window_open: boolean;
   team_registration_open: boolean;
-  transfer_cost: number;
   admin_notification_email: string;
 }
 
