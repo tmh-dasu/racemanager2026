@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Home, Users, Trophy, ListOrdered, Flag, Settings, BookOpen, LogIn, LogOut, Menu, X, HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useState } from "react";
 
 const navItems = [
