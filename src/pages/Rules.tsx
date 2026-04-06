@@ -184,7 +184,7 @@ export default function RulesPage() {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>• Inden hvert arrangement vælger du <strong className="text-foreground">én kører som captain</strong></li>
             <li>• Captainens point for <strong className="text-foreground">hele arrangementet</strong> (alle 4 sessioner) tæller <strong className="text-foreground">dobbelt</strong></li>
-            <li>• Captaincy-budgettet er fordelt per <strong className="text-foreground">tier-plads</strong>, ikke per kører:</li>
+            <li>• Captaincy-budgettet er fordelt per <strong className="text-foreground">kategoriplads</strong>, ikke per kører:</li>
             <li className="ml-4">– Guld-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
             <li className="ml-4">– Sølv-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
             <li className="ml-4">– Bronze-pladsen: præcis <strong className="text-foreground">2 captaincies</strong> hele sæsonen</li>
