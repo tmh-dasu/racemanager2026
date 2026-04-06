@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Shield, Plus, Trash2, Save, AlertTriangle, Ticket, Copy } from "lucide-react";
-import { fetchDrivers, fetchRaces, fetchSettings, fetchManagers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, fetchPredictionQuestions, upsertPredictionQuestion, resolvePredictions, deletePredictionQuestion, withdrawDriver, fetchAllTransfers, fetchPredictionCategories, upsertPredictionCategory, deletePredictionCategory } from "@/lib/api";
+import { fetchDrivers, fetchRaces, fetchSettings, fetchManagers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, fetchPredictionQuestions, upsertPredictionQuestion, resolvePredictions, deletePredictionQuestion, withdrawDriver, fetchAllTransfers, fetchPredictionCategories, upsertPredictionCategory, deletePredictionCategory, fetchSponsors, upsertSponsor, deleteSponsor } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 
 import ResultsAdmin from "@/components/admin/ResultsAdmin";
@@ -671,13 +671,22 @@ function SettingsAdmin() {
   );
 }
 
-function SponsorSettings({ settings, refetch, queryClient }: { settings: any; refetch: () => void; queryClient: any }) {
+function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; queryClient: any }) {
   const { toast } = useToast();
-  const [sponsorName, setSponsorName] = useState(settings.sponsor_name || "");
-  const [sponsorLogo, setSponsorLogo] = useState(settings.sponsor_logo_url || "");
-  const [sponsorUrl, setSponsorUrl] = useState(settings.sponsor_website_url || "");
-  const [sponsorTagline, setSponsorTagline] = useState(settings.sponsor_tagline || "");
+  const { data: sponsors = [], refetch: refetchSponsors } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
+  const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "" });
+  const [editId, setEditId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  function startEdit(s: any) {
+    setEditId(s.id);
+    setForm({ name: s.name, logo_url: s.logo_url || "", website_url: s.website_url || "", tagline: s.tagline || "" });
+  }
+
+  function resetForm() {
+    setEditId(null);
+    setForm({ name: "", logo_url: "", website_url: "", tagline: "" });
+  }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -689,7 +698,7 @@ function SponsorSettings({ settings, refetch, queryClient }: { settings: any; re
       const { error: uploadError } = await supabase.storage.from("sponsor-logos").upload(fileName, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("sponsor-logos").getPublicUrl(fileName);
-      setSponsorLogo(urlData.publicUrl);
+      setForm({ ...form, logo_url: urlData.publicUrl });
       toast({ title: "Logo uploadet" });
     } catch (err: any) {
       toast({ title: `Upload fejlede: ${err.message}`, variant: "destructive" });
@@ -698,17 +707,33 @@ function SponsorSettings({ settings, refetch, queryClient }: { settings: any; re
     }
   }
 
-  async function handleSaveSponsor() {
+  async function handleSave() {
+    if (!form.name.trim()) { toast({ title: "Angiv sponsor-navn", variant: "destructive" }); return; }
     try {
-      await Promise.all([
-        updateSetting("sponsor_name", sponsorName.trim()),
-        updateSetting("sponsor_logo_url", sponsorLogo.trim()),
-        updateSetting("sponsor_website_url", sponsorUrl.trim()),
-        updateSetting("sponsor_tagline", sponsorTagline.trim()),
-      ]);
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-      toast({ title: "Sponsor-indstillinger gemt" });
+      await upsertSponsor({
+        id: editId || undefined,
+        name: form.name.trim(),
+        logo_url: form.logo_url.trim() || null,
+        website_url: form.website_url.trim() || null,
+        tagline: form.tagline.trim() || null,
+        sort_order: editId ? undefined : sponsors.length,
+      } as any);
+      resetForm();
+      refetchSponsors();
+      queryClient.invalidateQueries({ queryKey: ["sponsors"] });
+      toast({ title: editId ? "Sponsor opdateret" : "Sponsor tilføjet" });
+    } catch (err: any) {
+      toast({ title: err.message, variant: "destructive" });
+    }
+  }
+
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Slet sponsor "${name}"?`)) return;
+    try {
+      await deleteSponsor(id);
+      refetchSponsors();
+      queryClient.invalidateQueries({ queryKey: ["sponsors"] });
+      toast({ title: "Sponsor slettet" });
     } catch (err: any) {
       toast({ title: err.message, variant: "destructive" });
     }
@@ -717,26 +742,48 @@ function SponsorSettings({ settings, refetch, queryClient }: { settings: any; re
   return (
     <div className="rounded bg-secondary/50 px-4 py-3 space-y-3">
       <span className="text-sm font-medium text-foreground">Præmiesponsorer (forside)</span>
-      <p className="text-xs text-muted-foreground">Vises som et kort på forsiden. Lad felterne stå tomme for at skjule kortet.</p>
-      <Input placeholder="Sponsor-navn" value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} className="bg-card border-border" />
-      <div className="space-y-1">
-        <label className="text-xs text-muted-foreground">Sponsor-logo</label>
-        <div className="flex items-center gap-2">
-          <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploading} className="text-xs file:mr-2 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1 file:text-xs file:font-medium file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50" />
-          {uploading && <span className="text-xs text-muted-foreground">Uploader...</span>}
-        </div>
-        {sponsorLogo && (
-          <div className="flex items-center gap-2 mt-1">
-            <img src={sponsorLogo} alt="Logo preview" className="h-10 w-auto object-contain rounded border border-border" />
-            <button onClick={() => setSponsorLogo("")} className="text-xs text-destructive hover:underline">Fjern</button>
+      <p className="text-xs text-muted-foreground">Tilføj en eller flere sponsorer. De vises på forsiden adskilt af en rød streg.</p>
+
+      {/* Form */}
+      <div className="space-y-2 border border-border rounded p-3 bg-card">
+        <Input placeholder="Sponsor-navn *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-secondary border-border" />
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Sponsor-logo</label>
+          <div className="flex items-center gap-2">
+            <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploading} className="text-xs file:mr-2 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1 file:text-xs file:font-medium file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50" />
+            {uploading && <span className="text-xs text-muted-foreground">Uploader...</span>}
           </div>
-        )}
+          {form.logo_url && (
+            <div className="flex items-center gap-2 mt-1">
+              <img src={form.logo_url} alt="Logo preview" className="h-10 w-auto object-contain rounded border border-border" />
+              <button onClick={() => setForm({ ...form, logo_url: "" })} className="text-xs text-destructive hover:underline">Fjern</button>
+            </div>
+          )}
+        </div>
+        <Input placeholder="Website-URL" value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} className="bg-secondary border-border" />
+        <Input placeholder="Tagline / beskrivelse (valgfri)" value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} className="bg-secondary border-border" />
+        <div className="flex gap-2">
+          <Button size="sm" onClick={handleSave} className="bg-gradient-racing text-primary-foreground font-display">
+            {editId ? <><Save className="h-4 w-4 mr-1" />Gem</> : <><Plus className="h-4 w-4 mr-1" />Tilføj sponsor</>}
+          </Button>
+          {editId && <Button size="sm" variant="outline" onClick={resetForm}>Annuller</Button>}
+        </div>
       </div>
-      <Input placeholder="Website-URL" value={sponsorUrl} onChange={(e) => setSponsorUrl(e.target.value)} className="bg-card border-border" />
-      <Input placeholder="Tagline / beskrivelse (valgfri)" value={sponsorTagline} onChange={(e) => setSponsorTagline(e.target.value)} className="bg-card border-border" />
-      <Button size="sm" onClick={handleSaveSponsor} className="bg-gradient-racing text-primary-foreground font-display">
-        <Save className="h-4 w-4 mr-1" />Gem sponsor
-      </Button>
+
+      {/* List */}
+      <div className="space-y-1">
+        {sponsors.map((s: any) => (
+          <div key={s.id} className="flex items-center justify-between rounded bg-card px-3 py-2 text-sm border border-border">
+            <button onClick={() => startEdit(s)} className="text-left flex-1 min-w-0 flex items-center gap-2">
+              {s.logo_url && <img src={s.logo_url} alt="" className="h-6 w-auto object-contain" />}
+              <span className="font-medium text-foreground">{s.name}</span>
+              {s.tagline && <span className="text-muted-foreground text-xs truncate">– {s.tagline}</span>}
+            </button>
+            <button onClick={() => handleDelete(s.id, s.name)} className="text-destructive hover:text-destructive/80 ml-2"><Trash2 className="h-4 w-4" /></button>
+          </div>
+        ))}
+        {sponsors.length === 0 && <p className="text-xs text-muted-foreground">Ingen sponsorer tilføjet endnu.</p>}
+      </div>
     </div>
   );
 }
