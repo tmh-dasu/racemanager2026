@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Shield, Plus, Trash2, Save, AlertTriangle, Ticket, Copy } from "lucide-react";
+import { Shield, Plus, Trash2, Save, AlertTriangle, Ticket, Copy, GripVertical } from "lucide-react";
 import { fetchDrivers, fetchRaces, fetchSettings, fetchManagers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, fetchPredictionQuestions, upsertPredictionQuestion, resolvePredictions, deletePredictionQuestion, withdrawDriver, fetchAllTransfers, fetchPredictionCategories, upsertPredictionCategory, deletePredictionCategory, fetchSponsors, upsertSponsor, deleteSponsor } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -677,6 +677,8 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
   const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "" });
   const [editId, setEditId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   function startEdit(s: any) {
     setEditId(s.id);
@@ -727,6 +729,20 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
     }
   }
 
+  async function handleDrop(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx) return;
+    const reordered = [...sponsors];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    try {
+      await Promise.all(reordered.map((s: any, i: number) => upsertSponsor({ id: s.id, name: s.name, sort_order: i } as any)));
+      refetchSponsors();
+      queryClient.invalidateQueries({ queryKey: ["sponsors"] });
+    } catch (err: any) {
+      toast({ title: err.message, variant: "destructive" });
+    }
+  }
+
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Slet sponsor "${name}"?`)) return;
     try {
@@ -772,13 +788,25 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
 
       {/* List */}
       <div className="space-y-1">
-        {sponsors.map((s: any) => (
-          <div key={s.id} className="flex items-center justify-between rounded bg-card px-3 py-2 text-sm border border-border">
-            <button onClick={() => startEdit(s)} className="text-left flex-1 min-w-0 flex items-center gap-2">
-              {s.logo_url && <img src={s.logo_url} alt="" className="h-6 w-auto object-contain" />}
-              <span className="font-medium text-foreground">{s.name}</span>
-              {s.tagline && <span className="text-muted-foreground text-xs truncate">– {s.tagline}</span>}
-            </button>
+        {sponsors.map((s: any, idx: number) => (
+          <div
+            key={s.id}
+            draggable
+            onDragStart={(e) => { setDragIdx(idx); e.dataTransfer.effectAllowed = "move"; }}
+            onDragOver={(e) => { e.preventDefault(); setDragOverIdx(idx); }}
+            onDragLeave={() => setDragOverIdx(null)}
+            onDrop={(e) => { e.preventDefault(); if (dragIdx !== null) handleDrop(dragIdx, idx); setDragIdx(null); setDragOverIdx(null); }}
+            onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+            className={`flex items-center justify-between rounded bg-card px-3 py-2 text-sm border transition-colors cursor-grab active:cursor-grabbing ${dragOverIdx === idx ? "border-racing-red bg-racing-red/5" : "border-border"} ${dragIdx === idx ? "opacity-50" : ""}`}
+          >
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+              <button onClick={() => startEdit(s)} className="text-left flex-1 min-w-0 flex items-center gap-2">
+                {s.logo_url && <img src={s.logo_url} alt="" className="h-6 w-auto object-contain" />}
+                <span className="font-medium text-foreground">{s.name}</span>
+                {s.tagline && <span className="text-muted-foreground text-xs truncate">– {s.tagline}</span>}
+              </button>
+            </div>
             <button onClick={() => handleDelete(s.id, s.name)} className="text-destructive hover:text-destructive/80 ml-2"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
