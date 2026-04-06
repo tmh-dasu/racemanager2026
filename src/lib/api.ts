@@ -13,6 +13,11 @@ export interface Driver {
   withdrawn: boolean;
 }
 
+export interface RaceLink {
+  label: string;
+  url: string;
+}
+
 export interface Race {
   id: string;
   round_number: number;
@@ -20,6 +25,8 @@ export interface Race {
   location: string | null;
   race_date: string | null;
   captain_deadline: string | null;
+  address: string | null;
+  links: RaceLink[];
 }
 
 /** Derive the effective deadline (24h before race_date). Falls back to captain_deadline for legacy data. */
@@ -157,7 +164,7 @@ export async function fetchDrivers(): Promise<Driver[]> {
 
 export async function fetchRaces(): Promise<Race[]> {
   const { data } = await supabase.from("races").select("*").order("round_number");
-  return (data || []) as Race[];
+  return ((data || []) as any[]).map(r => ({ ...r, links: Array.isArray(r.links) ? r.links : [] })) as Race[];
 }
 
 export async function fetchRaceResults(raceId?: string): Promise<RaceResult[]> {
@@ -284,11 +291,12 @@ export async function deleteManager(id: string) {
 }
 
 export async function upsertRace(race: Partial<Race> & { round_number: number; name: string }) {
+  const payload: any = { ...race };
   if (race.id) {
-    const { error } = await supabase.from("races").update(race).eq("id", race.id);
+    const { error } = await supabase.from("races").update(payload).eq("id", race.id);
     if (error) throw error;
   } else {
-    const { error } = await supabase.from("races").insert(race);
+    const { error } = await supabase.from("races").insert(payload);
     if (error) throw error;
   }
 }

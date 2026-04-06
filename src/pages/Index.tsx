@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift } from "lucide-react";
+import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift, MapPin, ExternalLink } from "lucide-react";
 import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 
@@ -106,6 +106,18 @@ export default function HomePage() {
               Runde {nextRace.round_number}: {nextRace.name}
             </h2>
             {nextRace.location && <p className="text-sm text-muted-foreground">{nextRace.location}</p>}
+            {nextRace.address && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nextRace.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+              >
+                <MapPin className="h-3 w-3 text-racing-red" />
+                {nextRace.address}
+                <ExternalLink className="h-2.5 w-2.5" />
+              </a>
+            )}
 
             <div className="mt-3 space-y-2">
               {nextRace.race_date && (
@@ -117,6 +129,20 @@ export default function HomePage() {
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
+              {/* External links */}
+              {nextRace.links && nextRace.links.length > 0 && nextRace.links.map((link, i) => (
+                <a
+                  key={i}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  {link.label}
+                </a>
+              ))}
+
               {/* Transfer window */}
               <div className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs">
                 <ArrowLeftRight className="h-3 w-3" />
