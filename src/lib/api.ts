@@ -13,6 +13,11 @@ export interface Driver {
   withdrawn: boolean;
 }
 
+export interface RaceLink {
+  label: string;
+  url: string;
+}
+
 export interface Race {
   id: string;
   round_number: number;
@@ -20,6 +25,8 @@ export interface Race {
   location: string | null;
   race_date: string | null;
   captain_deadline: string | null;
+  address: string | null;
+  links: RaceLink[];
 }
 
 /** Derive the effective deadline (24h before race_date). Falls back to captain_deadline for legacy data. */
