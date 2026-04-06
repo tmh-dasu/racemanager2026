@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Flag, Mail, Lock, User } from "lucide-react";
+import { Flag, Mail, Lock, User, Ticket } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [voucherCode, setVoucherCode] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -24,6 +25,27 @@ export default function AuthPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         toast({ title: "Login fejlede", description: error.message, variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+
+      // If voucher code provided, validate it after login
+      if (voucherCode.trim()) {
+        try {
+          const { data, error: vErr } = await supabase.functions.invoke("validate-voucher", {
+            body: { code: voucherCode },
+          });
+          if (vErr || !data?.success) {
+            toast({ title: data?.error || "Ugyldig voucher-kode", variant: "destructive" });
+            navigate("/vaelg-hold");
+          } else {
+            toast({ title: "Voucher indløst! 🎉" });
+            navigate("/vaelg-hold?paid=true");
+          }
+        } catch {
+          toast({ title: "Voucher-fejl, men du er logget ind", variant: "destructive" });
+          navigate("/vaelg-hold");
+        }
       } else {
         navigate("/vaelg-hold");
       }
@@ -43,6 +65,27 @@ export default function AuthPage() {
       });
       if (error) {
         toast({ title: "Oprettelse fejlede", description: error.message, variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+
+      // If voucher code provided, validate it after signup
+      if (voucherCode.trim()) {
+        try {
+          const { data, error: vErr } = await supabase.functions.invoke("validate-voucher", {
+            body: { code: voucherCode },
+          });
+          if (vErr || !data?.success) {
+            toast({ title: "Konto oprettet! 🏁", description: data?.error || "Voucher-koden var ugyldig, men din konto er oprettet.", variant: "destructive" });
+            navigate("/vaelg-hold");
+          } else {
+            toast({ title: "Konto oprettet og voucher indløst! 🎉" });
+            navigate("/vaelg-hold?paid=true");
+          }
+        } catch {
+          toast({ title: "Konto oprettet! 🏁", description: "Voucher kunne ikke valideres." });
+          navigate("/vaelg-hold");
+        }
       } else {
         toast({ title: "Konto oprettet! 🏁", description: "Du er nu logget ind." });
         navigate("/vaelg-hold");
@@ -102,6 +145,19 @@ export default function AuthPage() {
                 minLength={6}
               />
             </div>
+
+            {/* Voucher code - optional */}
+            <div className="relative">
+              <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Voucher-kode (valgfrit)"
+                value={voucherCode}
+                onChange={(e) => setVoucherCode(e.target.value)}
+                className="bg-secondary border-border pl-10 uppercase"
+                maxLength={50}
+              />
+            </div>
+
             <Button
               type="submit"
               disabled={loading}
