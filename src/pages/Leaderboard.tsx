@@ -20,7 +20,7 @@ function PointBreakdownRow({ breakdown }: { breakdown: PointBreakdown }) {
         <p className="font-display font-bold text-foreground">{breakdown.racePoints}</p>
       </div>
       <div className="text-center">
-        <p className="text-muted-foreground">Captain</p>
+        <p className="text-muted-foreground">Holdkaptajn</p>
         <p className="font-display font-bold text-gold">+{breakdown.captainBonus}</p>
       </div>
       <div className="text-center">
