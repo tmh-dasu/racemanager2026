@@ -24,6 +24,7 @@ const mobileMainNav = [
 export default function AppNav() {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [moreOpen, setMoreOpen] = useState(false);
 
   return (
