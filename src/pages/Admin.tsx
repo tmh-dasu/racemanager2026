@@ -677,6 +677,8 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
   const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "" });
   const [editId, setEditId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   function startEdit(s: any) {
     setEditId(s.id);
