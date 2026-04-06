@@ -81,6 +81,15 @@ export default function PickTeamPage() {
       for (const dId of Object.values(selectedDriverIds)) {
         if (dId) await addManagerDriver(manager.id, dId);
       }
+      // Send team creation confirmation email
+      const selectedDriverNames = Object.values(selectedDriverIds)
+        .filter(Boolean)
+        .map(dId => drivers.find(d => d.id === dId)?.name || "Ukendt")
+        .join(", ");
+      supabase.functions.invoke("send-team-confirmation", {
+        body: { teamName, driverNames: selectedDriverNames },
+      }).catch(console.error);
+
       queryClient.invalidateQueries({ queryKey: ["managers"] });
       toast({ title: "Hold oprettet! 🏁" });
       navigate("/mit-hold");
