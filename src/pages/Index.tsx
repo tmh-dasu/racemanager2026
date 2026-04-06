@@ -176,8 +176,9 @@ export default function HomePage() {
             className="block rounded-lg border border-border bg-card p-5 shadow-card hover:shadow-md transition-shadow"
           >
             <div className="flex items-center gap-2 mb-4">
-              <Gift className="h-4 w-4 text-gold" />
+              <Trophy className="h-5 w-5 text-gold" />
               <span className="font-display text-lg font-bold text-foreground">Præmiesponsorer</span>
+              <Gift className="h-4 w-4 text-gold" />
             </div>
             {settings.sponsor_logo_url && (
               <div className="flex justify-center mb-4">
