@@ -97,20 +97,25 @@ Deno.serve(async (req) => {
         }
 
         const html = `
-          <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #e53e3e;">🏎️ Husk inden ${race.name}!</h2>
-            <p>Hej ${mgr.team_name},</p>
-            <p>Deadline er <strong>${deadlineStr}</strong> (24 timer inden arrangementet starter). Du mangler:</p>
-            <ul style="margin: 16px 0; padding-left: 20px;">
-              ${reminderItems}
-            </ul>
-            <p style="margin: 24px 0;">
-              <a href="${siteUrl}/mit-hold" 
-                 style="background: linear-gradient(135deg, #e53e3e, #c53030); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                Gå til Mit Hold →
-              </a>
-            </p>
-            <p style="font-size: 12px; color: #999;">DASU RaceManager</p>
+          <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e4e4e7;">
+            <div style="background:#dc2626;padding:20px 24px;">
+              <h2 style="margin:0;color:#fff;font-size:20px;">🏎️ Husk inden ${race.name}!</h2>
+            </div>
+            <div style="padding:20px 24px;">
+              <p style="color:#18181b;">Hej ${mgr.team_name},</p>
+              <p style="color:#52525b;">Deadline er <strong>${deadlineStr}</strong> (24 timer inden arrangementet starter). Du mangler:</p>
+              <ul style="margin:16px 0;padding-left:20px;color:#18181b;">
+                ${reminderItems}
+              </ul>
+              <p style="text-align:center;margin:24px 0 8px;">
+                <a href="${siteUrl}/mit-hold" style="background:#dc2626;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
+                  Gå til Mit Hold →
+                </a>
+              </p>
+            </div>
+            <div style="padding:12px 24px;text-align:center;font-size:11px;color:#a1a1aa;border-top:1px solid #e4e4e7;">
+              DASU RaceManager
+            </div>
           </div>
         `
 
