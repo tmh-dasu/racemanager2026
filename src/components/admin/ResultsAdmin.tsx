@@ -216,7 +216,7 @@ export default function ResultsAdmin() {
               </Button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              CSV-format: bil_nr, placering (brug "DNF" for udgåede)
+              CSV-format: placering, bil_nr (brug "DNF" for udgåede)
             </span>
           </div>
 
