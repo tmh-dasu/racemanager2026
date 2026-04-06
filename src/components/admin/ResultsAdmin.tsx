@@ -21,6 +21,7 @@ export default function ResultsAdmin() {
   const [grid, setGrid] = useState<GridData>({});
   const [saving, setSaving] = useState(false);
   const [notifying, setNotifying] = useState(false);
+  const [uploadSession, setUploadSession] = useState<string>(SESSION_TYPES[0]);
 
   // Track which rounds have results
   const roundsWithResults = new Set(allResults.map(r => r.race_id));
@@ -121,8 +122,6 @@ export default function ResultsAdmin() {
         return;
       }
 
-      // Expected format: car_number, qualifying, heat1, heat2, heat3
-      // DNF marked as "DNF" or "dnf"
       const newGrid = { ...grid };
       let matched = 0;
 
@@ -134,29 +133,29 @@ export default function ResultsAdmin() {
         const driver = drivers.find((d) => d.car_number === carNum);
         if (!driver) continue;
 
-        SESSION_TYPES.forEach((session, idx) => {
-          const val = cols[idx + 1]?.toUpperCase();
-          if (!val) return;
-          if (!newGrid[driver.id]) {
-            newGrid[driver.id] = {};
-            SESSION_TYPES.forEach((s) => {
-              newGrid[driver.id][s] = { position: "", dnf: false };
-            });
+        if (!newGrid[driver.id]) {
+          newGrid[driver.id] = {};
+          SESSION_TYPES.forEach((s) => {
+            newGrid[driver.id][s] = { position: "", dnf: false };
+          });
+        }
+
+        const val = cols[1]?.toUpperCase();
+        if (!val) continue;
+
+        if (val === "DNF") {
+          newGrid[driver.id][uploadSession] = { position: "", dnf: true };
+        } else {
+          const pos = parseInt(val);
+          if (!isNaN(pos)) {
+            newGrid[driver.id][uploadSession] = { position: String(pos), dnf: false };
           }
-          if (val === "DNF") {
-            newGrid[driver.id][session] = { position: "", dnf: true };
-          } else {
-            const pos = parseInt(val);
-            if (!isNaN(pos)) {
-              newGrid[driver.id][session] = { position: String(pos), dnf: false };
-            }
-          }
-        });
+        }
         matched++;
       }
 
       setGrid(newGrid);
-      toast({ title: `${matched} kørere indlæst fra CSV` });
+      toast({ title: `${matched} kørere indlæst til ${SESSION_LABELS[uploadSession]}` });
     };
     reader.readAsText(file);
     if (fileRef.current) fileRef.current.value = "";
@@ -196,6 +195,15 @@ export default function ResultsAdmin() {
           {/* Upload + Save actions */}
           <div className="flex gap-2 items-center flex-wrap">
             <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleCSVUpload} />
+            <select
+              value={uploadSession}
+              onChange={(e) => setUploadSession(e.target.value)}
+              className="h-8 rounded-md border border-border bg-card px-2 text-sm font-display"
+            >
+              {SESSION_TYPES.map((s) => (
+                <option key={s} value={s}>{SESSION_LABELS[s]}</option>
+              ))}
+            </select>
             <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="font-display">
               <Upload className="h-4 w-4 mr-2" />Upload CSV
             </Button>
@@ -208,7 +216,7 @@ export default function ResultsAdmin() {
               </Button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              CSV-format: bil_nr, tidtagning, heat1, heat2, heat3 (brug "DNF" for udgåede)
+              CSV-format: bil_nr, placering (brug "DNF" for udgåede)
             </span>
           </div>
 
