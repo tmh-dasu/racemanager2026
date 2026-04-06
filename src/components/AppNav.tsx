@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Home, Users, Trophy, ListOrdered, Flag, Settings, BookOpen, LogIn, LogOut, Menu, X, HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useState } from "react";
 
 const navItems = [
@@ -11,7 +12,6 @@ const navItems = [
   { to: "/rangering", label: "Leaderboard", icon: ListOrdered },
   { to: "/resultater", label: "Resultater", icon: Flag },
   { to: "/regler", label: "Regler", icon: BookOpen },
-  { to: "/admin", label: "Admin", icon: Settings },
 ];
 
 const mobileMainNav = [
@@ -24,6 +24,7 @@ const mobileMainNav = [
 export default function AppNav() {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [moreOpen, setMoreOpen] = useState(false);
 
   return (
@@ -57,13 +58,28 @@ export default function AppNav() {
               );
             })}
             {user ? (
-              <button
-                onClick={signOut}
-                className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="font-medium">Log ud</span>
-              </button>
+              <>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors ${
+                      location.pathname === "/admin"
+                        ? "text-accent-foreground bg-accent/20"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span className="font-medium">Admin</span>
+                  </Link>
+                )}
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="font-medium">Log ud</span>
+                </button>
+              </>
             ) : (
               <Link
                 to="/login"
