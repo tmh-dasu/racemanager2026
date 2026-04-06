@@ -195,6 +195,15 @@ export default function ResultsAdmin() {
           {/* Upload + Save actions */}
           <div className="flex gap-2 items-center flex-wrap">
             <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleCSVUpload} />
+            <select
+              value={uploadSession}
+              onChange={(e) => setUploadSession(e.target.value)}
+              className="h-8 rounded-md border border-border bg-card px-2 text-sm font-display"
+            >
+              {SESSION_TYPES.map((s) => (
+                <option key={s} value={s}>{SESSION_LABELS[s]}</option>
+              ))}
+            </select>
             <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="font-display">
               <Upload className="h-4 w-4 mr-2" />Upload CSV
             </Button>
@@ -207,7 +216,7 @@ export default function ResultsAdmin() {
               </Button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              CSV-format: bil_nr, tidtagning, heat1, heat2, heat3 (brug "DNF" for udgåede)
+              CSV-format: bil_nr, placering (brug "DNF" for udgåede)
             </span>
           </div>
 
