@@ -50,6 +50,15 @@ export default function PickTeamPage() {
     if (existingManager) navigate("/mit-hold", { replace: true });
   }, [existingManager, navigate]);
 
+  // Verify Stripe payment and send confirmation email
+  useEffect(() => {
+    if (!sessionId || !hasPaid || verifiedRef.current) return;
+    verifiedRef.current = true;
+    supabase.functions.invoke("verify-payment", {
+      body: { session_id: sessionId },
+    }).catch(console.error);
+  }, [sessionId, hasPaid]);
+
   function toggleDriver(id: string, tier: Tier) {
     setSelectedDriverIds((prev) => ({
       ...prev,
