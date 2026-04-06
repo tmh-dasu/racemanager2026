@@ -122,8 +122,6 @@ export default function ResultsAdmin() {
         return;
       }
 
-      // Expected format: car_number, qualifying, heat1, heat2, heat3
-      // DNF marked as "DNF" or "dnf"
       const newGrid = { ...grid };
       let matched = 0;
 
@@ -135,29 +133,29 @@ export default function ResultsAdmin() {
         const driver = drivers.find((d) => d.car_number === carNum);
         if (!driver) continue;
 
-        SESSION_TYPES.forEach((session, idx) => {
-          const val = cols[idx + 1]?.toUpperCase();
-          if (!val) return;
-          if (!newGrid[driver.id]) {
-            newGrid[driver.id] = {};
-            SESSION_TYPES.forEach((s) => {
-              newGrid[driver.id][s] = { position: "", dnf: false };
-            });
+        if (!newGrid[driver.id]) {
+          newGrid[driver.id] = {};
+          SESSION_TYPES.forEach((s) => {
+            newGrid[driver.id][s] = { position: "", dnf: false };
+          });
+        }
+
+        const val = cols[1]?.toUpperCase();
+        if (!val) continue;
+
+        if (val === "DNF") {
+          newGrid[driver.id][uploadSession] = { position: "", dnf: true };
+        } else {
+          const pos = parseInt(val);
+          if (!isNaN(pos)) {
+            newGrid[driver.id][uploadSession] = { position: String(pos), dnf: false };
           }
-          if (val === "DNF") {
-            newGrid[driver.id][session] = { position: "", dnf: true };
-          } else {
-            const pos = parseInt(val);
-            if (!isNaN(pos)) {
-              newGrid[driver.id][session] = { position: String(pos), dnf: false };
-            }
-          }
-        });
+        }
         matched++;
       }
 
       setGrid(newGrid);
-      toast({ title: `${matched} kørere indlæst fra CSV` });
+      toast({ title: `${matched} kørere indlæst til ${SESSION_LABELS[uploadSession]}` });
     };
     reader.readAsText(file);
     if (fileRef.current) fileRef.current.value = "";
