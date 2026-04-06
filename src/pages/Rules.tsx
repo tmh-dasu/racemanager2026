@@ -172,7 +172,7 @@ export default function RulesPage() {
         <Section icon={<ShieldAlert className="h-5 w-5 text-destructive" />} title="Kører udgår af klassen ⚠️">
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>• Hvis en kører officielt udgår af klassen, markeres det af admin i systemet</li>
-            <li>• Berørte hold får automatisk ét <strong className="text-foreground">gratis ekstraordinært transfer</strong> inden for samme tier – uden pointfradrag</li>
+            <li>• Berørte hold får automatisk ét <strong className="text-foreground">gratis ekstraordinært transfer</strong> inden for samme kategori – uden pointfradrag</li>
             <li>• Det gratis transfer gælder kun til erstatning af den udgåede kører</li>
             <li>• Du modtager en <strong className="text-foreground">email-notifikation</strong> når en af dine kørere udgår</li>
             <li>• Captaincy-budgettet følger tier-pladsen — den nye kører har samme resterende budget som pladsen</li>
