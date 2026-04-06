@@ -385,7 +385,7 @@ export default function MyTeamPage() {
                   >
                     <span className="font-display font-bold text-foreground">#{d.car_number}</span>
                     <span className="text-sm text-foreground">{d.name}</span>
-                    <span className="text-xs text-muted-foreground capitalize">{d.tier === "gold" ? "🥇" : d.tier === "silver" ? "🥈" : "🥉"} {d.tier}</span>
+                    <span className="text-xs text-muted-foreground capitalize">{d.tier === "gold" ? "🥇 Guld" : d.tier === "silver" ? "🥈 Sølv" : "🥉 Bronze"}</span>
                   </button>
                 ))}
               </div>
