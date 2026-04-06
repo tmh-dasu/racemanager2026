@@ -431,7 +431,7 @@ export default function MyTeamPage() {
           </DialogHeader>
           <TransferConfirmContent
             swapOutDriver={swapOutDriver}
-            swapInDriver={drivers.find(d => d.id === swapInId)}
+            swapInDriver={swapInDriver}
             transferCost={transferCost}
             managerId={manager?.id}
             onCancel={() => setConfirmOpen(false)}
