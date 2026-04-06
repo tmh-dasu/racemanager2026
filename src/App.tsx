@@ -17,6 +17,7 @@ import TeamPublic from "./pages/TeamPublic";
 import Predictions from "./pages/Predictions";
 import DriverProfile from "./pages/DriverProfile";
 import ResetPassword from "./pages/ResetPassword";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/predictions" element={<Predictions />} />
             <Route path="/regler" element={<Rules />} />
+            <Route path="/vilkaar" element={<Terms />} />
             <Route path="/hold/:slug" element={<TeamPublic />} />
             <Route path="/koerer/:slug" element={<DriverProfile />} />
             <Route path="*" element={<NotFound />} />
