@@ -61,7 +61,7 @@ serve(async (req) => {
     await supabaseAdmin.functions.invoke("send-email", {
       body: {
         to: email,
-        subject: "Betalingsbekræftelse – DASU Race Manager 2026",
+        subject: "Betalingsbekræftelse – DASU RaceManager 2026",,
         html: `
 <!DOCTYPE html>
 <html>
