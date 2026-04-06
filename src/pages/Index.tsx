@@ -169,35 +169,44 @@ export default function HomePage() {
         </div>
 
         {/* Sponsor Card */}
-        {settings?.sponsor_name && (
-          <a
-            href={settings.sponsor_website_url || "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block rounded-lg border border-border bg-card p-5 shadow-card hover:shadow-md transition-shadow"
-          >
+        {sponsors.length > 0 && (
+          <div className="rounded-lg border border-border bg-card p-5 shadow-card">
             <div className="flex items-center gap-2 mb-4">
               <Trophy className="h-5 w-5 text-gold" />
               <span className="font-display text-lg font-bold text-foreground">Præmiesponsorer</span>
               <Gift className="h-4 w-4 text-gold" />
             </div>
-            {settings.sponsor_logo_url && (
-              <div className="flex justify-center mb-4">
-                <img
-                  src={settings.sponsor_logo_url}
-                  alt={settings.sponsor_name}
-                  className="h-16 w-auto object-contain"
-                />
-              </div>
-            )}
-            <h3 className="text-center font-display text-lg font-bold text-foreground">{settings.sponsor_name}</h3>
-            {settings.sponsor_tagline && (
-              <p className="text-center text-sm text-muted-foreground mt-1">{settings.sponsor_tagline}</p>
-            )}
-            <p className="text-center text-xs text-muted-foreground mt-3 border-t border-border pt-3">
-              Vinderens præmie leveres af {settings.sponsor_name}
+            <div className="space-y-0">
+              {sponsors.map((sponsor, idx) => (
+                <div key={sponsor.id}>
+                  {idx > 0 && <div className="h-px bg-racing-red my-4" />}
+                  <a
+                    href={sponsor.website_url || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block hover:opacity-80 transition-opacity"
+                  >
+                    {sponsor.logo_url && (
+                      <div className="flex justify-center mb-3">
+                        <img
+                          src={sponsor.logo_url}
+                          alt={sponsor.name}
+                          className="h-16 w-auto object-contain"
+                        />
+                      </div>
+                    )}
+                    <h3 className="text-center font-display text-lg font-bold text-foreground">{sponsor.name}</h3>
+                    {sponsor.tagline && (
+                      <p className="text-center text-sm text-muted-foreground mt-1">{sponsor.tagline}</p>
+                    )}
+                  </a>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-xs text-muted-foreground mt-4 border-t border-border pt-3">
+              Vinderens præmie leveres af {sponsors.map(s => s.name).join(" & ")}
             </p>
-          </a>
+          </div>
         )}
       </div>
     </PageLayout>
