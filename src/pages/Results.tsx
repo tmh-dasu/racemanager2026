@@ -185,7 +185,7 @@ export default function ResultsPage() {
                           {i + 1}
                         </span>
                         <div className="min-w-0">
-                          <span className="font-medium text-foreground truncate block">#{driverNumber(driverId)} {driverName(driverId)}</span>
+                          <span className="font-medium text-foreground truncate block">{driverName(driverId)}</span>
                           <span className="text-xs text-muted-foreground truncate block">{driverTeam(driverId)}</span>
                         </div>
                         {races.map((race) => {
