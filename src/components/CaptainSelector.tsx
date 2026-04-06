@@ -50,7 +50,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
 
     const tierRemaining = getTierBudget(driver.tier, captainSelections, drivers, nextRace.id);
     if (tierRemaining <= 0) {
-      toast({ title: `${TIER_LABELS[driver.tier]}-pladsen har brugt alle 2 captaincies`, variant: "destructive" });
+      toast({ title: `${TIER_LABELS[driver.tier]}-pladsen har brugt alle 2 holdkaptajner`, variant: "destructive" });
       return;
     }
 
