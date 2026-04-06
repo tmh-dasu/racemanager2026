@@ -129,7 +129,8 @@ export default function ResultsAdmin() {
         const cols = lines[i].split(/[,;\t]/).map((c) => c.trim());
         if (cols.length < 2) continue;
 
-        const carNum = parseInt(cols[0]);
+        const pos = cols[0]?.toUpperCase();
+        const carNum = parseInt(cols[1]);
         const driver = drivers.find((d) => d.car_number === carNum);
         if (!driver) continue;
 
@@ -140,15 +141,14 @@ export default function ResultsAdmin() {
           });
         }
 
-        const val = cols[1]?.toUpperCase();
-        if (!val) continue;
+        if (!pos) continue;
 
-        if (val === "DNF") {
+        if (pos === "DNF") {
           newGrid[driver.id][uploadSession] = { position: "", dnf: true };
         } else {
-          const pos = parseInt(val);
-          if (!isNaN(pos)) {
-            newGrid[driver.id][uploadSession] = { position: String(pos), dnf: false };
+          const p = parseInt(pos);
+          if (!isNaN(p)) {
+            newGrid[driver.id][uploadSession] = { position: String(p), dnf: false };
           }
         }
         matched++;
@@ -216,7 +216,7 @@ export default function ResultsAdmin() {
               </Button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              CSV-format: bil_nr, placering (brug "DNF" for udgåede)
+              CSV-format: placering, bil_nr (brug "DNF" for udgåede)
             </span>
           </div>
 
