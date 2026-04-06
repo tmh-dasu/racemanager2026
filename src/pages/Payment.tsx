@@ -26,7 +26,7 @@ export default function PaymentPage() {
       const { data, error } = await supabase.functions.invoke("create-payment");
       if (error) throw error;
       if (data?.url) {
-        window.open(data.url, "_blank");
+        window.location.assign(data.url);
       } else {
         throw new Error("Ingen betalingslink modtaget");
       }
