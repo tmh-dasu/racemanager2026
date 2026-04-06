@@ -677,6 +677,26 @@ function SponsorSettings({ settings, refetch, queryClient }: { settings: any; re
   const [sponsorLogo, setSponsorLogo] = useState(settings.sponsor_logo_url || "");
   const [sponsorUrl, setSponsorUrl] = useState(settings.sponsor_website_url || "");
   const [sponsorTagline, setSponsorTagline] = useState(settings.sponsor_tagline || "");
+  const [uploading, setUploading] = useState(false);
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const fileName = `sponsor-logo-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("sponsor-logos").upload(fileName, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("sponsor-logos").getPublicUrl(fileName);
+      setSponsorLogo(urlData.publicUrl);
+      toast({ title: "Logo uploadet" });
+    } catch (err: any) {
+      toast({ title: `Upload fejlede: ${err.message}`, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function handleSaveSponsor() {
     try {
@@ -699,7 +719,19 @@ function SponsorSettings({ settings, refetch, queryClient }: { settings: any; re
       <span className="text-sm font-medium text-foreground">Præmiesponsorer (forside)</span>
       <p className="text-xs text-muted-foreground">Vises som et kort på forsiden. Lad felterne stå tomme for at skjule kortet.</p>
       <Input placeholder="Sponsor-navn" value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} className="bg-card border-border" />
-      <Input placeholder="Logo-URL (billede)" value={sponsorLogo} onChange={(e) => setSponsorLogo(e.target.value)} className="bg-card border-border" />
+      <div className="space-y-1">
+        <label className="text-xs text-muted-foreground">Sponsor-logo</label>
+        <div className="flex items-center gap-2">
+          <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploading} className="text-xs file:mr-2 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1 file:text-xs file:font-medium file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50" />
+          {uploading && <span className="text-xs text-muted-foreground">Uploader...</span>}
+        </div>
+        {sponsorLogo && (
+          <div className="flex items-center gap-2 mt-1">
+            <img src={sponsorLogo} alt="Logo preview" className="h-10 w-auto object-contain rounded border border-border" />
+            <button onClick={() => setSponsorLogo("")} className="text-xs text-destructive hover:underline">Fjern</button>
+          </div>
+        )}
+      </div>
       <Input placeholder="Website-URL" value={sponsorUrl} onChange={(e) => setSponsorUrl(e.target.value)} className="bg-card border-border" />
       <Input placeholder="Tagline / beskrivelse (valgfri)" value={sponsorTagline} onChange={(e) => setSponsorTagline(e.target.value)} className="bg-card border-border" />
       <Button size="sm" onClick={handleSaveSponsor} className="bg-gradient-racing text-primary-foreground font-display">
