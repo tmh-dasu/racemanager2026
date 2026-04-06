@@ -99,7 +99,7 @@ export default function MyTeamPage() {
     const oldDriver = drivers.find((d) => d.id === swapOutId);
     const newDriver = drivers.find((d) => d.id === swapInId);
     if (!oldDriver || !newDriver || oldDriver.tier !== newDriver.tier) {
-      toast({ title: "Du kan kun bytte til en kører i samme tier", variant: "destructive" });
+      toast({ title: "Du kan kun bytte til en kører i samme kategori", variant: "destructive" });
       return;
     }
 
