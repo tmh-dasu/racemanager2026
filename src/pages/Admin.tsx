@@ -671,7 +671,7 @@ function SettingsAdmin() {
   );
 }
 
-function SponsorSettings({ settings, refetch, queryClient }: { settings: any; refetch: () => void; queryClient: any }) {
+function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; queryClient: any }) {
   const { toast } = useToast();
   const { data: sponsors = [], refetch: refetchSponsors } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
   const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "" });
