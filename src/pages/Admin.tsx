@@ -341,8 +341,8 @@ function PredictionsAdmin() {
         race_id: form.race_id,
         question_type: form.question_type,
         question_text: form.question_text,
-        option_a: isDuel ? `driver:${form.option_a}` : !isDuel ? (selectedCat ? null : null) : null,
-        option_b: isDuel ? `driver:${form.option_b}` : null,
+        option_a: isDuel ? `driver:${form.option_a}` : (form.option_a || null),
+        option_b: isDuel ? `driver:${form.option_b}` : (form.option_b || null),
         prediction_deadline: form.prediction_deadline || null,
       });
       setForm({ race_id: "", question_type: "", question_text: "", option_a: "", option_b: "", prediction_deadline: "" });
