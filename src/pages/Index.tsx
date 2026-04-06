@@ -129,6 +129,20 @@ export default function HomePage() {
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
+              {/* External links */}
+              {nextRace.links && nextRace.links.length > 0 && nextRace.links.map((link, i) => (
+                <a
+                  key={i}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  {link.label}
+                </a>
+              ))}
+
               {/* Transfer window */}
               <div className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs">
                 <ArrowLeftRight className="h-3 w-3" />
