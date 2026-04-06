@@ -25,7 +25,9 @@ export default function PickTeamPage() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const hasPaid = searchParams.get("paid") === "true";
+  const sessionId = searchParams.get("session_id");
   const { user, loading: authLoading } = useAuth();
+  const verifiedRef = useRef(false);
 
   const { data: allDrivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const drivers = allDrivers.filter((d) => !d.withdrawn);
