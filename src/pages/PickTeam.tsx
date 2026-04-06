@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, AlertTriangle } from "lucide-react";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import PageLayout from "@/components/PageLayout";
 
 const TIER_CONFIG = {
@@ -24,7 +25,9 @@ export default function PickTeamPage() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const hasPaid = searchParams.get("paid") === "true";
+  const sessionId = searchParams.get("session_id");
   const { user, loading: authLoading } = useAuth();
+  const verifiedRef = useRef(false);
 
   const { data: allDrivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const drivers = allDrivers.filter((d) => !d.withdrawn);
@@ -46,6 +49,15 @@ export default function PickTeamPage() {
   useEffect(() => {
     if (existingManager) navigate("/mit-hold", { replace: true });
   }, [existingManager, navigate]);
+
+  // Verify Stripe payment and send confirmation email
+  useEffect(() => {
+    if (!sessionId || !hasPaid || verifiedRef.current) return;
+    verifiedRef.current = true;
+    supabase.functions.invoke("verify-payment", {
+      body: { session_id: sessionId },
+    }).catch(console.error);
+  }, [sessionId, hasPaid]);
 
   function toggleDriver(id: string, tier: Tier) {
     setSelectedDriverIds((prev) => ({
@@ -69,6 +81,15 @@ export default function PickTeamPage() {
       for (const dId of Object.values(selectedDriverIds)) {
         if (dId) await addManagerDriver(manager.id, dId);
       }
+      // Send team creation confirmation email
+      const selectedDriverNames = Object.values(selectedDriverIds)
+        .filter(Boolean)
+        .map(dId => drivers.find(d => d.id === dId)?.name || "Ukendt")
+        .join(", ");
+      supabase.functions.invoke("send-team-confirmation", {
+        body: { teamName, driverNames: selectedDriverNames },
+      }).catch(console.error);
+
       queryClient.invalidateQueries({ queryKey: ["managers"] });
       toast({ title: "Hold oprettet! 🏁" });
       navigate("/mit-hold");

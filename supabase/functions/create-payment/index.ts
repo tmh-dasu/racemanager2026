@@ -56,7 +56,7 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/vaelg-hold?paid=true`,
+      success_url: `${origin}/vaelg-hold?paid=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/betal`,
       payment_method_types: ["card", "mobilepay"],
     });
