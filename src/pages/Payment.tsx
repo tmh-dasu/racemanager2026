@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, ShieldCheck, Flag, Ticket } from "lucide-react";
+import { CreditCard, ShieldCheck, Flag, Ticket, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,13 +14,30 @@ export default function PaymentPage() {
   const { user } = useAuth();
   const [voucherCode, setVoucherCode] = useState("");
   const [validating, setValidating] = useState(false);
+  const [paying, setPaying] = useState(false);
 
-  function handlePay() {
-    toast({
-      title: "Stripe er ikke konfigureret endnu",
-      description: "Betalingsintegration kommer snart. Kontakt admin for adgang.",
-      variant: "destructive",
-    });
+  async function handlePay() {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setPaying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-payment");
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("Ingen betalingslink modtaget");
+      }
+    } catch (err: any) {
+      toast({
+        title: "Kunne ikke starte betaling",
+        description: err.message || "Prøv igen senere",
+        variant: "destructive",
+      });
+    }
+    setPaying(false);
   }
 
   async function handleVoucher() {
@@ -90,17 +107,18 @@ export default function PaymentPage() {
                 <span>Giver adgang til at vælge dit hold for hele sæsonen</span>
               </div>
               <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-racing-red" />
-                <span>Sikker betaling via Stripe</span>
+                <Smartphone className="mt-0.5 h-4 w-4 shrink-0 text-racing-red" />
+                <span>Betal med MobilePay eller kort via Stripe</span>
               </div>
             </div>
 
             <Button
               onClick={handlePay}
+              disabled={paying}
               className="w-full bg-gradient-racing py-3 font-display text-base font-semibold text-primary-foreground shadow-racing hover:scale-105 transition-transform"
             >
               <CreditCard className="h-5 w-5" />
-              Betal med kort
+              {paying ? "Starter betaling..." : "Betal med kort / MobilePay"}
             </Button>
           </div>
 
