@@ -249,7 +249,7 @@ export default function PredictionsPage() {
                 <div key={q.id} className="space-y-2 rounded-md bg-secondary/30 p-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-display font-bold text-muted-foreground">#{i + 1}</span>
-                    <span className="text-xs text-muted-foreground">{QUESTION_TYPE_LABELS[q.question_type]}</span>
+                    <span className="text-xs text-muted-foreground">{categoryLabels[q.question_type] || q.question_type}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{q.question_text}</p>
 
