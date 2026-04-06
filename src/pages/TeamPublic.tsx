@@ -121,7 +121,7 @@ export default function TeamPublicPage() {
                     {captainRounds.length > 0 && (
                       <div className="flex items-center gap-1 mt-1 text-gold text-[11px]">
                         <Crown className="h-3 w-3" />
-                        <span>Captain i R{captainRounds.join(", R")}</span>
+                        <span>Holdkaptajn i R{captainRounds.join(", R")}</span>
                       </div>
                     )}
                   </div>
