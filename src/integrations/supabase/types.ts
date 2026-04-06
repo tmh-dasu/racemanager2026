@@ -458,52 +458,6 @@ export type Database = {
         }
         Relationships: []
       }
-      season_predictions: {
-        Row: {
-          created_at: string
-          driver_id: string
-          id: string
-          is_correct: boolean | null
-          manager_id: string
-        }
-        Insert: {
-          created_at?: string
-          driver_id: string
-          id?: string
-          is_correct?: boolean | null
-          manager_id: string
-        }
-        Update: {
-          created_at?: string
-          driver_id?: string
-          id?: string
-          is_correct?: boolean | null
-          manager_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "season_predictions_driver_id_fkey"
-            columns: ["driver_id"]
-            isOneToOne: false
-            referencedRelation: "drivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "season_predictions_manager_id_fkey"
-            columns: ["manager_id"]
-            isOneToOne: true
-            referencedRelation: "managers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "season_predictions_manager_id_fkey"
-            columns: ["manager_id"]
-            isOneToOne: true
-            referencedRelation: "managers_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       settings: {
         Row: {
           created_at: string
