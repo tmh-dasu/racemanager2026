@@ -255,7 +255,7 @@ export default function ResultsAdmin() {
                                 checked={cell?.dnf || false}
                                 onChange={(e) => updateCell(d.id, s, "dnf", e.target.checked)}
                               />
-                              <span className="text-[10px] text-destructive font-bold">D</span>
+                              <span className="text-[10px] text-destructive font-bold">DNF</span>
                             </label>
                           </div>
                         </td>
