@@ -16,7 +16,7 @@ export default function PageLayout({ children }: { children: ReactNode }) {
             <span className="text-border">|</span>
             <Link to="/regler" className="hover:text-foreground transition-colors">Regler</Link>
           </div>
-          <p>© {new Date().getFullYear()} DASU Race Manager. Alle rettigheder forbeholdes.</p>
+          <p>© {new Date().getFullYear()} DASU RaceManager. Alle rettigheder forbeholdes.</p>
         </div>
       </footer>
     </div>
