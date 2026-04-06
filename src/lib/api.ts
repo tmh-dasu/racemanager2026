@@ -81,7 +81,6 @@ export interface Transfer {
 export interface Settings {
   transfer_window_open: boolean;
   team_registration_open: boolean;
-  transfer_cost: number;
   admin_notification_email: string;
 }
 
@@ -139,7 +138,6 @@ export async function fetchSettings(): Promise<Settings> {
   return {
     transfer_window_open: map.transfer_window_open === "true",
     team_registration_open: map.team_registration_open === "true",
-    transfer_cost: Number(map.transfer_cost || 10),
     admin_notification_email: map.admin_notification_email || "",
   };
 }
