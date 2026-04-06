@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, AlertTriangle, LogOut, ShieldAlert, History } from "lucide-react";
-import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers, fetchAllCaptainSelections, fetchAllPredictionAnswers, fetchAllTransfers, computePointBreakdown } from "@/lib/api";
+import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers, fetchAllCaptainSelections, fetchAllPredictionAnswers, fetchAllTransfers, computePointBreakdown, getTransferCostForTier } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -82,7 +82,8 @@ export default function MyTeamPage() {
   const swapOutDriver = drivers.find((d) => d.id === swapOutId);
   const availableDrivers = drivers.filter((d) => !myDriverIds.includes(d.id) && !d.withdrawn && (!swapOutDriver || d.tier === swapOutDriver.tier));
 
-  const transferCost = settings?.transfer_cost ?? 10;
+  const swapInDriver = drivers.find(d => d.id === swapInId);
+  const transferCost = swapInDriver ? getTransferCostForTier(swapInDriver.tier) : 10;
 
   function getDriverPoints(driverId: string) {
     return allResults.filter((r) => r.driver_id === driverId).reduce((s, r) => s + r.points, 0);
@@ -283,9 +284,9 @@ export default function MyTeamPage() {
             className="bg-accent text-accent-foreground font-display font-semibold hover:bg-accent/90"
           >
             <ArrowLeftRight className="mr-2 h-4 w-4" />
-            Transfer ({transferCost} point)
+            Transfer
           </Button>
-          <span className="text-xs text-muted-foreground">Ubegrænset antal transfers • {transferCost} point per transfer</span>
+          <span className="text-xs text-muted-foreground">🥇 15 pts • 🥈 10 pts • 🥉 5 pts</span>
         </div>
 
         {/* Captain Selector */}
@@ -370,7 +371,7 @@ export default function MyTeamPage() {
         <DialogContent className="bg-card border-border max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">Transfer – Skift kører</DialogTitle>
-            <DialogDescription>Du kan kun bytte til en kører inden for samme tier. Koster {transferCost} point.</DialogDescription>
+            <DialogDescription>Du kan kun bytte til en kører inden for samme tier. Koster 🥇 15 / 🥈 10 / 🥉 5 point.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -430,7 +431,7 @@ export default function MyTeamPage() {
           </DialogHeader>
           <TransferConfirmContent
             swapOutDriver={swapOutDriver}
-            swapInDriver={drivers.find(d => d.id === swapInId)}
+            swapInDriver={swapInDriver}
             transferCost={transferCost}
             managerId={manager?.id}
             onCancel={() => setConfirmOpen(false)}

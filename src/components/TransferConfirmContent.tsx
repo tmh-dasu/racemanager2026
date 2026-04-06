@@ -54,7 +54,7 @@ export default function TransferConfirmContent({ swapOutDriver, swapInDriver, tr
       </div>
 
       <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
-        <p className="text-sm text-muted-foreground">Pointfradrag</p>
+        <p className="text-sm text-muted-foreground">Pointfradrag ({TIER_EMOJI[swapInDriver?.tier || "bronze"]} {TIER_LABELS[swapInDriver?.tier || "bronze"]}kører)</p>
         <p className="font-display text-2xl font-bold text-destructive">−{transferCost} point</p>
       </div>
       <p className="text-xs text-muted-foreground text-center">

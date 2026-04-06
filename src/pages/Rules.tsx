@@ -125,13 +125,14 @@ export default function RulesPage() {
         <Section icon={<ArrowRightLeft className="h-5 w-5 text-accent" />} title="Transfer-system 🔄">
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>• Du kan til enhver tid skifte <strong className="text-foreground">én kører</strong> ud mod en anden <strong className="text-foreground">inden for samme tier</strong></li>
-            <li>• Hvert transfer koster <strong className="text-foreground">point</strong> der trækkes direkte fra din sæsontotal (standard: 10 point)</li>
+            <li>• Transfers koster point afhængigt af tieren på den kører, du henter ind: en <strong className="text-gold">guldkører koster 15 point</strong>, en <strong className="text-silver">sølvkører koster 10 point</strong> og en <strong className="text-bronze">bronzekører koster 5 point</strong>. Pointomkostningen trækkes fra din pointsaldo ved bekræftelse.</li>
             <li>• Der er <strong className="text-foreground">ingen grænse</strong> for antal transfers – men hvert koster point</li>
             <li>• Pointfradraget er <strong className="text-foreground">permanent</strong> og kan ikke fortrydes</li>
             <li>• Transfervinduet er <strong className="text-foreground">lukket</strong> indtil admin åbner det efter hvert arrangements resultater er indtastet</li>
             <li>• Vinduet lukker automatisk <strong className="text-foreground">24 timer inden næste arrangement starter</strong></li>
             <li>• Vinduet kan også <strong className="text-foreground">lukkes manuelt</strong> af admin</li>
             <li>• Captaincy-budgettet følger <strong className="text-foreground">tier-pladsen</strong>, ikke den individuelle kører — se captain-regler nedenfor</li>
+            <li>• <strong className="text-foreground">Gæstekørere</strong> er ikke en del af spillet — kun kørere tilmeldt den fulde sæson kan vælges</li>
           </ul>
           <div className="mt-3 flex items-start gap-2 rounded-md bg-accent/10 border border-accent/20 px-3 py-2">
             <ArrowRightLeft className="h-4 w-4 text-accent mt-0.5 shrink-0" />
@@ -159,7 +160,7 @@ export default function RulesPage() {
             </div>
             <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
               <span className="text-destructive font-bold">−</span>
-              <span className="text-muted-foreground"><strong className="text-foreground">Transferfradrag</strong> (10 point per gennemført transfer)</span>
+              <span className="text-muted-foreground"><strong className="text-foreground">Transferfradrag</strong> (5/10/15 point afhængigt af tier)</span>
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-3">
