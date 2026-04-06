@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
                 Gå til Mit Hold →
               </a>
             </p>
-            <p style="font-size: 12px; color: #999;">DASU Race Manager</p>
+            <p style="font-size: 12px; color: #999;">DASU RaceManager</p>
           </div>
         `
 
