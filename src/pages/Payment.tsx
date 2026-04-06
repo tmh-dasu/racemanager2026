@@ -149,7 +149,10 @@ export default function PaymentPage() {
           </div>
 
           <p className="text-center text-xs text-muted-foreground">
-            Ved at betale accepterer du vilkårene for DASU RaceManager 2026
+            Ved at betale accepterer du{" "}
+            <a href="/vilkaar" className="text-racing-red hover:underline font-medium">
+              vilkårene for DASU RaceManager 2026
+            </a>
           </p>
         </div>
       </div>
