@@ -111,6 +111,31 @@ export default function AuthPage() {
             </Button>
           </form>
 
+          {isLogin && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!email.trim()) {
+                    toast({ title: "Indtast din email først", variant: "destructive" });
+                    return;
+                  }
+                  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                  });
+                  if (error) {
+                    toast({ title: "Fejl", description: error.message, variant: "destructive" });
+                  } else {
+                    toast({ title: "Email sendt! 📧", description: "Tjek din indbakke for et link til nulstilling." });
+                  }
+                }}
+                className="text-sm text-muted-foreground hover:text-racing-red hover:underline transition-colors"
+              >
+                Glemt adgangskode?
+              </button>
+            </div>
+          )}
+
           <p className="text-center text-sm text-muted-foreground">
             {isLogin ? "Har du ikke en konto?" : "Har du allerede en konto?"}{" "}
             <button

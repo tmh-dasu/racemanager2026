@@ -16,6 +16,7 @@ import Auth from "./pages/Auth";
 import TeamPublic from "./pages/TeamPublic";
 import Predictions from "./pages/Predictions";
 import DriverProfile from "./pages/DriverProfile";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
