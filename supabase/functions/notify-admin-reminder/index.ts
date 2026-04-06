@@ -82,32 +82,32 @@ Deno.serve(async (req) => {
       if (issues.length === 0) continue
 
       const issueRows = issues.map(i =>
-        `<tr><td style="padding:6px 12px;border-bottom:1px solid #334155;">${i.level}</td><td style="padding:6px 12px;border-bottom:1px solid #334155;color:#e2e8f0;">${i.message}</td></tr>`
+        `<tr><td style="padding:6px 12px;border-bottom:1px solid #f4f4f5;">${i.level}</td><td style="padding:6px 12px;border-bottom:1px solid #f4f4f5;color:#18181b;">${i.message}</td></tr>`
       ).join('')
 
       const siteUrl = 'https://dasuracemanager.lovable.app'
       const html = `
-        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#0f172a;color:#e2e8f0;border-radius:8px;overflow:hidden;">
-          <div style="background:linear-gradient(135deg,#c41e1e,#e53e3e);padding:20px 24px;">
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e4e4e7;">
+          <div style="background:#dc2626;padding:20px 24px;">
             <h2 style="margin:0;color:#fff;font-size:20px;">⚠️ Admin-advarsel: Runde ${race.round_number}</h2>
           </div>
           <div style="padding:20px 24px;">
-            <p>Arrangementet <strong>${race.name}</strong> starter om mindre end 72 timer, men følgende er ikke klar:</p>
+            <p style="color:#52525b;">Arrangementet <strong style="color:#18181b;">${race.name}</strong> starter om mindre end 72 timer, men følgende er ikke klar:</p>
 
             <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">
               <thead>
-                <tr><th style="text-align:left;padding:6px 12px;border-bottom:2px solid #475569;">Status</th><th style="text-align:left;padding:6px 12px;border-bottom:2px solid #475569;">Problem</th></tr>
+                <tr style="background:#f4f4f5;"><th style="text-align:left;padding:6px 12px;border-bottom:2px solid #e4e4e7;color:#71717a;">Status</th><th style="text-align:left;padding:6px 12px;border-bottom:2px solid #e4e4e7;color:#71717a;">Problem</th></tr>
               </thead>
               <tbody>${issueRows}</tbody>
             </table>
 
             <p style="text-align:center;margin:24px 0 8px;">
-              <a href="${siteUrl}/admin" style="background:linear-gradient(135deg,#c41e1e,#e53e3e);color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
+              <a href="${siteUrl}/admin" style="background:#dc2626;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
                 Åbn admin-panelet →
               </a>
             </p>
           </div>
-          <div style="padding:12px 24px;text-align:center;font-size:11px;color:#64748b;">
+          <div style="padding:12px 24px;text-align:center;font-size:11px;color:#a1a1aa;border-top:1px solid #e4e4e7;">
             DASU RaceManager – Automatisk admin-påmindelse
           </div>
         </div>

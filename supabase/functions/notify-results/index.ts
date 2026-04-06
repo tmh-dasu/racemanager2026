@@ -94,48 +94,48 @@ Deno.serve(async (req) => {
         const tierBadge = d.tier === 'gold' ? '🥇' : d.tier === 'silver' ? '🥈' : '🥉'
         driverBreakdown.push(
           `<tr>
-            <td style="padding:4px 8px;border-bottom:1px solid #e5e7eb;">${tierBadge} #${d.car_number} ${d.name}${isCaptain ? ' ⭐' : ''}</td>
-            <td style="padding:4px 8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:bold;">${driverPts} pt</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f4f4f5;color:#18181b;">${tierBadge} #${d.car_number} ${d.name}${isCaptain ? ' ⭐' : ''}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f4f4f5;text-align:right;font-weight:bold;color:#18181b;">${driverPts} pt</td>
           </tr>`
         )
       }
 
       const html = `
-        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#0f172a;color:#e2e8f0;border-radius:8px;overflow:hidden;">
-          <div style="background:linear-gradient(135deg,#c41e1e,#e53e3e);padding:20px 24px;">
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e4e4e7;">
+          <div style="background:#dc2626;padding:20px 24px;">
             <h2 style="margin:0;color:#fff;font-size:20px;">🏁 Resultater: ${race.name}</h2>
           </div>
           <div style="padding:20px 24px;">
-            <p>Hej <strong>${mgr.team_name}</strong>,</p>
-            <p>Resultaterne for Runde ${race.round_number} er nu opdateret!</p>
+            <p style="color:#18181b;">Hej <strong>${mgr.team_name}</strong>,</p>
+            <p style="color:#52525b;">Resultaterne for Runde ${race.round_number} er nu opdateret!</p>
 
-            <div style="background:#1e293b;border-radius:6px;padding:12px;margin:16px 0;">
-              <table style="width:100%;border-collapse:collapse;color:#e2e8f0;font-size:14px;">
+            <div style="border:1px solid #e4e4e7;border-radius:6px;overflow:hidden;margin:16px 0;">
+              <table style="width:100%;border-collapse:collapse;font-size:14px;">
                 <thead>
-                  <tr><th style="text-align:left;padding:4px 8px;border-bottom:2px solid #475569;">Kører</th><th style="text-align:right;padding:4px 8px;border-bottom:2px solid #475569;">Point</th></tr>
+                  <tr style="background:#f4f4f5;"><th style="text-align:left;padding:8px 12px;border-bottom:2px solid #e4e4e7;color:#71717a;">Kører</th><th style="text-align:right;padding:8px 12px;border-bottom:2px solid #e4e4e7;color:#71717a;">Point</th></tr>
                 </thead>
                 <tbody>
                   ${driverBreakdown.join('')}
                 </tbody>
                 <tfoot>
-                  <tr><td style="padding:8px;font-weight:bold;color:#e53e3e;">Runde-total</td><td style="padding:8px;text-align:right;font-weight:bold;color:#e53e3e;">${roundPoints} pt</td></tr>
+                  <tr style="background:#f4f4f5;"><td style="padding:8px 12px;font-weight:bold;color:#dc2626;">Runde-total</td><td style="padding:8px 12px;text-align:right;font-weight:bold;color:#dc2626;">${roundPoints} pt</td></tr>
                 </tfoot>
               </table>
             </div>
 
-            <div style="background:#1e293b;border-radius:6px;padding:16px;margin:16px 0;text-align:center;">
-              <p style="margin:0 0 4px;font-size:13px;color:#94a3b8;">Din samlede rangering</p>
-              <p style="margin:0;font-size:28px;font-weight:bold;color:#e53e3e;">#${rank}</p>
-              <p style="margin:4px 0 0;font-size:18px;font-weight:bold;">${mgr.total_points} point</p>
+            <div style="background:#f4f4f5;border-radius:6px;padding:16px;margin:16px 0;text-align:center;">
+              <p style="margin:0 0 4px;font-size:13px;color:#71717a;">Din samlede rangering</p>
+              <p style="margin:0;font-size:28px;font-weight:bold;color:#dc2626;">#${rank}</p>
+              <p style="margin:4px 0 0;font-size:18px;font-weight:bold;color:#18181b;">${mgr.total_points} point</p>
             </div>
 
             <p style="text-align:center;margin:24px 0 8px;">
-              <a href="${siteUrl}/rangering" style="background:linear-gradient(135deg,#c41e1e,#e53e3e);color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
+              <a href="${siteUrl}/rangering" style="background:#dc2626;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
                 Se fuld rangering →
               </a>
             </p>
           </div>
-          <div style="padding:12px 24px;text-align:center;font-size:11px;color:#64748b;">
+          <div style="padding:12px 24px;text-align:center;font-size:11px;color:#a1a1aa;border-top:1px solid #e4e4e7;">
             DASU RaceManager
           </div>
         </div>

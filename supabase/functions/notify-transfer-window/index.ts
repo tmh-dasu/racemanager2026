@@ -62,25 +62,25 @@ Deno.serve(async (req) => {
 
     for (const mgr of managers) {
       const html = `
-        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#0f172a;color:#e2e8f0;border-radius:8px;overflow:hidden;">
-          <div style="background:linear-gradient(135deg,#c41e1e,#e53e3e);padding:20px 24px;">
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e4e4e7;">
+          <div style="background:#dc2626;padding:20px 24px;">
             <h2 style="margin:0;color:#fff;font-size:20px;">${isOpened ? '🔄 Transfervinduet er åbent' : '⏰ Transfervinduet lukker snart'}</h2>
           </div>
           <div style="padding:20px 24px;">
-            <p>Hej <strong>${mgr.team_name}</strong>,</p>
+            <p style="color:#18181b;">Hej <strong>${mgr.team_name}</strong>,</p>
             ${isOpened
-              ? `<p>Transfervinduet er nu åbent! Du kan skifte kørere ud inden for samme tier.</p>
-                 <p style="font-size:13px;color:#94a3b8;">Husk: Hvert transfer koster <strong style="color:#e53e3e;">${transferCost} point</strong> fra din samlede pointtotal.</p>`
-              : `<p>Transfervinduet lukker inden for kort tid. Hvis du overvejer et kørerskifte, er det nu du skal handle!</p>
-                 <p style="font-size:13px;color:#94a3b8;">Hvert transfer koster <strong style="color:#e53e3e;">${transferCost} point</strong>.</p>`
+              ? `<p style="color:#52525b;">Transfervinduet er nu åbent! Du kan skifte kørere ud inden for samme kategori.</p>
+                 <p style="font-size:13px;color:#71717a;">Husk: Hvert transfer koster <strong style="color:#dc2626;">${transferCost} point</strong> fra din samlede pointtotal.</p>`
+              : `<p style="color:#52525b;">Transfervinduet lukker inden for kort tid. Hvis du overvejer et kørerskifte, er det nu du skal handle!</p>
+                 <p style="font-size:13px;color:#71717a;">Hvert transfer koster <strong style="color:#dc2626;">${transferCost} point</strong>.</p>`
             }
             <p style="text-align:center;margin:24px 0 8px;">
-              <a href="${siteUrl}/mit-hold" style="background:linear-gradient(135deg,#c41e1e,#e53e3e);color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
+              <a href="${siteUrl}/mit-hold" style="background:#dc2626;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
                 Gå til Mit Hold →
               </a>
             </p>
           </div>
-          <div style="padding:12px 24px;text-align:center;font-size:11px;color:#64748b;">
+          <div style="padding:12px 24px;text-align:center;font-size:11px;color:#a1a1aa;border-top:1px solid #e4e4e7;">
             DASU RaceManager
           </div>
         </div>
