@@ -59,7 +59,7 @@ export default function PickTeamPage() {
   async function handleSubmit() {
     if (!user) { navigate("/login"); return; }
     if (!teamName) { toast({ title: "Udfyld holdnavn", variant: "destructive" }); return; }
-    if (!allSelected) { toast({ title: "Vælg én kører fra hver tier", variant: "destructive" }); return; }
+    if (!allSelected) { toast({ title: "Vælg én kører fra hver kategori", variant: "destructive" }); return; }
 
     setSubmitting(true);
     try {
