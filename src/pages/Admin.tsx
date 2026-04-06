@@ -729,6 +729,20 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
     }
   }
 
+  async function handleDrop(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx) return;
+    const reordered = [...sponsors];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    try {
+      await Promise.all(reordered.map((s: any, i: number) => upsertSponsor({ id: s.id, name: s.name, sort_order: i } as any)));
+      refetchSponsors();
+      queryClient.invalidateQueries({ queryKey: ["sponsors"] });
+    } catch (err: any) {
+      toast({ title: err.message, variant: "destructive" });
+    }
+  }
+
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Slet sponsor "${name}"?`)) return;
     try {
