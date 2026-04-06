@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift } from "lucide-react";
+import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift, MapPin, ExternalLink } from "lucide-react";
 import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 
