@@ -120,7 +120,7 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
                   <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${tier.className}`}>{tier.label}</Badge>
                   <span className="text-foreground flex-1 truncate">{d.name}</span>
                   {captainRounds.length > 0 && (
-                    <span className="flex items-center gap-1 text-gold text-[11px]" title={`Captain i runde ${captainRounds.join(", ")}`}>
+                    <span className="flex items-center gap-1 text-gold text-[11px]" title={`Holdkaptajn i runde ${captainRounds.join(", ")}`}>
                       <Crown className="h-3 w-3" />
                       R{captainRounds.join(", R")}
                     </span>

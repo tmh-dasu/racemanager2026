@@ -111,7 +111,7 @@ export default function HomePage() {
                 <CountdownTimer deadline={nextRace.race_date} label="Arrangement" />
               )}
               {nextRace.race_date && (
-                <CountdownTimer deadline={new Date(new Date(nextRace.race_date).getTime() - 24 * 60 * 60 * 1000).toISOString()} label="Captain/transfer deadline" />
+                <CountdownTimer deadline={new Date(new Date(nextRace.race_date).getTime() - 24 * 60 * 60 * 1000).toISOString()} label="Holdkaptajn/transfer deadline" />
               )}
             </div>
 

@@ -100,7 +100,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
       )}
 
       {!currentCaptainForNextRace && !isLocked && nextRace && (
-        <p className="text-xs text-yellow-400">⚠️ Du har ikke valgt captain endnu — ingen bonus uden valg!</p>
+        <p className="text-xs text-yellow-400">⚠️ Du har ikke valgt holdkaptajn endnu — ingen bonus uden valg!</p>
       )}
 
       {/* Tier budget summary */}
