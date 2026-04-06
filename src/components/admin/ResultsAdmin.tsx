@@ -143,7 +143,7 @@ export default function ResultsAdmin() {
 
         if (!pos) continue;
 
-        if (pos === "DNF") {
+        if (pos === "DNF" || pos === "DNS" || pos === "DSQ") {
           newGrid[driver.id][uploadSession] = { position: "", dnf: true };
         } else {
           const p = parseInt(pos);
@@ -216,7 +216,7 @@ export default function ResultsAdmin() {
               </Button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              CSV-format: placering, bil_nr (brug "DNF" for udgåede)
+              CSV-format: Pos, No., Name, ... (standardformat fra tidtagning)
             </span>
           </div>
 
