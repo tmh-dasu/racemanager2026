@@ -152,7 +152,7 @@ export default function RulesPage() {
             </div>
             <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
               <span className="text-success font-bold">+</span>
-              <span className="text-muted-foreground"><strong className="text-foreground">Captain-bonus</strong> (dobbelte point for valgt captain)</span>
+              <span className="text-muted-foreground"><strong className="text-foreground">Holdkaptajn-bonus</strong> (dobbelte point for valgt holdkaptajn)</span>
             </div>
             <div className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
               <span className="text-success font-bold">+</span>
