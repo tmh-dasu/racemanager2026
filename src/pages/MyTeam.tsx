@@ -394,7 +394,7 @@ export default function MyTeamPage() {
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Vælg ny kører ({swapOutDriver?.tier === "gold" ? "🥇 Guld" : swapOutDriver?.tier === "silver" ? "🥈 Sølv" : "🥉 Bronze"}):</p>
                 <div className="max-h-48 space-y-2 overflow-y-auto">
-                  {availableDrivers.length === 0 && <p className="text-xs text-muted-foreground">Ingen ledige kørere i denne tier.</p>}
+                  {availableDrivers.length === 0 && <p className="text-xs text-muted-foreground">Ingen ledige kørere i denne kategori.</p>}
                   {availableDrivers.map((d) => (
                     <button
                       key={d.id}
