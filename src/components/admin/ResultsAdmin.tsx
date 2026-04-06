@@ -21,6 +21,7 @@ export default function ResultsAdmin() {
   const [grid, setGrid] = useState<GridData>({});
   const [saving, setSaving] = useState(false);
   const [notifying, setNotifying] = useState(false);
+  const [uploadSession, setUploadSession] = useState<string>(SESSION_TYPES[0]);
 
   // Track which rounds have results
   const roundsWithResults = new Set(allResults.map(r => r.race_id));
