@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift } from "lucide-react";
-import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions } from "@/lib/api";
+import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 
 function CountdownTimer({ deadline, label }: { deadline: string; label: string }) {

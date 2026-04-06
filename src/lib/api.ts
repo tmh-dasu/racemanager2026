@@ -546,6 +546,36 @@ export async function resolvePredictions(questionId: string, correctAnswer: stri
 }
 
 // Driver withdrawal: mark driver as withdrawn, notify affected managers
+// Sponsors
+export interface Sponsor {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  website_url: string | null;
+  tagline: string | null;
+  sort_order: number;
+}
+
+export async function fetchSponsors(): Promise<Sponsor[]> {
+  const { data } = await supabase.from("sponsors").select("*").order("sort_order");
+  return (data || []) as unknown as Sponsor[];
+}
+
+export async function upsertSponsor(sponsor: Partial<Sponsor> & { name: string }) {
+  if (sponsor.id) {
+    const { error } = await supabase.from("sponsors").update(sponsor as any).eq("id", sponsor.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("sponsors").insert(sponsor as any);
+    if (error) throw error;
+  }
+}
+
+export async function deleteSponsor(id: string) {
+  const { error } = await supabase.from("sponsors").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function withdrawDriver(driverId: string) {
   const { error: wErr } = await supabase.from("drivers").update({ withdrawn: true } as any).eq("id", driverId);
   if (wErr) throw wErr;
