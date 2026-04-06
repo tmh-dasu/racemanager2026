@@ -63,7 +63,7 @@ export default function AuthPage() {
               {isLogin ? "Log ind" : "Opret konto"}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {isLogin ? "Log ind for at se dit hold" : "Opret en konto for at deltage i DASU Race Manager"}
+              {isLogin ? "Log ind for at se dit hold" : "{isLogin ? "Log ind for at se dit hold" : "Opret en konto for at deltage i DASU RaceManager"}"}
             </p>
           </div>
 

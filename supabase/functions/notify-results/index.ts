@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'DASU Race Manager <noreply@racemanager.dasu.dk>',
+            from: 'DASU RaceManager <noreply@racemanager.dasu.dk>',,
             to: [mgr.email],
             subject: `🏁 Resultater Runde ${race.round_number} — Du er #${rank} med ${mgr.total_points} point`,
             html,

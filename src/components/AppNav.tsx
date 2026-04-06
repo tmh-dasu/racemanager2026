@@ -35,7 +35,7 @@ export default function AppNav() {
             <img src="/images/dasu-logo.png" alt="DASU" className="h-9 w-auto" />
             <img src="/images/supergt-logo.png" alt="Super GT Danmark" className="h-9 w-auto" />
             <span className="font-display text-lg font-bold tracking-wide text-foreground">
-              Race Manager
+              RaceManager
             </span>
           </Link>
           <div className="flex items-center gap-1">
