@@ -58,7 +58,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
     try {
       await setCaptainSelection(managerId, nextRace.id, driverId);
       queryClient.invalidateQueries({ queryKey: ["captain_selections", managerId] });
-      toast({ title: `${driver.name} valgt som captain! 👑` });
+      toast({ title: `${driver.name} valgt som holdkaptajn! 👑` });
     } catch (err: any) {
       toast({ title: "Fejl: " + err.message, variant: "destructive" });
     }
