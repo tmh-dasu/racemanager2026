@@ -11,7 +11,6 @@ const navItems = [
   { to: "/rangering", label: "Leaderboard", icon: ListOrdered },
   { to: "/resultater", label: "Resultater", icon: Flag },
   { to: "/regler", label: "Regler", icon: BookOpen },
-  { to: "/admin", label: "Admin", icon: Settings },
 ];
 
 const mobileMainNav = [
