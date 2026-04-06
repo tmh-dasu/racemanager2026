@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
                 Gå til Mit Hold →
               </a>
             </p>
-            <p style="font-size: 12px; color: #999;">DASU Race Manager</p>
+            <p style="font-size: 12px; color: #999;">DASU RaceManager</p>
           </div>
         `
 
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: 'DASU Race Manager <noreply@racemanager.dasu.dk>',
+              from: 'DASU RaceManager <noreply@racemanager.dasu.dk>',
               to: [mgr.email],
               subject: `⏰ Deadline ${deadlineStr} — ${race.name}`,
               html,

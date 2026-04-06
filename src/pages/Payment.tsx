@@ -81,7 +81,7 @@ export default function PaymentPage() {
               <Flag className="h-8 w-8 text-racing-red" />
             </div>
             <h1 className="font-display text-2xl font-bold text-foreground">
-              Tilmelding til DASU Race Manager 2026
+              Tilmelding til DASU RaceManager 2026
             </h1>
             <p className="text-sm text-muted-foreground">
               Betal tilmeldingsgebyret for at oprette dit fantasy-hold
@@ -149,7 +149,7 @@ export default function PaymentPage() {
           </div>
 
           <p className="text-center text-xs text-muted-foreground">
-            Ved at betale accepterer du vilkårene for DASU Race Manager 2026
+            Ved at betale accepterer du vilkårene for DASU RaceManager 2026
           </p>
         </div>
       </div>
