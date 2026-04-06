@@ -124,7 +124,7 @@ export default function RulesPage() {
         {/* Transfers */}
         <Section icon={<ArrowRightLeft className="h-5 w-5 text-accent" />} title="Transfer-system 🔄">
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• Du kan til enhver tid skifte <strong className="text-foreground">én kører</strong> ud mod en anden <strong className="text-foreground">inden for samme tier</strong></li>
+            <li>• Du kan til enhver tid skifte <strong className="text-foreground">én kører</strong> ud mod en anden <strong className="text-foreground">inden for samme kategori</strong></li>
             <li>• Transfers koster point afhængigt af tieren på den kører, du henter ind: en <strong className="text-gold">guldkører koster 15 point</strong>, en <strong className="text-silver">sølvkører koster 10 point</strong> og en <strong className="text-bronze">bronzekører koster 5 point</strong>. Pointomkostningen trækkes fra din pointsaldo ved bekræftelse.</li>
             <li>• Der er <strong className="text-foreground">ingen grænse</strong> for antal transfers – men hvert koster point</li>
             <li>• Pointfradraget er <strong className="text-foreground">permanent</strong> og kan ikke fortrydes</li>
