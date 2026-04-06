@@ -593,7 +593,6 @@ function SettingsAdmin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: settings, refetch } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
-  const [transferCostInput, setTransferCostInput] = useState("");
   const [adminEmailInput, setAdminEmailInput] = useState("");
 
   async function toggle(key: string, current: boolean) {
@@ -613,15 +612,6 @@ function SettingsAdmin() {
         console.error("Failed to send transfer notification:", e);
       }
     }
-  }
-
-  async function saveTransferCost() {
-    const val = Number(transferCostInput);
-    if (isNaN(val) || val < 0) { toast({ title: "Angiv et gyldigt tal", variant: "destructive" }); return; }
-    await updateSetting("transfer_cost", String(val));
-    refetch();
-    queryClient.invalidateQueries({ queryKey: ["settings"] });
-    toast({ title: "Transaktionsomkostning opdateret" });
   }
 
   if (!settings) return null;
