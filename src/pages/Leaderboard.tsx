@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, Crown, ArrowLeftRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, fetchAllPredictionAnswers, computePointBreakdown, type Manager, type Driver, type CaptainSelection, type Race, type Transfer, type PointBreakdown } from "@/lib/api";
+import { fetchManagers, fetchManagerDrivers, fetchManagerByUserId, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, fetchAllPredictionAnswers, computePointBreakdown, type Manager, type Driver, type CaptainSelection, type Race, type Transfer, type PointBreakdown } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 import { Badge } from "@/components/ui/badge";
 
@@ -37,10 +38,10 @@ function PointBreakdownRow({ breakdown }: { breakdown: PointBreakdown }) {
   );
 }
 
-function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, transfers, breakdown }: {
+function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, transfers, breakdown, isMyTeam }: {
   manager: Manager; rank: number; allDrivers: Driver[];
   captainSelections: CaptainSelection[]; races: Race[]; transfers: Transfer[];
-  breakdown: PointBreakdown;
+  breakdown: PointBreakdown; isMyTeam: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const { data: managerDrivers } = useQuery({
@@ -78,6 +79,7 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
       <button
         onClick={() => setOpen(!open)}
         className={`w-full flex items-center gap-3 rounded-lg border p-3 shadow-card transition text-left ${
+          isMyTeam ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20" :
           rank === 0 ? "border-gold/30 bg-gold/5" : rank === 1 ? "border-silver/30 bg-silver/5" : rank === 2 ? "border-bronze/30 bg-bronze/5" : "border-border bg-card"
         } hover:bg-accent/50`}
       >
@@ -88,7 +90,10 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
         </span>
         <div className="flex-1 min-w-0">
           <Link to={`/hold/${manager.slug}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>
-            <p className="font-display font-semibold text-foreground truncate">{manager.team_name}</p>
+            <p className="font-display font-semibold text-foreground truncate flex items-center gap-1.5">
+              {manager.team_name}
+              {isMyTeam && <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary">Mit hold</Badge>}
+            </p>
           </Link>
           <p className="text-xs text-muted-foreground truncate">{manager.name}</p>
         </div>
@@ -152,7 +157,13 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
 }
 
 export default function LeaderboardPage() {
+  const { user } = useAuth();
   const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+  const { data: myManager } = useQuery({
+    queryKey: ["my_manager", user?.id],
+    queryFn: () => fetchManagerByUserId(user!.id),
+    enabled: !!user,
+  });
   const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
   const { data: allDrivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const { data: captainSelections = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
@@ -201,6 +212,7 @@ export default function LeaderboardPage() {
               races={races}
               transfers={transfers}
               breakdown={breakdowns.get(m.id) || { racePoints: 0, captainBonus: 0, predictionPoints: 0, transferCosts: 0, total: 0 }}
+              isMyTeam={myManager?.id === m.id}
             />
           ))}
         </div>
