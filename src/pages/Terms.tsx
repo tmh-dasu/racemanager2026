@@ -72,8 +72,8 @@ export default function TermsPage() {
             <h2 className="font-display text-lg font-semibold text-foreground">7. Kontakt</h2>
             <p>
               Har du spørgsmål til vilkårene eller spillet, kan du kontakte DASU på{" "}
-              <a href="mailto:info@dasu.dk" className="text-racing-red hover:underline font-medium">
-                info@dasu.dk
+              <a href="mailto:dasu@dasu.dk" className="text-racing-red hover:underline font-medium">
+                dasu@dasu.dk
               </a>.
             </p>
           </section>
