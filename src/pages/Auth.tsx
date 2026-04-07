@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Flag, Mail, Lock, User, Ticket } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +17,7 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [voucherCode, setVoucherCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -158,9 +160,27 @@ export default function AuthPage() {
               />
             </div>
 
+            {!isLogin && (
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="terms"
+                  checked={termsAccepted}
+                  onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="terms" className="text-sm text-muted-foreground leading-snug cursor-pointer">
+                  Jeg accepterer{" "}
+                  <a href="/vilkaar" target="_blank" className="text-racing-red hover:underline font-medium">
+                    vilkår og betingelser
+                  </a>{" "}
+                  for DASU RaceManager, herunder at mit holdnavn og pointresultater vises offentligt på leaderboardet, og at DASU må kontakte mig med information om spillet.
+                </label>
+              </div>
+            )}
+
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || (!isLogin && !termsAccepted)}
               className="w-full bg-gradient-racing py-3 font-display text-base font-semibold text-primary-foreground shadow-racing hover:scale-105 transition-transform"
             >
               {loading ? "Vent..." : isLogin ? "Log ind" : "Opret konto"}

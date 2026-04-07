@@ -43,7 +43,14 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-display text-lg font-semibold text-foreground">4. Persondata</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">4. Leaderboard og kommunikation</h2>
+            <p>
+              Dit holdnavn og dine pointresultater vises offentligt på leaderboardet og kan blive omtalt i forbindelse med nyheder og kommunikation om spillet — herunder på dasu.dk og i DASU's sociale medier og nyhedsbreve.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-display text-lg font-semibold text-foreground">5. Persondata</h2>
             <p>
               Vi opbevarer dit navn og din e-mailadresse for at administrere din deltagelse i
               spillet. Dine data deles ikke med tredjeparter ud over de tekniske platforme,
@@ -53,7 +60,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-display text-lg font-semibold text-foreground">5. Ansvar</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">6. Ansvar</h2>
             <p>
               DASU RaceManager er et underholdningstilbud uden præmier af økonomisk værdi.
               DASU påtager sig intet ansvar for tekniske fejl, nedetid eller datatab.
@@ -62,7 +69,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-display text-lg font-semibold text-foreground">6. Kontakt</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">7. Kontakt</h2>
             <p>
               Har du spørgsmål til vilkårene eller spillet, kan du kontakte DASU på{" "}
               <a href="mailto:info@dasu.dk" className="text-racing-red hover:underline font-medium">
