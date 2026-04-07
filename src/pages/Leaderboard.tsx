@@ -157,7 +157,13 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
 }
 
 export default function LeaderboardPage() {
+  const { user } = useAuth();
   const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+  const { data: myManager } = useQuery({
+    queryKey: ["my_manager", user?.id],
+    queryFn: () => fetchManagerByUserId(user!.id),
+    enabled: !!user,
+  });
   const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
   const { data: allDrivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const { data: captainSelections = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
