@@ -47,6 +47,9 @@ export default function TermsPage() {
             <p>
               Dit holdnavn og dine pointresultater vises offentligt på leaderboardet og kan blive omtalt i forbindelse med nyheder og kommunikation om spillet — herunder på dasu.dk og i DASU's sociale medier og nyhedsbreve.
             </p>
+            <p>
+              Som deltager modtager du notifikationsmails fra spillet, f.eks. ved nye resultater, transfervinduer og påmindelser om kaptajnvalg.
+            </p>
           </section>
 
           <section className="space-y-2">
