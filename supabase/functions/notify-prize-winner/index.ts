@@ -11,7 +11,6 @@ Deno.serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const resendApiKey = Deno.env.get('RESEND_API_KEY')
 
@@ -21,7 +20,7 @@ Deno.serve(async (req) => {
     })
   }
 
-  // Verify caller is admin
+  // Verify caller is admin using the JWT from Authorization header
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -29,25 +28,21 @@ Deno.serve(async (req) => {
     })
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: authHeader } },
-  })
-
   const token = authHeader.replace('Bearer ', '')
-  const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token)
-  if (claimsErr || !claimsData?.claims) {
+  const adminClient = createClient(supabaseUrl, serviceKey)
+
+  // Verify the JWT and get user
+  const { data: { user }, error: userErr } = await adminClient.auth.getUser(token)
+  if (userErr || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }
 
-  const userId = claimsData.claims.sub
-  const adminClient = createClient(supabaseUrl, serviceKey)
-
   const { data: roleRow } = await adminClient
     .from('user_roles')
     .select('role')
-    .eq('user_id', userId)
+    .eq('user_id', user.id)
     .eq('role', 'admin')
     .maybeSingle()
 
