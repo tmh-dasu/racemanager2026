@@ -17,6 +17,7 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [voucherCode, setVoucherCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
