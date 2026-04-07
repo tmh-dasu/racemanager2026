@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp, Crown, ArrowLeftRight } from "lucide-react";
+import { ChevronDown, ChevronUp, Crown, ArrowLeftRight, User } from "lucide-react";
 import { Link } from "react-router-dom";
-import { fetchManagers, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, fetchAllPredictionAnswers, computePointBreakdown, type Manager, type Driver, type CaptainSelection, type Race, type Transfer, type PointBreakdown } from "@/lib/api";
+import { fetchManagers, fetchManagerDrivers, fetchManagerByUserId, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, fetchAllPredictionAnswers, computePointBreakdown, type Manager, type Driver, type CaptainSelection, type Race, type Transfer, type PointBreakdown } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 import { Badge } from "@/components/ui/badge";
 
