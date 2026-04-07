@@ -49,22 +49,30 @@ Deno.serve(async (req) => {
 
     const trimmedCode = code.trim().toUpperCase();
 
-    // Look up the voucher
+    // Look up the first unused voucher with this code
     const { data: voucher, error: fetchError } = await adminClient
       .from("voucher_codes")
       .select("id, used_by")
       .eq("code", trimmedCode)
+      .is("used_by", null)
+      .limit(1)
       .maybeSingle();
 
     if (fetchError || !voucher) {
-      return new Response(JSON.stringify({ error: "Ugyldig voucher-kode" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+      // Check if code exists but all are used
+      const { count } = await adminClient
+        .from("voucher_codes")
+        .select("id", { count: "exact", head: true })
+        .eq("code", trimmedCode);
 
-    if (voucher.used_by) {
-      return new Response(JSON.stringify({ error: "Denne kode er allerede brugt" }), {
+      if (count && count > 0) {
+        return new Response(JSON.stringify({ error: "Denne kode er allerede brugt op" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ error: "Ugyldig voucher-kode" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
