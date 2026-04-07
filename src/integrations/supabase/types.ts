@@ -408,6 +408,48 @@ export type Database = {
           },
         ]
       }
+      prizes: {
+        Row: {
+          created_at: string
+          description: string | null
+          drawn_at: string | null
+          id: string
+          name: string
+          winner_manager_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          drawn_at?: string | null
+          id?: string
+          name: string
+          winner_manager_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          drawn_at?: string | null
+          id?: string
+          name?: string
+          winner_manager_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prizes_winner_manager_id_fkey"
+            columns: ["winner_manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prizes_winner_manager_id_fkey"
+            columns: ["winner_manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       race_results: {
         Row: {
           created_at: string
