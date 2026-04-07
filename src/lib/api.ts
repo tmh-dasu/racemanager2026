@@ -584,6 +584,36 @@ export async function deleteSponsor(id: string) {
   if (error) throw error;
 }
 
+// Prizes / Lottery
+export interface Prize {
+  id: string;
+  name: string;
+  description: string | null;
+  winner_manager_id: string | null;
+  drawn_at: string | null;
+  created_at: string;
+}
+
+export async function fetchPrizes(): Promise<Prize[]> {
+  const { data } = await supabase.from("prizes").select("*").order("created_at");
+  return (data || []) as unknown as Prize[];
+}
+
+export async function upsertPrize(prize: Partial<Prize> & { name: string }) {
+  if (prize.id) {
+    const { error } = await supabase.from("prizes").update(prize as any).eq("id", prize.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("prizes").insert(prize as any);
+    if (error) throw error;
+  }
+}
+
+export async function deletePrize(id: string) {
+  const { error } = await supabase.from("prizes").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function withdrawDriver(driverId: string) {
   const { error: wErr } = await supabase.from("drivers").update({ withdrawn: true } as any).eq("id", driverId);
   if (wErr) throw wErr;
