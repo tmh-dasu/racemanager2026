@@ -80,6 +80,7 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
       <button
         onClick={() => setOpen(!open)}
         className={`w-full flex items-center gap-3 rounded-lg border p-3 shadow-card transition text-left ${
+          isMyTeam ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20" :
           rank === 0 ? "border-gold/30 bg-gold/5" : rank === 1 ? "border-silver/30 bg-silver/5" : rank === 2 ? "border-bronze/30 bg-bronze/5" : "border-border bg-card"
         } hover:bg-accent/50`}
       >
