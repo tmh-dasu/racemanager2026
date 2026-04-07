@@ -60,7 +60,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-display text-lg font-semibold text-foreground">5. Ansvar</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">6. Ansvar</h2>
             <p>
               DASU RaceManager er et underholdningstilbud uden præmier af økonomisk værdi.
               DASU påtager sig intet ansvar for tekniske fejl, nedetid eller datatab.
