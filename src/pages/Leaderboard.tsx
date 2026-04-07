@@ -91,7 +91,10 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
         </span>
         <div className="flex-1 min-w-0">
           <Link to={`/hold/${manager.slug}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>
-            <p className="font-display font-semibold text-foreground truncate">{manager.team_name}</p>
+            <p className="font-display font-semibold text-foreground truncate flex items-center gap-1.5">
+              {manager.team_name}
+              {isMyTeam && <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary">Mit hold</Badge>}
+            </p>
           </Link>
           <p className="text-xs text-muted-foreground truncate">{manager.name}</p>
         </div>
