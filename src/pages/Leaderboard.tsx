@@ -212,7 +212,7 @@ export default function LeaderboardPage() {
               races={races}
               transfers={transfers}
               breakdown={breakdowns.get(m.id) || { racePoints: 0, captainBonus: 0, predictionPoints: 0, transferCosts: 0, total: 0 }}
-            />
+              isMyTeam={myManager?.id === m.id}
           ))}
         </div>
       </div>
