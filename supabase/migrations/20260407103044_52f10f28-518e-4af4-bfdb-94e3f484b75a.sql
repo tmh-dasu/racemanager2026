@@ -1,0 +1,1 @@
+ALTER TABLE public.voucher_codes DROP CONSTRAINT IF EXISTS voucher_codes_code_key;
