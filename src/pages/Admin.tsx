@@ -72,6 +72,7 @@ export default function AdminPage() {
             <TabsTrigger value="managers" className="font-display">Managers</TabsTrigger>
             <TabsTrigger value="transfers" className="font-display">Transfers</TabsTrigger>
             <TabsTrigger value="vouchers" className="font-display">Vouchers</TabsTrigger>
+            <TabsTrigger value="lottery" className="font-display">Lodtrækning</TabsTrigger>
             <TabsTrigger value="settings" className="font-display">Indstillinger</TabsTrigger>
           </TabsList>
 
