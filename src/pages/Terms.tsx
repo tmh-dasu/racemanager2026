@@ -63,11 +63,9 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-display text-lg font-semibold text-foreground">6. Ansvar</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">6. Præmier og anerkendelse</h2>
             <p>
-              DASU RaceManager er et underholdningstilbud uden præmier af økonomisk værdi.
-              DASU påtager sig intet ansvar for tekniske fejl, nedetid eller datatab.
-              Eventuelle præmier er udelukkende ære og anerkendelse.
+              Der uddeles præmier i udvalgte kategorier i løbet af sæsonen. De konkrete præmier stilles til rådighed af eksterne partnere. Deltagerne har intet retskrav på en specifik præmie eller kompensation, og DASU påtager sig intet ansvar for præmiers art, værdi eller levering. DASU påtager sig desuden intet ansvar for tekniske fejl, nedetid eller datatab.
             </p>
           </section>
 
