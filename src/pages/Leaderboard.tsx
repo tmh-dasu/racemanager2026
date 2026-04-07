@@ -38,9 +38,10 @@ function PointBreakdownRow({ breakdown }: { breakdown: PointBreakdown }) {
   );
 }
 
-function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, transfers, breakdown }: {
+function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, transfers, breakdown, isMyTeam }: {
   manager: Manager; rank: number; allDrivers: Driver[];
   captainSelections: CaptainSelection[]; races: Race[]; transfers: Transfer[];
+  breakdown: PointBreakdown; isMyTeam: boolean;
   breakdown: PointBreakdown;
 }) {
   const [open, setOpen] = useState(false);
