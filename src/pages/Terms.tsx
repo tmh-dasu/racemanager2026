@@ -69,7 +69,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-display text-lg font-semibold text-foreground">6. Kontakt</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">7. Kontakt</h2>
             <p>
               Har du spørgsmål til vilkårene eller spillet, kan du kontakte DASU på{" "}
               <a href="mailto:info@dasu.dk" className="text-racing-red hover:underline font-medium">
