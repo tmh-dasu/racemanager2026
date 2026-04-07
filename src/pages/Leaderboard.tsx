@@ -42,7 +42,6 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
   manager: Manager; rank: number; allDrivers: Driver[];
   captainSelections: CaptainSelection[]; races: Race[]; transfers: Transfer[];
   breakdown: PointBreakdown; isMyTeam: boolean;
-  breakdown: PointBreakdown;
 }) {
   const [open, setOpen] = useState(false);
   const { data: managerDrivers } = useQuery({
