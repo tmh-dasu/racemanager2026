@@ -80,13 +80,19 @@ export default function PrizeLottery() {
       });
 
       // Send notification email to winner
-      try {
-        await supabase.functions.invoke("notify-prize-winner", {
-          body: { prizeId: prize.id },
+      const { error: notifyError } = await supabase.functions.invoke("notify-prize-winner", {
+        body: { prizeId: prize.id },
+      });
+
+      if (notifyError) {
+        console.error("Prize winner email error:", notifyError);
+        toast({
+          title: `🎉 ${winner.team_name} vandt "${prize.name}"!`,
+          description: "Vinderen blev gemt, men emailen kunne ikke sendes.",
+          variant: "destructive",
         });
+      } else {
         toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"! Email sendt.` });
-      } catch {
-        toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"! (Email kunne ikke sendes)` });
       }
 
       refetch();

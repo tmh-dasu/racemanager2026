@@ -11,56 +11,55 @@ Deno.serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const resendApiKey = Deno.env.get('RESEND_API_KEY')
 
-  if (!resendApiKey) {
-    return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    })
-  }
-
-  // Verify caller is admin using the JWT from Authorization header
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  })
 
   const token = authHeader.replace('Bearer ', '')
-  const adminClient = createClient(supabaseUrl, serviceKey)
-
-  // Verify the JWT and get user
-  const { data: { user }, error: userErr } = await adminClient.auth.getUser(token)
-  if (userErr || !user) {
+  const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token)
+  if (claimsErr || !claimsData?.claims?.sub) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+
+  const adminClient = createClient(supabaseUrl, serviceKey)
+  const userId = claimsData.claims.sub
 
   const { data: roleRow } = await adminClient
     .from('user_roles')
     .select('role')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .eq('role', 'admin')
     .maybeSingle()
 
   if (!roleRow) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), {
-      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 
-  // Parse request
   const { prizeId } = await req.json()
   if (!prizeId) {
     return new Response(JSON.stringify({ error: 'Missing prizeId' }), {
-      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 
-  // Get prize with winner
   const { data: prize, error: prizeErr } = await adminClient
     .from('prizes')
     .select('*')
@@ -69,11 +68,11 @@ Deno.serve(async (req) => {
 
   if (prizeErr || !prize || !prize.winner_manager_id) {
     return new Response(JSON.stringify({ error: 'Prize not found or no winner' }), {
-      status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 
-  // Get winner manager
   const { data: manager } = await adminClient
     .from('managers')
     .select('email, team_name, name')
@@ -82,11 +81,12 @@ Deno.serve(async (req) => {
 
   if (!manager?.email) {
     return new Response(JSON.stringify({ error: 'Winner email not found' }), {
-      status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 
-  // Send email
+  const subject = `🎉 Tillykke! Du har vundet "${prize.name}" i DASU RaceManager`
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;padding:32px;">
       <div style="text-align:center;margin-bottom:24px;">
@@ -111,30 +111,33 @@ Deno.serve(async (req) => {
     </div>
   `
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: 'DASU RaceManager <noreply@racemanager.dasu.dk>',
-      to: [manager.email],
-      subject: `🎉 Tillykke! Du har vundet "${prize.name}" i DASU RaceManager`,
+  console.log('Sending prize winner email', { prizeId, email: manager.email })
+
+  const { data: emailResult, error: emailError } = await adminClient.functions.invoke('send-email', {
+    body: {
+      to: manager.email,
+      subject,
       html,
-    }),
+    },
   })
 
-  const emailData = await res.json()
+  if (emailError) {
+    console.error('Failed to send prize winner email', {
+      prizeId,
+      email: manager.email,
+      error: emailError.message,
+    })
 
-  if (!res.ok) {
-    console.error('Resend error:', emailData)
-    return new Response(JSON.stringify({ error: 'Email send failed', details: emailData }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    return new Response(JSON.stringify({ error: 'Email send failed', details: emailError.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 
+  console.log('Prize winner email sent', { prizeId, email: manager.email, result: emailResult })
+
   return new Response(JSON.stringify({ success: true, email: manager.email }), {
-    status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    status: 200,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
 })
