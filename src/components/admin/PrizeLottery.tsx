@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2, Save, Gift, Shuffle } from "lucide-react";
 import { fetchPrizes, upsertPrize, deletePrize, fetchManagers, type Prize } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -77,8 +78,18 @@ export default function PrizeLottery() {
         winner_manager_id: winner.id,
         drawn_at: new Date().toISOString(),
       });
+
+      // Send notification email to winner
+      try {
+        await supabase.functions.invoke("notify-prize-winner", {
+          body: { prizeId: prize.id },
+        });
+        toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"! Email sendt.` });
+      } catch {
+        toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"! (Email kunne ikke sendes)` });
+      }
+
       refetch();
-      toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"!` });
     } catch (err: any) {
       toast({ title: err.message, variant: "destructive" });
     }
