@@ -81,8 +81,18 @@ export default function PrizeLottery() {
         winner_manager_id: winner.id,
         drawn_at: new Date().toISOString(),
       });
+
+      // Send notification email to winner
+      try {
+        await supabase.functions.invoke("notify-prize-winner", {
+          body: { prizeId: prize.id },
+        });
+        toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"! Email sendt.` });
+      } catch {
+        toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"! (Email kunne ikke sendes)` });
+      }
+
       refetch();
-      toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"!` });
     } catch (err: any) {
       toast({ title: err.message, variant: "destructive" });
     }
