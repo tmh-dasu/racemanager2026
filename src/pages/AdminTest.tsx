@@ -242,10 +242,10 @@ export default function AdminTestPage() {
           driver_id: d[res.driver],
           session_type: s.session,
           position: res.position,
-          fastest_lap: res.fastest_lap,
+          fastest_lap: false,
           pole_position: false,
           dnf: res.dnf,
-          points: calculatePoints(res.position, res.dnf) + (res.fastest_lap ? 3 : 0),
+          points: calculatePoints(res.position, res.dnf),
         });
       }
     }
