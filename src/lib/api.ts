@@ -54,8 +54,6 @@ export interface RaceResult {
   driver_id: string;
   session_type: string;
   position: number | null;
-  fastest_lap: boolean;
-  pole_position: boolean;
   dnf: boolean;
   points: number;
 }
