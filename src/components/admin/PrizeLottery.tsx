@@ -164,6 +164,16 @@ export default function PrizeLottery() {
               <Award className="h-3.5 w-3.5 mr-1" />
               Afdeling
             </Button>
+            <Button
+              type="button"
+              variant={form.prize_category === "other" ? "default" : "outline"}
+              size="sm"
+              className={`flex-1 font-display ${form.prize_category === "other" ? "bg-primary/20 text-primary border-primary/30 hover:bg-primary/30" : ""}`}
+              onClick={() => setForm({ ...form, prize_category: "other" })}
+            >
+              <Gift className="h-3.5 w-3.5 mr-1" />
+              Øvrige
+            </Button>
           </div>
         </div>
         <div className="flex gap-2">
