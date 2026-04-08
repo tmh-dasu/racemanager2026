@@ -374,32 +374,29 @@ export function computePointBreakdown(
     captainMap.set(c.race_id, c.driver_id);
   });
 
-  const baseSessionPts: number[] = [];
-  const captainSessionPts: number[] = [];
-
-  allResults
+  // Base race points from current team drivers
+  const baseTotal = allResults
     .filter((r) => driverIds.includes(r.driver_id))
-    .forEach((r) => {
-      const pts = r.points || 0;
-      const isCaptain = captainMap.get(r.race_id) === r.driver_id;
-      baseSessionPts.push(pts);
-      captainSessionPts.push(isCaptain ? pts * 2 : pts);
-    });
+    .reduce((sum, r) => sum + (r.points || 0), 0);
 
-  const { total: baseTotal } = applyDropWorst(baseSessionPts, completedRounds);
-  const { total: totalWithCaptain } = applyDropWorst(captainSessionPts, completedRounds);
+  // Captain bonus: persists even if captain driver was transferred out
+  let captainBonus = 0;
+  captainMap.forEach((captainDriverId, raceId) => {
+    const captainPts = allResults
+      .filter((r) => r.driver_id === captainDriverId && r.race_id === raceId)
+      .reduce((sum, r) => sum + (r.points || 0), 0);
+    captainBonus += captainPts;
+  });
 
-  const racePoints = baseTotal;
-  const captainBonus = totalWithCaptain - baseTotal;
   const predictionPoints = allPredAnswers.filter((a) => a.manager_id === managerId && a.is_correct === true).length * 5;
   const transferCosts = allTransfers.filter((t) => t.manager_id === managerId).reduce((sum, t) => sum + (t.point_cost || 0), 0);
 
   return {
-    racePoints,
+    racePoints: baseTotal,
     captainBonus,
     predictionPoints,
     transferCosts,
-    total: totalWithCaptain + predictionPoints - transferCosts,
+    total: baseTotal + captainBonus + predictionPoints - transferCosts,
   };
 }
 
