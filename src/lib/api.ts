@@ -322,14 +322,21 @@ export async function recalculateManagerPoints() {
       captainMap.set(c.race_id, c.driver_id);
     });
 
-    const sessionPoints = (allResults || [])
+    // Base race points from current team drivers
+    const basePoints = (allResults || [])
       .filter((r: any) => driverIds.includes(r.driver_id))
-      .map((r: any) => {
-        const pts = r.points || 0;
-        const isCaptain = captainMap.get(r.race_id) === r.driver_id;
-        return isCaptain ? pts * 2 : pts;
-      });
-    const { total } = applyDropWorst(sessionPoints, completedRounds);
+      .reduce((sum: number, r: any) => sum + (r.points || 0), 0);
+
+    // Captain bonus: calculated from captain driver's results (persists even after transfer)
+    let captainBonus = 0;
+    captainMap.forEach((captainDriverId, raceId) => {
+      const captainPts = (allResults || [])
+        .filter((r: any) => r.driver_id === captainDriverId && r.race_id === raceId)
+        .reduce((sum: number, r: any) => sum + (r.points || 0), 0);
+      captainBonus += captainPts; // bonus = extra copy of captain's points
+    });
+
+    const total = basePoints + captainBonus;
 
     // Prediction bonuses: 5 points per correct answer
     const predictionBonus = (allPredAnswers || []).filter((a: any) => a.manager_id === mgr.id && a.is_correct === true).length * 5;
