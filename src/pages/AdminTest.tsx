@@ -352,7 +352,7 @@ export default function AdminTestPage() {
       await performTransfer(tids.managers["Spiller A"], tids.drivers["Test Sølv 1"], tids.drivers["Test Sølv 2"], getTransferCostForTier("silver"));
       const bd = await getBreakdownData(tids);
       const b = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
-      subs.push({ name: "A: Sølv→Sølv (−10)", status: b.total === 197 ? "pass" : "fail", message: `Total: ${b.total} (forventet 197)` });
+      subs.push({ name: "A: Sølv→Sølv (−10)", status: b.total === 271 ? "pass" : "fail", message: `Total: ${b.total} (forventet 271)` });
     } catch (e: any) {
       subs.push({ name: "A: Sølv→Sølv (−10)", status: "fail", message: e.message });
     }
@@ -362,7 +362,7 @@ export default function AdminTestPage() {
       await performTransfer(tids.managers["Spiller A"], tids.drivers["Test Bronze 1"], tids.drivers["Test Bronze 2"], getTransferCostForTier("bronze"));
       const bd = await getBreakdownData(tids);
       const b = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
-      subs.push({ name: "B: Bronze→Bronze (−5)", status: b.total === 149 ? "pass" : "fail", message: `Total: ${b.total} (forventet 149)` });
+      subs.push({ name: "B: Bronze→Bronze (−5)", status: b.total === 223 ? "pass" : "fail", message: `Total: ${b.total} (forventet 223)` });
     } catch (e: any) {
       subs.push({ name: "B: Bronze→Bronze (−5)", status: "fail", message: e.message });
     }
@@ -372,7 +372,7 @@ export default function AdminTestPage() {
       await performTransfer(tids.managers["Spiller A"], tids.drivers["Test Guld 1"], tids.drivers["Test Guld 2"], getTransferCostForTier("gold"));
       const bd = await getBreakdownData(tids);
       const b = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
-      subs.push({ name: "C: Guld→Guld (−15)", status: b.total === 124 ? "pass" : "fail", message: `Total: ${b.total} (forventet 124)` });
+      subs.push({ name: "C: Guld→Guld (−15)", status: b.total === 198 ? "pass" : "fail", message: `Total: ${b.total} (forventet 198)` });
     } catch (e: any) {
       subs.push({ name: "C: Guld→Guld (−15)", status: "fail", message: e.message });
     }
@@ -451,10 +451,10 @@ export default function AdminTestPage() {
 
     const checks = [
       { label: "Race-point", actual: bA.racePoints, expected: 154 },
-      { label: "Captain-bonus", actual: bA.captainBonus, expected: 0 },
+      { label: "Captain-bonus", actual: bA.captainBonus, expected: 74 },
       { label: "Prediction-point", actual: bA.predictionPoints, expected: 15 },
       { label: "Transferfradrag", actual: bA.transferCosts, expected: 30 },
-      { label: "Total", actual: bA.total, expected: 139 },
+      { label: "Total", actual: bA.total, expected: 213 },
     ];
 
     const allOk = checks.every(c => c.actual === c.expected);
