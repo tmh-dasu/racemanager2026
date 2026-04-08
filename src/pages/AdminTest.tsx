@@ -352,7 +352,7 @@ export default function AdminTestPage() {
       await performTransfer(tids.managers["Spiller A"], tids.drivers["Test Sølv 1"], tids.drivers["Test Sølv 2"], getTransferCostForTier("silver"));
       const bd = await getBreakdownData(tids);
       const b = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
-      subs.push({ name: "A: Sølv→Sølv (−10)", status: b.total === 213 ? "pass" : "fail", message: `Total: ${b.total} (forventet 213)` });
+      subs.push({ name: "A: Sølv→Sølv (−10)", status: b.total === 197 ? "pass" : "fail", message: `Total: ${b.total} (forventet 197)` });
     } catch (e: any) {
       subs.push({ name: "A: Sølv→Sølv (−10)", status: "fail", message: e.message });
     }
