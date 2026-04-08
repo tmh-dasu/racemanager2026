@@ -578,13 +578,14 @@ export interface Prize {
   id: string;
   name: string;
   description: string | null;
+  prize_category: "season" | "round";
   winner_manager_id: string | null;
   drawn_at: string | null;
   created_at: string;
 }
 
 export async function fetchPrizes(): Promise<Prize[]> {
-  const { data } = await supabase.from("prizes").select("*").order("created_at");
+  const { data } = await supabase.from("prizes").select("*").order("prize_category").order("created_at");
   return (data || []) as unknown as Prize[];
 }
 

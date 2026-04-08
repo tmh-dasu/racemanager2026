@@ -1,0 +1,1 @@
+ALTER TABLE public.prizes ADD COLUMN prize_category text NOT NULL DEFAULT 'round';
