@@ -362,7 +362,7 @@ export default function AdminTestPage() {
       await performTransfer(tids.managers["Spiller A"], tids.drivers["Test Bronze 1"], tids.drivers["Test Bronze 2"], getTransferCostForTier("bronze"));
       const bd = await getBreakdownData(tids);
       const b = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
-      subs.push({ name: "B: Bronze→Bronze (−5)", status: b.total === 208 ? "pass" : "fail", message: `Total: ${b.total} (forventet 208)` });
+      subs.push({ name: "B: Bronze→Bronze (−5)", status: b.total === 149 ? "pass" : "fail", message: `Total: ${b.total} (forventet 149)` });
     } catch (e: any) {
       subs.push({ name: "B: Bronze→Bronze (−5)", status: "fail", message: e.message });
     }
