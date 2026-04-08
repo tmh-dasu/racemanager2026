@@ -267,17 +267,6 @@ export default function HomePage() {
                       </div>
                     ))}
 
-                    {/* Lottery prizes in this category */}
-                    {catPrizes.length > 0 && (
-                      <div className={`space-y-1.5 ${catSponsors.length > 0 ? "mt-3" : ""}`}>
-                        {catPrizes.map((prize) => (
-                            <div key={prize.id} className="rounded-md bg-secondary/50 px-3 py-2">
-                              <p className="text-sm font-medium text-foreground">{prize.name}</p>
-                              {prize.description && <p className="text-xs text-muted-foreground">{prize.description}</p>}
-                            </div>
-                          ))}
-                      </div>
-                    )}
                   </div>
                 );
               })}
