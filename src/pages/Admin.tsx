@@ -859,10 +859,13 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
           >
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-              <button onClick={() => startEdit(s)} className="text-left flex-1 min-w-0 flex items-center gap-2">
-                {s.logo_url && <img src={s.logo_url} alt="" className="h-6 w-auto object-contain" />}
-                <span className="font-medium text-foreground">{s.name}</span>
-                {s.tagline && <span className="text-muted-foreground text-xs truncate">– {s.tagline}</span>}
+              <button onClick={() => startEdit(s)} className="text-left flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  {s.logo_url && <img src={s.logo_url} alt="" className="h-6 w-auto object-contain" />}
+                  <span className="font-medium text-foreground">{s.name}</span>
+                  {s.tagline && <span className="text-muted-foreground text-xs truncate">– {s.tagline}</span>}
+                </div>
+                {s.prize_description && <p className="text-xs text-muted-foreground mt-0.5 truncate">🏆 {s.prize_description}</p>}
               </button>
             </div>
             <button onClick={() => handleDelete(s.id, s.name)} className="text-destructive hover:text-destructive/80 ml-2"><Trash2 className="h-4 w-4" /></button>
