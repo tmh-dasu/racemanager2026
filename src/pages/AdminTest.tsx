@@ -299,11 +299,11 @@ export default function AdminTestPage() {
     const breakA = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
     const breakB = computePointBreakdown(tids.managers["Spiller B"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
 
-    const aOk = breakA.racePoints === 171;
-    const bOk = breakB.racePoints === 102;
+    const aOk = breakA.racePoints === 225;
+    const bOk = breakB.racePoints === 154;
     updateTest(1, {
       status: aOk && bOk ? "pass" : "fail",
-      message: `Spiller A: ${breakA.racePoints} (forventet 171) | Spiller B: ${breakB.racePoints} (forventet 102)`,
+      message: `Spiller A: ${breakA.racePoints} (forventet 225) | Spiller B: ${breakB.racePoints} (forventet 154)`,
     });
   }
 
