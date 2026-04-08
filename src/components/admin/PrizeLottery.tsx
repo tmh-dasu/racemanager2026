@@ -82,6 +82,38 @@ export default function PrizeLottery() {
     setDrawing(null);
   }
 
+  async function handleDrawAnother(prize: Prize) {
+    // Create a copy of the prize and draw a winner for it
+    const winnerIds = prizes
+      .filter((p) => p.winner_manager_id)
+      .map((p) => p.winner_manager_id);
+    const eligible = managers.filter((m) => !winnerIds.includes(m.id));
+    if (eligible.length === 0) {
+      toast({ title: "Ingen hold at trække fra – alle har vundet!", variant: "destructive" });
+      return;
+    }
+    setDrawing(prize.id + "-another");
+    await new Promise((r) => setTimeout(r, 1500));
+    const winner = eligible[Math.floor(Math.random() * eligible.length)];
+    try {
+      await upsertPrize({
+        name: prize.name,
+        description: prize.description,
+        prize_category: prize.prize_category,
+        winner_manager_id: winner.id,
+        drawn_at: new Date().toISOString(),
+      });
+      const { data: newPrizes } = await supabase.from("prizes").select("*").eq("winner_manager_id", winner.id).eq("name", prize.name).order("created_at", { ascending: false }).limit(1);
+      if (newPrizes?.[0]) {
+        await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: newPrizes[0].id } });
+      }
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["prizes"] });
+      toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"!` });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    setDrawing(null);
+  }
+
   async function handleResetDraw(prize: Prize) {
     if (!confirm(`Nulstil lodtrækning for "${prize.name}"?`)) return;
     try {
@@ -94,6 +126,12 @@ export default function PrizeLottery() {
   const managerMap = Object.fromEntries(managers.map((m) => [m.id, m]));
   const undrawnPrizes = prizes.filter((p) => !p.winner_manager_id);
   const drawnPrizes = prizes.filter((p) => p.winner_manager_id);
+  // Group drawn prizes by name for "draw another" button
+  const drawnByName = drawnPrizes.reduce<Record<string, Prize[]>>((acc, p) => {
+    if (!acc[p.name]) acc[p.name] = [];
+    acc[p.name].push(p);
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-6">
@@ -184,6 +222,7 @@ export default function PrizeLottery() {
                 {drawnPrizes.map((p) => {
                   const winner = managerMap[p.winner_manager_id!];
                   const catConfig = CATEGORY_CONFIG[p.prize_category] || CATEGORY_CONFIG.round;
+                  const isDrawingAnother = drawing === p.id + "-another";
                   return (
                     <tr key={p.id} className="border-t border-border hover:bg-secondary/30">
                       <td className="px-4 py-2 font-medium text-foreground">{p.name}</td>
@@ -196,7 +235,15 @@ export default function PrizeLottery() {
                         {p.drawn_at ? new Date(p.drawn_at).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "–"}
                       </td>
                       <td className="px-4 py-2 text-right">
-                        <Button size="sm" variant="outline" onClick={() => handleResetDraw(p)} className="text-xs h-7">Nulstil</Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="sm" onClick={() => handleDrawAnother(p)} disabled={!!drawing}
+                            className="bg-gradient-racing text-primary-foreground font-display text-xs h-7">
+                            <Shuffle className={`h-3 w-3 mr-1 ${isDrawingAnother ? "animate-spin" : ""}`} />
+                            {isDrawingAnother ? "Trækker..." : "Træk endnu en"}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleResetDraw(p)} className="text-xs h-7">Nulstil</Button>
+                          <button onClick={() => handleDelete(p.id)} className="text-destructive hover:text-destructive/80"><Trash2 className="h-3.5 w-3.5" /></button>
+                        </div>
                       </td>
                     </tr>
                   );
