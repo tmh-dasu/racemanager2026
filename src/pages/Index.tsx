@@ -270,25 +270,12 @@ export default function HomePage() {
                     {/* Lottery prizes in this category */}
                     {catPrizes.length > 0 && (
                       <div className={`space-y-1.5 ${catSponsors.length > 0 ? "mt-3" : ""}`}>
-                        {catPrizes.map((prize) => {
-                          const winner = prize.winner_manager_id ? managerMap[prize.winner_manager_id] : null;
-                          return (
-                            <div key={prize.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
-                              <div>
-                                <p className="text-sm font-medium text-foreground">{prize.name}</p>
-                                {prize.description && <p className="text-xs text-muted-foreground">{prize.description}</p>}
-                              </div>
-                              {winner ? (
-                                <div className="text-right">
-                                  <p className="text-xs text-success font-bold font-display">{winner.team_name}</p>
-                                  <p className="text-xs text-muted-foreground">{winner.name}</p>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">Ikke trukket</span>
-                              )}
+                        {catPrizes.map((prize) => (
+                            <div key={prize.id} className="rounded-md bg-secondary/50 px-3 py-2">
+                              <p className="text-sm font-medium text-foreground">{prize.name}</p>
+                              {prize.description && <p className="text-xs text-muted-foreground">{prize.description}</p>}
                             </div>
-                          );
-                        })}
+                          ))}
                       </div>
                     )}
                   </div>
