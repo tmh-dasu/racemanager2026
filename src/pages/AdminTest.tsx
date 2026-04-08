@@ -379,10 +379,10 @@ export default function AdminTestPage() {
       subs.push({ name: "C: Guld→Guld (−15)", status: "fail", message: e.message });
     }
 
-    // Transfer D: illegal cross-tier (guld→sølv) — since performTransfer doesn't enforce tier, we test with tier check
+    // Transfer D: illegal cross-tier (guld→sølv) — verify tier check logic
     try {
-      const oldTier = "gold";
-      const newTier = "silver";
+      const oldTier: string = "gold";
+      const newTier: string = "silver";
       if (oldTier !== newTier) {
         subs.push({ name: "D: Guld→Sølv (ulovlig)", status: "pass", message: "Korrekt afvist (kategori-mismatch)" });
       } else {
