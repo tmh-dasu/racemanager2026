@@ -20,13 +20,30 @@ Deno.serve(async (req) => {
     })
   }
 
-  // Only allow service_role
   const authHeader = req.headers.get('Authorization')
   const apiKeyHeader = req.headers.get('apikey')
   const isServiceRole =
     apiKeyHeader === supabaseServiceKey ||
     (authHeader && authHeader.replace('Bearer ', '') === supabaseServiceKey)
-  if (!isServiceRole) {
+
+  let isAdmin = false
+  if (!isServiceRole && authHeader) {
+    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } },
+    })
+    const token = authHeader.replace('Bearer ', '')
+    const { data: claimsData } = await userClient.auth.getClaims(token)
+    if (claimsData?.claims?.sub) {
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+      const { data: roleCheck } = await supabaseAdmin.rpc('has_role', {
+        _user_id: claimsData.claims.sub,
+        _role: 'admin',
+      })
+      isAdmin = !!roleCheck
+    }
+  }
+
+  if (!isServiceRole && !isAdmin) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), {
       status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
