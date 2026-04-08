@@ -550,6 +550,7 @@ export interface Sponsor {
   logo_url: string | null;
   website_url: string | null;
   tagline: string | null;
+  prize_description: string | null;
   sort_order: number;
 }
 

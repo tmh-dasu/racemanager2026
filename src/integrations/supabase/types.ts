@@ -570,6 +570,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          prize_description: string | null
           sort_order: number
           tagline: string | null
           website_url: string | null
@@ -579,6 +580,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          prize_description?: string | null
           sort_order?: number
           tagline?: string | null
           website_url?: string | null
@@ -588,6 +590,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          prize_description?: string | null
           sort_order?: number
           tagline?: string | null
           website_url?: string | null

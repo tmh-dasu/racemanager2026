@@ -724,7 +724,7 @@ function SettingsAdmin() {
 function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; queryClient: any }) {
   const { toast } = useToast();
   const { data: sponsors = [], refetch: refetchSponsors } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
-  const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "" });
+  const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "" });
   const [editId, setEditId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -732,12 +732,12 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
 
   function startEdit(s: any) {
     setEditId(s.id);
-    setForm({ name: s.name, logo_url: s.logo_url || "", website_url: s.website_url || "", tagline: s.tagline || "" });
+    setForm({ name: s.name, logo_url: s.logo_url || "", website_url: s.website_url || "", tagline: s.tagline || "", prize_description: s.prize_description || "" });
   }
 
   function resetForm() {
     setEditId(null);
-    setForm({ name: "", logo_url: "", website_url: "", tagline: "" });
+    setForm({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "" });
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -768,6 +768,7 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
         logo_url: form.logo_url.trim() || null,
         website_url: form.website_url.trim() || null,
         tagline: form.tagline.trim() || null,
+        prize_description: form.prize_description.trim() || null,
         sort_order: editId ? undefined : sponsors.length,
       } as any);
       resetForm();
@@ -828,6 +829,13 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
         </div>
         <Input placeholder="Website-URL" value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Tagline / beskrivelse (valgfri)" value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} className="bg-secondary border-border" />
+        <textarea
+          placeholder="Præmieoplysninger (valgfri) – f.eks. hvilke præmier sponsoren stiller til rådighed"
+          value={form.prize_description}
+          onChange={(e) => setForm({ ...form, prize_description: e.target.value })}
+          className="flex min-h-[60px] w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          rows={3}
+        />
         <div className="flex gap-2">
           <Button size="sm" onClick={handleSave} className="bg-gradient-racing text-primary-foreground font-display">
             {editId ? <><Save className="h-4 w-4 mr-1" />Gem</> : <><Plus className="h-4 w-4 mr-1" />Tilføj sponsor</>}
@@ -851,10 +859,13 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
           >
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-              <button onClick={() => startEdit(s)} className="text-left flex-1 min-w-0 flex items-center gap-2">
-                {s.logo_url && <img src={s.logo_url} alt="" className="h-6 w-auto object-contain" />}
-                <span className="font-medium text-foreground">{s.name}</span>
-                {s.tagline && <span className="text-muted-foreground text-xs truncate">– {s.tagline}</span>}
+              <button onClick={() => startEdit(s)} className="text-left flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  {s.logo_url && <img src={s.logo_url} alt="" className="h-6 w-auto object-contain" />}
+                  <span className="font-medium text-foreground">{s.name}</span>
+                  {s.tagline && <span className="text-muted-foreground text-xs truncate">– {s.tagline}</span>}
+                </div>
+                {s.prize_description && <p className="text-xs text-muted-foreground mt-0.5 truncate">🏆 {s.prize_description}</p>}
               </button>
             </div>
             <button onClick={() => handleDelete(s.id, s.name)} className="text-destructive hover:text-destructive/80 ml-2"><Trash2 className="h-4 w-4" /></button>
