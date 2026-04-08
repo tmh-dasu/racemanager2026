@@ -578,7 +578,7 @@ export interface Prize {
   id: string;
   name: string;
   description: string | null;
-  prize_category: "season" | "round";
+  prize_category: "season" | "round" | "other";
   winner_manager_id: string | null;
   drawn_at: string | null;
   created_at: string;
