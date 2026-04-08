@@ -233,7 +233,7 @@ export default function HomePage() {
                 const config = CATEGORY_CONFIG[cat];
                 const Icon = config.icon;
                 return (
-                  <div key={cat} className="mb-4 last:mb-0">
+                  <div key={cat} className="mb-4 last:mb-0 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-racing-red [&:not(:first-child)]:pt-4">
                     <div className="flex items-center gap-1.5 mb-2">
                       <Icon className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-semibold text-foreground">{config.label}</span>
