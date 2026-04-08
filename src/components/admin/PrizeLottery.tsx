@@ -17,7 +17,7 @@ export default function PrizeLottery() {
   const { toast } = useToast();
   const { data: prizes = [], refetch } = useQuery({ queryKey: ["prizes"], queryFn: fetchPrizes });
   const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
-  const [form, setForm] = useState({ name: "", description: "", prize_category: "round" as "season" | "round" });
+  const [form, setForm] = useState({ name: "", description: "", prize_category: "round" as "season" | "round" | "other" });
   const [editId, setEditId] = useState<string | null>(null);
   const [drawing, setDrawing] = useState<string | null>(null);
 
