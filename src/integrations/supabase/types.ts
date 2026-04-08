@@ -415,6 +415,7 @@ export type Database = {
           drawn_at: string | null
           id: string
           name: string
+          prize_category: string
           winner_manager_id: string | null
         }
         Insert: {
@@ -423,6 +424,7 @@ export type Database = {
           drawn_at?: string | null
           id?: string
           name: string
+          prize_category?: string
           winner_manager_id?: string | null
         }
         Update: {
@@ -431,6 +433,7 @@ export type Database = {
           drawn_at?: string | null
           id?: string
           name?: string
+          prize_category?: string
           winner_manager_id?: string | null
         }
         Relationships: [
