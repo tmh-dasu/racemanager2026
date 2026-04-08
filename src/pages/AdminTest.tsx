@@ -402,9 +402,9 @@ export default function AdminTestPage() {
 
     // Create 3 questions
     const qDefs = [
-      { race_id: tids.raceId, question_type: "duel", question_text: "Hvem kvalificerer sig bedst af Test Guld 1 og Test Guld 2?", option_a: "Test Guld 1", option_b: "Test Guld 2", published: true, prediction_deadline: predDeadline },
-      { race_id: tids.raceId, question_type: "point_duel", question_text: "Hvem scorer flest point af Test Sølv 1 og Test Sølv 2?", option_a: "Test Sølv 1", option_b: "Test Sølv 2", published: true, prediction_deadline: predDeadline },
-      { race_id: tids.raceId, question_type: "yes_no", question_text: "Gennemfører alle kørere session 4?", option_a: "Ja", option_b: "Nej", published: true, prediction_deadline: predDeadline },
+      { race_id: tids.raceId, question_type: "fastest_qualifying", question_text: "Hvem kvalificerer sig bedst af Test Guld 1 og Test Guld 2?", option_a: "Test Guld 1", option_b: "Test Guld 2", published: true, prediction_deadline: predDeadline },
+      { race_id: tids.raceId, question_type: "most_points", question_text: "Hvem scorer flest point af Test Sølv 1 og Test Sølv 2?", option_a: "Test Sølv 1", option_b: "Test Sølv 2", published: true, prediction_deadline: predDeadline },
+      { race_id: tids.raceId, question_type: "final_winner", question_text: "Gennemfører alle kørere session 4?", option_a: "Ja", option_b: "Nej", published: true, prediction_deadline: predDeadline },
     ];
 
     const qIds: string[] = [];
