@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 const CATEGORY_CONFIG = {
   season: { label: "Sæsonpræmier", icon: Trophy, iconClass: "text-gold" },
   round: { label: "Afdelingspræmier", icon: Award, iconClass: "text-accent" },
+  other: { label: "Øvrige præmier", icon: Gift, iconClass: "text-primary" },
 } as const;
 
 export default function PrizeLottery() {
