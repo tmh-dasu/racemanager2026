@@ -18,6 +18,7 @@ import Predictions from "./pages/Predictions";
 import DriverProfile from "./pages/DriverProfile";
 import ResetPassword from "./pages/ResetPassword";
 import Terms from "./pages/Terms";
+import AdminTest from "./pages/AdminTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/rangering" element={<Leaderboard />} />
             <Route path="/resultater" element={<Results />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/test" element={<AdminTest />} />
             <Route path="/predictions" element={<Predictions />} />
             <Route path="/regler" element={<Rules />} />
             <Route path="/vilkaar" element={<Terms />} />
