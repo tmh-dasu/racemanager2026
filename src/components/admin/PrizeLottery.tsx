@@ -222,6 +222,7 @@ export default function PrizeLottery() {
                 {drawnPrizes.map((p) => {
                   const winner = managerMap[p.winner_manager_id!];
                   const catConfig = CATEGORY_CONFIG[p.prize_category] || CATEGORY_CONFIG.round;
+                  const isDrawingAnother = drawing === p.id + "-another";
                   return (
                     <tr key={p.id} className="border-t border-border hover:bg-secondary/30">
                       <td className="px-4 py-2 font-medium text-foreground">{p.name}</td>
@@ -234,7 +235,15 @@ export default function PrizeLottery() {
                         {p.drawn_at ? new Date(p.drawn_at).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "–"}
                       </td>
                       <td className="px-4 py-2 text-right">
-                        <Button size="sm" variant="outline" onClick={() => handleResetDraw(p)} className="text-xs h-7">Nulstil</Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="sm" onClick={() => handleDrawAnother(p)} disabled={!!drawing}
+                            className="bg-gradient-racing text-primary-foreground font-display text-xs h-7">
+                            <Shuffle className={`h-3 w-3 mr-1 ${isDrawingAnother ? "animate-spin" : ""}`} />
+                            {isDrawingAnother ? "Trækker..." : "Træk endnu en"}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleResetDraw(p)} className="text-xs h-7">Nulstil</Button>
+                          <button onClick={() => handleDelete(p.id)} className="text-destructive hover:text-destructive/80"><Trash2 className="h-3.5 w-3.5" /></button>
+                        </div>
                       </td>
                     </tr>
                   );
