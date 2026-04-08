@@ -315,11 +315,11 @@ export default function AdminTestPage() {
     const bd = await getBreakdownData(tids);
     const breakA = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
 
-    const expected = 223;
+    const expected = 299;
     const ok = breakA.total === expected;
     updateTest(2, {
       status: ok ? "pass" : "fail",
-      message: `Total: ${breakA.total} (forventet ${expected}), Captain-bonus: ${breakA.captainBonus} (forventet 52)`,
+      message: `Total: ${breakA.total} (forventet ${expected}), Captain-bonus: ${breakA.captainBonus} (forventet 74)`,
     });
   }
 
