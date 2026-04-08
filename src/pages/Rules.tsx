@@ -107,20 +107,6 @@ export default function RulesPage() {
           </div>
         </Section>
 
-        {/* Drop worst */}
-        <Section icon={<ListMinus className="h-5 w-5 text-accent" />} title="Fratrækning af dårligste resultater">
-          <p className="text-sm text-muted-foreground mb-3">
-            Inden finaleafdelingen fratrækkes de dårligste <strong className="text-foreground">rundetotaler</strong> (sum af tidtagning + 3 heats). Point fra finaleafdelingen kan ikke fratrækkes.
-          </p>
-          <div className="space-y-1">
-            {dropRules.map((r) => (
-              <div key={r.rounds} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2 text-sm">
-                <span className="text-foreground">{r.rounds}</span>
-                <span className="font-display font-bold text-foreground">{r.drop}</span>
-              </div>
-            ))}
-          </div>
-        </Section>
 
         {/* Transfers */}
         <Section icon={<ArrowRightLeft className="h-5 w-5 text-accent" />} title="Transfer-system 🔄">
