@@ -233,7 +233,7 @@ export default function RulesPage() {
         <div className="rounded-lg border border-border bg-card p-5 shadow-card text-center">
           <Trophy className="h-8 w-8 text-gold mx-auto mb-2" />
           <p className="font-display text-lg font-bold text-foreground">
-            Manageren med flest point efter fratrækning vinder! 🏆
+            Manageren med flest point vinder! 🏆
           </p>
         </div>
       </div>

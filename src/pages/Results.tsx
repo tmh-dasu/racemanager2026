@@ -206,9 +206,6 @@ export default function ResultsPage() {
                     ))}
                   </div>
 
-                  <p className="text-xs text-muted-foreground mt-3">
-                    * Netto = brutto minus de {driverStandings[0]?.dropCount || 0} dårligste enkeltresultater
-                  </p>
                 </>
               )}
             </div>

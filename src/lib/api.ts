@@ -115,21 +115,10 @@ export function calculatePoints(position: number | null, dnf: boolean): number {
   return POINTS_MAP[position || 0] || 0;
 }
 
-/** Drop worst individual session results based on number of completed rounds (§2.7)
- *  Drop-worst only activates from round 4 onwards. */
-export function applyDropWorst(sessionPoints: number[], completedRounds: number): { total: number; dropCount: number } {
-  let dropCount: number;
-  if (completedRounds >= 7) dropCount = 4;
-  else if (completedRounds >= 6) dropCount = 3;
-  else if (completedRounds >= 4) dropCount = 2;
-  else dropCount = 0;
-
-  dropCount = Math.min(dropCount, Math.max(0, sessionPoints.length - 1));
-
-  const sorted = [...sessionPoints].sort((a, b) => a - b);
-  const kept = sorted.slice(dropCount);
-  const total = kept.reduce((sum, pts) => sum + pts, 0);
-  return { total, dropCount };
+/** Sum all session points (no drop-worst). */
+export function applyDropWorst(sessionPoints: number[], _completedRounds: number): { total: number; dropCount: number } {
+  const total = sessionPoints.reduce((sum, pts) => sum + pts, 0);
+  return { total, dropCount: 0 };
 }
 
 export const TRANSFER_COST_BY_TIER: Record<string, number> = {
