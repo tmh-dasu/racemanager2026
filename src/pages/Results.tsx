@@ -161,25 +161,24 @@ export default function ResultsPage() {
               ) : (
                 <>
                   {/* Header */}
-                  <div className="grid gap-1 text-xs text-muted-foreground px-2 py-1" style={{ gridTemplateColumns: `2rem 1fr ${races.map(() => "3rem").join(" ")} 3.5rem 3.5rem` }}>
+                  <div className="grid gap-1 text-xs text-muted-foreground px-2 py-1" style={{ gridTemplateColumns: `2rem 1fr ${races.map(() => "3rem").join(" ")} 3.5rem` }}>
                     <span>Pos</span>
                     <span>Kører</span>
                     {races.map((r) => (
                       <span key={r.id} className="text-center">R{r.round_number}</span>
                     ))}
-                    <span className="text-right">Brutto</span>
-                    <span className="text-right font-semibold">Netto</span>
+                    <span className="text-right font-semibold">Total</span>
                   </div>
 
                   {/* Rows */}
                   <div className="space-y-1">
-                    {driverStandings.map(({ driverId, perRound, grossTotal, netTotal }, i) => (
+                    {driverStandings.map(({ driverId, perRound, netTotal }, i) => (
                       <div
                         key={driverId}
                         className={`grid gap-1 items-center rounded px-2 py-1.5 text-sm ${
                           i === 0 ? "bg-gold/10 border border-gold/20" : i === 1 ? "bg-secondary/70" : i === 2 ? "bg-racing-red/5" : "bg-secondary/50"
                         }`}
-                        style={{ gridTemplateColumns: `2rem 1fr ${races.map(() => "3rem").join(" ")} 3.5rem 3.5rem` }}
+                        style={{ gridTemplateColumns: `2rem 1fr ${races.map(() => "3rem").join(" ")} 3.5rem` }}
                       >
                         <span className={`font-display font-bold ${i === 0 ? "text-gold" : i === 1 ? "text-muted-foreground" : i === 2 ? "text-racing-red" : "text-muted-foreground"}`}>
                           {i + 1}
@@ -202,15 +201,11 @@ export default function ResultsPage() {
                             </span>
                           );
                         })}
-                        <span className="text-right text-xs text-muted-foreground">{grossTotal}</span>
                         <span className="text-right font-display font-bold text-foreground">{netTotal}</span>
                       </div>
                     ))}
                   </div>
 
-                  <p className="text-xs text-muted-foreground mt-3">
-                    * Netto = brutto minus de {driverStandings[0]?.dropCount || 0} dårligste enkeltresultater
-                  </p>
                 </>
               )}
             </div>

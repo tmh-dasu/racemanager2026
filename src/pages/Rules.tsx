@@ -1,5 +1,5 @@
 import PageLayout from "@/components/PageLayout";
-import { Trophy, Zap, Target, Calendar, ArrowRightLeft, ListMinus, Crown, Brain, ShieldAlert } from "lucide-react";
+import { Trophy, Zap, Target, Calendar, ArrowRightLeft, Crown, Brain, ShieldAlert } from "lucide-react";
 
 const pointsTable = [
   { pos: "1.", pts: 25 }, { pos: "2.", pts: 22 }, { pos: "3.", pts: 20 },
@@ -20,12 +20,6 @@ const races = [
   { round: 6, name: "Padborg Park – Finaleløbet", location: "Padborg", date: "3. oktober" },
 ];
 
-const dropRules = [
-  { rounds: "7+ afdelinger gennemført", drop: "4 dårligste resultater" },
-  { rounds: "6 afdelinger gennemført", drop: "3 dårligste resultater" },
-  { rounds: "4–5 afdelinger gennemført", drop: "2 dårligste resultater" },
-  { rounds: "Under 4 afdelinger gennemført", drop: "Ingen fratræk" },
-];
 
 export default function RulesPage() {
   return (
@@ -113,20 +107,6 @@ export default function RulesPage() {
           </div>
         </Section>
 
-        {/* Drop worst */}
-        <Section icon={<ListMinus className="h-5 w-5 text-accent" />} title="Fratrækning af dårligste resultater">
-          <p className="text-sm text-muted-foreground mb-3">
-            Inden finaleafdelingen fratrækkes de dårligste <strong className="text-foreground">rundetotaler</strong> (sum af tidtagning + 3 heats). Point fra finaleafdelingen kan ikke fratrækkes.
-          </p>
-          <div className="space-y-1">
-            {dropRules.map((r) => (
-              <div key={r.rounds} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2 text-sm">
-                <span className="text-foreground">{r.rounds}</span>
-                <span className="font-display font-bold text-foreground">{r.drop}</span>
-              </div>
-            ))}
-          </div>
-        </Section>
 
         {/* Transfers */}
         <Section icon={<ArrowRightLeft className="h-5 w-5 text-accent" />} title="Transfer-system 🔄">
@@ -253,7 +233,7 @@ export default function RulesPage() {
         <div className="rounded-lg border border-border bg-card p-5 shadow-card text-center">
           <Trophy className="h-8 w-8 text-gold mx-auto mb-2" />
           <p className="font-display text-lg font-bold text-foreground">
-            Manageren med flest point efter fratrækning vinder! 🏆
+            Manageren med flest point vinder! 🏆
           </p>
         </div>
       </div>
