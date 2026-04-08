@@ -56,9 +56,16 @@ export default function RulesPage() {
         <Section icon={<Zap className="h-5 w-5 text-accent" />} title="Sådan deltager du">
           <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
             <li>Opret dit hold med et holdnavn, dit navn og din e-mail</li>
+            <li>Betal tilmeldingsgebyret på <strong className="text-foreground">kr. 49</strong> per hold (via kort eller MobilePay)</li>
             <li>Vælg <strong className="text-foreground">3 kørere</strong>: én fra <strong className="text-gold">Guld</strong>, én fra <strong className="text-silver">Sølv</strong> og én fra <strong className="text-bronze">Bronze</strong>-kategorien</li>
             <li>Du kan løbende justere dit hold via transfers (se nedenfor)</li>
           </ol>
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-gold/10 border border-gold/20 px-3 py-2">
+            <Trophy className="h-4 w-4 text-gold mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              Alle tilmeldingsgebyrer går til en <strong className="text-foreground">præmie til bedste am-kører</strong> i klassen.
+            </p>
+          </div>
         </Section>
 
         {/* Points system */}
