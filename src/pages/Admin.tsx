@@ -737,7 +737,7 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
 
   function resetForm() {
     setEditId(null);
-    setForm({ name: "", logo_url: "", website_url: "", tagline: "" });
+    setForm({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "" });
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
