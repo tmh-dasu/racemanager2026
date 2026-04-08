@@ -86,9 +86,10 @@ Deno.serve(async (req) => {
             <p style="color:#18181b;">Hej <strong>${mgr.team_name}</strong>,</p>
             ${isOpened
               ? `<p style="color:#52525b;">Transfervinduet er nu åbent! Du kan skifte kørere ud inden for samme kategori.</p>
-                 <p style="font-size:13px;color:#71717a;">Husk: Hvert transfer koster <strong style="color:#dc2626;">${transferCost} point</strong> fra din samlede pointtotal.</p>`
+                 <p style="font-size:13px;color:#71717a;">Husk: Transfers koster point baseret på kategorien du køber ind i:<br/>
+                 <strong style="color:#dc2626;">Guld: 15 point</strong> · <strong style="color:#dc2626;">Sølv: 10 point</strong> · <strong style="color:#dc2626;">Bronze: 5 point</strong></p>`
               : `<p style="color:#52525b;">Transfervinduet lukker inden for kort tid. Hvis du overvejer et kørerskifte, er det nu du skal handle!</p>
-                 <p style="font-size:13px;color:#71717a;">Hvert transfer koster <strong style="color:#dc2626;">${transferCost} point</strong>.</p>`
+                 <p style="font-size:13px;color:#71717a;">Transfers koster: <strong style="color:#dc2626;">Guld: 15</strong> · <strong style="color:#dc2626;">Sølv: 10</strong> · <strong style="color:#dc2626;">Bronze: 5 point</strong>.</p>`
             }
             <p style="text-align:center;margin:24px 0 8px;">
               <a href="${siteUrl}/mit-hold" style="background:#dc2626;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
