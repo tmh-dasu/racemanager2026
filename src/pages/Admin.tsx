@@ -911,6 +911,12 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
                   {s.logo_url && <img src={s.logo_url} alt="" className="h-6 w-auto object-contain" />}
                   <span className="font-medium text-foreground">{s.name}</span>
                   {s.tagline && <span className="text-muted-foreground text-xs truncate">– {s.tagline}</span>}
+                  {(() => {
+                    const cat = s.prize_category || "round";
+                    const config = CATEGORY_CONFIG[cat as keyof typeof CATEGORY_CONFIG];
+                    const CatIcon = config.icon;
+                    return <span className={`inline-flex items-center gap-0.5 text-xs ${config.iconClass}`}><CatIcon className="h-3 w-3" />{config.label}{s.prize_placement ? ` ${s.prize_placement}.` : ""}</span>;
+                  })()}
                 </div>
                 {s.prize_description && <p className="text-xs text-muted-foreground mt-0.5 truncate">🏆 {s.prize_description}</p>}
               </button>
