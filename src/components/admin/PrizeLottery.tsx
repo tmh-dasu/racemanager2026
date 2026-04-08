@@ -192,10 +192,10 @@ export default function PrizeLottery() {
       </div>
 
       {/* Category sections */}
-      {(["season", "round"] as const).map((cat) => {
+      {(["season", "round", "other"] as const).map((cat) => {
         const config = CATEGORY_CONFIG[cat];
         const CatIcon = config.icon;
-        const catPrizes = cat === "season" ? seasonPrizes : roundPrizes;
+        const catPrizes = prizes.filter((p) => p.prize_category === cat);
         if (catPrizes.length === 0) return null;
 
         const undrawn = catPrizes.filter((p) => !p.winner_manager_id);
