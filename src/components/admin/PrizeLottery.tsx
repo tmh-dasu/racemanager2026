@@ -124,6 +124,7 @@ export default function PrizeLottery() {
 
   const seasonPrizes = prizes.filter((p) => p.prize_category === "season");
   const roundPrizes = prizes.filter((p) => p.prize_category === "round");
+  const otherPrizes = prizes.filter((p) => p.prize_category === "other");
 
   return (
     <div className="space-y-6">
