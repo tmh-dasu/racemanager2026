@@ -29,13 +29,14 @@ Deno.serve(async (req) => {
   // Also allow authenticated admins
   let isAdmin = false
   if (!isServiceRole && authHeader) {
-    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey)
+    const anonClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
       global: { headers: { Authorization: authHeader } },
     })
     const token = authHeader.replace('Bearer ', '')
-    const { data: claimsData } = await userClient.auth.getClaims(token)
+    const { data: claimsData } = await anonClient.auth.getClaims(token)
     if (claimsData?.claims?.sub) {
-      const { data: roleCheck } = await supabase.rpc('has_role', {
+      const { data: roleCheck } = await serviceClient.rpc('has_role', {
         _user_id: claimsData.claims.sub,
         _role: 'admin',
       })
