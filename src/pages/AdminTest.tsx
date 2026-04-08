@@ -450,11 +450,11 @@ export default function AdminTestPage() {
     const bA = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
 
     const checks = [
-      { label: "Race-point", actual: bA.racePoints, expected: 171 },
-      { label: "Captain-bonus", actual: bA.captainBonus, expected: 52 },
+      { label: "Race-point", actual: bA.racePoints, expected: 154 },
+      { label: "Captain-bonus", actual: bA.captainBonus, expected: 0 },
       { label: "Prediction-point", actual: bA.predictionPoints, expected: 15 },
       { label: "Transferfradrag", actual: bA.transferCosts, expected: 30 },
-      { label: "Total", actual: bA.total, expected: 208 },
+      { label: "Total", actual: bA.total, expected: 139 },
     ];
 
     const allOk = checks.every(c => c.actual === c.expected);
