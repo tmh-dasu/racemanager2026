@@ -724,7 +724,7 @@ function SettingsAdmin() {
 function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; queryClient: any }) {
   const { toast } = useToast();
   const { data: sponsors = [], refetch: refetchSponsors } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
-  const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "" });
+  const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "" });
   const [editId, setEditId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
