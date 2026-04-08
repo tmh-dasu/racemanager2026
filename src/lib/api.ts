@@ -551,6 +551,8 @@ export interface Sponsor {
   website_url: string | null;
   tagline: string | null;
   prize_description: string | null;
+  prize_category: "season" | "round" | "other";
+  prize_placement: number | null;
   sort_order: number;
 }
 
