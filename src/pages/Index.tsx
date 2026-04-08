@@ -195,6 +195,60 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Prizes */}
+        {prizes.length > 0 && (() => {
+          const CATEGORY_CONFIG: Record<string, { label: string; icon: typeof Trophy }> = {
+            season: { label: "Sæsonpræmier", icon: Trophy },
+            round: { label: "Afdelingspræmier", icon: Award },
+            other: { label: "Øvrige præmier", icon: Gift },
+          };
+          const grouped = prizes.reduce<Record<string, Prize[]>>((acc, p) => {
+            const cat = p.prize_category || "round";
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(p);
+            return acc;
+          }, {});
+          return (
+            <div className="rounded-lg border border-border bg-card p-5 shadow-card">
+              <div className="flex items-center gap-2 mb-4">
+                <Gift className="h-5 w-5 text-gold" />
+                <span className="font-display text-lg font-bold text-foreground">Præmier</span>
+              </div>
+              <div className="space-y-4">
+                {(["season", "round", "other"] as const).map((cat) => {
+                  const items = grouped[cat];
+                  if (!items || items.length === 0) return null;
+                  const config = CATEGORY_CONFIG[cat];
+                  const Icon = config.icon;
+                  return (
+                    <div key={cat}>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-semibold text-foreground">{config.label}</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {items.map((prize) => (
+                          <div key={prize.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{prize.name}</p>
+                              {prize.description && <p className="text-xs text-muted-foreground">{prize.description}</p>}
+                            </div>
+                            {prize.winner_manager_id ? (
+                              <span className="text-xs text-success font-medium">Vundet</span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Ikke trukket</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Sponsor Card */}
         {sponsors.length > 0 && (
           <div className="rounded-lg border border-border bg-card p-5 shadow-card">
