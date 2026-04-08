@@ -195,8 +195,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Prizes */}
-        {prizes.length > 0 && (() => {
+        {/* Prizes & Sponsors combined */}
+        {(prizes.length > 0 || sponsors.length > 0) && (() => {
           const CATEGORY_CONFIG: Record<string, { label: string; icon: typeof Trophy }> = {
             season: { label: "Sæsonpræmier", icon: Trophy },
             round: { label: "Afdelingspræmier", icon: Award },
@@ -212,91 +212,83 @@ export default function HomePage() {
           return (
             <div className="rounded-lg border border-border bg-card p-5 shadow-card">
               <div className="flex items-center gap-2 mb-4">
-                <Gift className="h-5 w-5 text-gold" />
-                <span className="font-display text-lg font-bold text-foreground">Præmier</span>
+                <Trophy className="h-5 w-5 text-gold" />
+                <span className="font-display text-lg font-bold text-foreground">Præmier & Sponsorer</span>
+                <Gift className="h-4 w-4 text-gold" />
               </div>
-              <div className="space-y-4">
-                {(["season", "round", "other"] as const).map((cat) => {
-                  const items = grouped[cat];
-                  if (!items || items.length === 0) return null;
-                  const config = CATEGORY_CONFIG[cat];
-                  const Icon = config.icon;
-                  return (
-                    <div key={cat}>
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-semibold text-foreground">{config.label}</span>
-                      </div>
-                      <div className="space-y-1.5">
-                        {items.map((prize) => {
-                          const winner = prize.winner_manager_id ? managerMap[prize.winner_manager_id] : null;
-                          return (
-                            <div key={prize.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
-                              <div>
-                                <p className="text-sm font-medium text-foreground">{prize.name}</p>
-                                {prize.description && <p className="text-xs text-muted-foreground">{prize.description}</p>}
-                              </div>
-                              {winner ? (
-                                <div className="text-right">
-                                  <p className="text-xs text-success font-bold font-display">{winner.team_name}</p>
-                                  <p className="text-xs text-muted-foreground">{winner.name}</p>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">Ikke trukket</span>
-                              )}
+
+              {/* Sponsors */}
+              {sponsors.length > 0 && (
+                <div className="mb-4">
+                  <div className="space-y-0">
+                    {sponsors.map((sponsor, idx) => (
+                      <div key={sponsor.id}>
+                        {idx > 0 && <div className="h-px bg-racing-red my-4" />}
+                        <a
+                          href={sponsor.website_url || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block hover:opacity-80 transition-opacity"
+                        >
+                          {sponsor.logo_url && (
+                            <div className="flex justify-center mb-3">
+                              <img src={sponsor.logo_url} alt={sponsor.name} className="h-16 w-auto object-contain" />
                             </div>
-                          );
-                        })}
+                          )}
+                          <h3 className="text-center font-display text-lg font-bold text-foreground">{sponsor.name}</h3>
+                          {sponsor.tagline && (
+                            <p className="text-center text-sm text-muted-foreground mt-1">{sponsor.tagline}</p>
+                          )}
+                        </a>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    ))}
+                  </div>
+                  <p className="text-center text-xs text-muted-foreground mt-4 border-t border-border pt-3">
+                    Vinderens præmie leveres af {sponsors.map(s => s.name).join(" & ")}
+                  </p>
+                </div>
+              )}
+
+              {/* Prize list */}
+              {prizes.length > 0 && (
+                <div className={`space-y-4 ${sponsors.length > 0 ? "border-t border-border pt-4" : ""}`}>
+                  {(["season", "round", "other"] as const).map((cat) => {
+                    const items = grouped[cat];
+                    if (!items || items.length === 0) return null;
+                    const config = CATEGORY_CONFIG[cat];
+                    const Icon = config.icon;
+                    return (
+                      <div key={cat}>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-semibold text-foreground">{config.label}</span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {items.map((prize) => {
+                            const winner = prize.winner_manager_id ? managerMap[prize.winner_manager_id] : null;
+                            return (
+                              <div key={prize.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
+                                <div>
+                                  <p className="text-sm font-medium text-foreground">{prize.name}</p>
+                                  {prize.description && <p className="text-xs text-muted-foreground">{prize.description}</p>}
+                                </div>
+                                {winner ? (
+                                  <div className="text-right">
+                                    <p className="text-xs text-success font-bold font-display">{winner.team_name}</p>
+                                    <p className="text-xs text-muted-foreground">{winner.name}</p>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">Ikke trukket</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })()}
-
-        {/* Sponsor Card */}
-        {sponsors.length > 0 && (
-          <div className="rounded-lg border border-border bg-card p-5 shadow-card">
-            <div className="flex items-center gap-2 mb-4">
-              <Trophy className="h-5 w-5 text-gold" />
-              <span className="font-display text-lg font-bold text-foreground">Præmiesponsorer</span>
-              <Gift className="h-4 w-4 text-gold" />
-            </div>
-            <div className="space-y-0">
-              {sponsors.map((sponsor, idx) => (
-                <div key={sponsor.id}>
-                  {idx > 0 && <div className="h-px bg-racing-red my-4" />}
-                  <a
-                    href={sponsor.website_url || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block hover:opacity-80 transition-opacity"
-                  >
-                    {sponsor.logo_url && (
-                      <div className="flex justify-center mb-3">
-                        <img
-                          src={sponsor.logo_url}
-                          alt={sponsor.name}
-                          className="h-16 w-auto object-contain"
-                        />
-                      </div>
-                    )}
-                    <h3 className="text-center font-display text-lg font-bold text-foreground">{sponsor.name}</h3>
-                    {sponsor.tagline && (
-                      <p className="text-center text-sm text-muted-foreground mt-1">{sponsor.tagline}</p>
-                    )}
-                  </a>
-                </div>
-              ))}
-            </div>
-            <p className="text-center text-xs text-muted-foreground mt-4 border-t border-border pt-3">
-              Vinderens præmie leveres af {sponsors.map(s => s.name).join(" & ")}
-            </p>
-          </div>
-        )}
-      </div>
-    </PageLayout>
-  );
-}
