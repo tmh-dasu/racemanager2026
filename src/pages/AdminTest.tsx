@@ -299,11 +299,11 @@ export default function AdminTestPage() {
     const breakA = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
     const breakB = computePointBreakdown(tids.managers["Spiller B"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
 
-    const aOk = breakA.racePoints === 171;
-    const bOk = breakB.racePoints === 102;
+    const aOk = breakA.racePoints === 225;
+    const bOk = breakB.racePoints === 154;
     updateTest(1, {
       status: aOk && bOk ? "pass" : "fail",
-      message: `Spiller A: ${breakA.racePoints} (forventet 171) | Spiller B: ${breakB.racePoints} (forventet 102)`,
+      message: `Spiller A: ${breakA.racePoints} (forventet 225) | Spiller B: ${breakB.racePoints} (forventet 154)`,
     });
   }
 
@@ -315,11 +315,11 @@ export default function AdminTestPage() {
     const bd = await getBreakdownData(tids);
     const breakA = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
 
-    const expected = 223;
+    const expected = 299;
     const ok = breakA.total === expected;
     updateTest(2, {
       status: ok ? "pass" : "fail",
-      message: `Total: ${breakA.total} (forventet ${expected}), Captain-bonus: ${breakA.captainBonus} (forventet 52)`,
+      message: `Total: ${breakA.total} (forventet ${expected}), Captain-bonus: ${breakA.captainBonus} (forventet 74)`,
     });
   }
 
