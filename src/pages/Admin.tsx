@@ -722,20 +722,26 @@ function SettingsAdmin() {
 function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; queryClient: any }) {
   const { toast } = useToast();
   const { data: sponsors = [], refetch: refetchSponsors } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
-  const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "" });
+  const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "", prize_category: "round" as "season" | "round" | "other", prize_placement: "" as string });
   const [editId, setEditId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
+  const CATEGORY_CONFIG = {
+    season: { label: "Sæson", icon: Trophy, iconClass: "text-gold" },
+    round: { label: "Afdeling", icon: Award, iconClass: "text-accent" },
+    other: { label: "Øvrige", icon: Gift, iconClass: "text-primary" },
+  } as const;
+
   function startEdit(s: any) {
     setEditId(s.id);
-    setForm({ name: s.name, logo_url: s.logo_url || "", website_url: s.website_url || "", tagline: s.tagline || "", prize_description: s.prize_description || "" });
+    setForm({ name: s.name, logo_url: s.logo_url || "", website_url: s.website_url || "", tagline: s.tagline || "", prize_description: s.prize_description || "", prize_category: s.prize_category || "round", prize_placement: s.prize_placement ? String(s.prize_placement) : "" });
   }
 
   function resetForm() {
     setEditId(null);
-    setForm({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "" });
+    setForm({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "", prize_category: "round", prize_placement: "" });
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
