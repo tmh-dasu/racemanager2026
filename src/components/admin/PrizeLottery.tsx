@@ -10,13 +10,14 @@ import { useToast } from "@/hooks/use-toast";
 const CATEGORY_CONFIG = {
   season: { label: "Sæsonpræmier", icon: Trophy, iconClass: "text-gold" },
   round: { label: "Afdelingspræmier", icon: Award, iconClass: "text-accent" },
+  other: { label: "Øvrige præmier", icon: Gift, iconClass: "text-primary" },
 } as const;
 
 export default function PrizeLottery() {
   const { toast } = useToast();
   const { data: prizes = [], refetch } = useQuery({ queryKey: ["prizes"], queryFn: fetchPrizes });
   const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
-  const [form, setForm] = useState({ name: "", description: "", prize_category: "round" as "season" | "round" });
+  const [form, setForm] = useState({ name: "", description: "", prize_category: "round" as "season" | "round" | "other" });
   const [editId, setEditId] = useState<string | null>(null);
   const [drawing, setDrawing] = useState<string | null>(null);
 
@@ -121,8 +122,6 @@ export default function PrizeLottery() {
 
   const managerMap = Object.fromEntries(managers.map((m) => [m.id, m]));
 
-  const seasonPrizes = prizes.filter((p) => p.prize_category === "season");
-  const roundPrizes = prizes.filter((p) => p.prize_category === "round");
 
   return (
     <div className="space-y-6">
@@ -165,6 +164,16 @@ export default function PrizeLottery() {
               <Award className="h-3.5 w-3.5 mr-1" />
               Afdeling
             </Button>
+            <Button
+              type="button"
+              variant={form.prize_category === "other" ? "default" : "outline"}
+              size="sm"
+              className={`flex-1 font-display ${form.prize_category === "other" ? "bg-primary/20 text-primary border-primary/30 hover:bg-primary/30" : ""}`}
+              onClick={() => setForm({ ...form, prize_category: "other" })}
+            >
+              <Gift className="h-3.5 w-3.5 mr-1" />
+              Øvrige
+            </Button>
           </div>
         </div>
         <div className="flex gap-2">
@@ -190,10 +199,10 @@ export default function PrizeLottery() {
       </div>
 
       {/* Category sections */}
-      {(["season", "round"] as const).map((cat) => {
+      {(["season", "round", "other"] as const).map((cat) => {
         const config = CATEGORY_CONFIG[cat];
         const CatIcon = config.icon;
-        const catPrizes = cat === "season" ? seasonPrizes : roundPrizes;
+        const catPrizes = prizes.filter((p) => p.prize_category === cat);
         if (catPrizes.length === 0) return null;
 
         const undrawn = catPrizes.filter((p) => !p.winner_manager_id);
