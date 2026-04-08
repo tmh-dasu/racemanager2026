@@ -226,12 +226,12 @@ export default function AdminTestPage() {
       ]},
       // Session 4 - heat3
       { session: "heat3", results: [
-        { driver: "Test Guld 1", position: 1, fastest_lap: true, dnf: false },
-        { driver: "Test Sølv 1", position: 5, fastest_lap: false, dnf: false },
-        { driver: "Test Bronze 1", position: 6, fastest_lap: false, dnf: false },
-        { driver: "Test Guld 2", position: 2, fastest_lap: false, dnf: false },
-        { driver: "Test Sølv 2", position: 9, fastest_lap: false, dnf: false },
-        { driver: "Test Bronze 2", position: null, fastest_lap: false, dnf: true },
+        { driver: "Test Guld 1", position: 1, dnf: false },
+        { driver: "Test Sølv 1", position: 5, dnf: false },
+        { driver: "Test Bronze 1", position: 6, dnf: false },
+        { driver: "Test Guld 2", position: 2, dnf: false },
+        { driver: "Test Sølv 2", position: 9, dnf: false },
+        { driver: "Test Bronze 2", position: null, dnf: true },
       ]},
     ];
 
