@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Shield, Plus, Trash2, Save, AlertTriangle, Ticket, Copy, GripVertical } from "lucide-react";
+import { Shield, Plus, Trash2, Save, AlertTriangle, Ticket, Copy, GripVertical, Trophy, Award, Gift } from "lucide-react";
 import { fetchDrivers, fetchRaces, fetchSettings, fetchManagers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, fetchPredictionQuestions, upsertPredictionQuestion, resolvePredictions, deletePredictionQuestion, withdrawDriver, fetchAllTransfers, fetchPredictionCategories, upsertPredictionCategory, deletePredictionCategory, fetchSponsors, upsertSponsor, deleteSponsor } from "@/lib/api";
 import PrizeLottery from "@/components/admin/PrizeLottery";
-import PrizeSettings from "@/components/admin/PrizeSettings";
+
 import { supabase } from "@/integrations/supabase/client";
 
 import ResultsAdmin from "@/components/admin/ResultsAdmin";
@@ -715,8 +715,6 @@ function SettingsAdmin() {
       {/* Sponsor settings */}
       <SponsorSettings settings={settings} refetch={refetch} queryClient={queryClient} />
 
-      {/* Prize settings */}
-      <PrizeSettings />
     </div>
   );
 }
@@ -724,20 +722,26 @@ function SettingsAdmin() {
 function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; queryClient: any }) {
   const { toast } = useToast();
   const { data: sponsors = [], refetch: refetchSponsors } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
-  const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "" });
+  const [form, setForm] = useState({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "", prize_category: "round" as "season" | "round" | "other", prize_placement: "" as string });
   const [editId, setEditId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
+  const CATEGORY_CONFIG = {
+    season: { label: "Sæson", icon: Trophy, iconClass: "text-gold" },
+    round: { label: "Afdeling", icon: Award, iconClass: "text-accent" },
+    other: { label: "Øvrige", icon: Gift, iconClass: "text-primary" },
+  } as const;
+
   function startEdit(s: any) {
     setEditId(s.id);
-    setForm({ name: s.name, logo_url: s.logo_url || "", website_url: s.website_url || "", tagline: s.tagline || "", prize_description: s.prize_description || "" });
+    setForm({ name: s.name, logo_url: s.logo_url || "", website_url: s.website_url || "", tagline: s.tagline || "", prize_description: s.prize_description || "", prize_category: s.prize_category || "round", prize_placement: s.prize_placement ? String(s.prize_placement) : "" });
   }
 
   function resetForm() {
     setEditId(null);
-    setForm({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "" });
+    setForm({ name: "", logo_url: "", website_url: "", tagline: "", prize_description: "", prize_category: "round", prize_placement: "" });
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -769,6 +773,8 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
         website_url: form.website_url.trim() || null,
         tagline: form.tagline.trim() || null,
         prize_description: form.prize_description.trim() || null,
+        prize_category: form.prize_category,
+        prize_placement: form.prize_placement ? parseInt(form.prize_placement) : null,
         sort_order: editId ? undefined : sponsors.length,
       } as any);
       resetForm();
@@ -836,6 +842,47 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
           className="flex min-h-[60px] w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           rows={3}
         />
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Præmiekategori</label>
+          <div className="flex gap-1">
+            {(["season", "round", "other"] as const).map((cat) => {
+              const config = CATEGORY_CONFIG[cat];
+              const CatIcon = config.icon;
+              return (
+                <Button
+                  key={cat}
+                  type="button"
+                  variant={form.prize_category === cat ? "default" : "outline"}
+                  size="sm"
+                  className={`flex-1 font-display ${form.prize_category === cat ? config.iconClass : ""}`}
+                  onClick={() => setForm({ ...form, prize_category: cat, prize_placement: cat !== "season" ? "" : form.prize_placement })}
+                >
+                  <CatIcon className="h-3.5 w-3.5 mr-1" />
+                  {config.label}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+        {form.prize_category === "season" && (
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Præmieplacering (1., 2. eller 3. præmie)</label>
+            <div className="flex gap-1">
+              {[1, 2, 3].map((n) => (
+                <Button
+                  key={n}
+                  type="button"
+                  variant={form.prize_placement === String(n) ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1 font-display"
+                  onClick={() => setForm({ ...form, prize_placement: String(n) })}
+                >
+                  {n}. præmie
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="flex gap-2">
           <Button size="sm" onClick={handleSave} className="bg-gradient-racing text-primary-foreground font-display">
             {editId ? <><Save className="h-4 w-4 mr-1" />Gem</> : <><Plus className="h-4 w-4 mr-1" />Tilføj sponsor</>}
@@ -864,6 +911,12 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
                   {s.logo_url && <img src={s.logo_url} alt="" className="h-6 w-auto object-contain" />}
                   <span className="font-medium text-foreground">{s.name}</span>
                   {s.tagline && <span className="text-muted-foreground text-xs truncate">– {s.tagline}</span>}
+                  {(() => {
+                    const cat = s.prize_category || "round";
+                    const config = CATEGORY_CONFIG[cat as keyof typeof CATEGORY_CONFIG];
+                    const CatIcon = config.icon;
+                    return <span className={`inline-flex items-center gap-0.5 text-xs ${config.iconClass}`}><CatIcon className="h-3 w-3" />{config.label}{s.prize_placement ? ` ${s.prize_placement}.` : ""}</span>;
+                  })()}
                 </div>
                 {s.prize_description && <p className="text-xs text-muted-foreground mt-0.5 truncate">🏆 {s.prize_description}</p>}
               </button>
