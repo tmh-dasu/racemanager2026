@@ -55,12 +55,7 @@ const INITIAL_TESTS: TestResult[] = [
   { name: "Test 10 — Betaling via Stripe", status: "idle", message: "" },
 ];
 
-// Points scale matching api.ts
-const POINTS_MAP: Record<number, number> = {
-  1: 25, 2: 22, 3: 20, 4: 18, 5: 16, 6: 15, 7: 14, 8: 13,
-  9: 12, 10: 11, 11: 10, 12: 9, 13: 8, 14: 7, 15: 6, 16: 5,
-  17: 4, 18: 3, 19: 2, 20: 1,
-};
+// Stored IDs from seed
 
 // Stored IDs from seed
 interface TestIds {
