@@ -242,6 +242,13 @@ export default function RulesPage() {
             Manageren med flest point vinder! 🏆
           </p>
         </div>
+
+        {/* Disclaimer */}
+        <div className="rounded-lg border border-border bg-secondary/30 p-4 text-center">
+          <p className="text-xs text-muted-foreground">
+            DASU forbeholder sig retten til at justere eller ændre reglerne i spillet til enhver tid, såfremt det skønnes nødvendigt.
+          </p>
+        </div>
       </div>
     </PageLayout>
   );
