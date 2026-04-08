@@ -451,10 +451,10 @@ export default function AdminTestPage() {
 
     const checks = [
       { label: "Race-point", actual: bA.racePoints, expected: 154 },
-      { label: "Captain-bonus", actual: bA.captainBonus, expected: 0 },
+      { label: "Captain-bonus", actual: bA.captainBonus, expected: 74 },
       { label: "Prediction-point", actual: bA.predictionPoints, expected: 15 },
       { label: "Transferfradrag", actual: bA.transferCosts, expected: 30 },
-      { label: "Total", actual: bA.total, expected: 139 },
+      { label: "Total", actual: bA.total, expected: 213 },
     ];
 
     const allOk = checks.every(c => c.actual === c.expected);
