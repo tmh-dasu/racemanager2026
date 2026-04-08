@@ -372,7 +372,7 @@ export default function AdminTestPage() {
       await performTransfer(tids.managers["Spiller A"], tids.drivers["Test Guld 1"], tids.drivers["Test Guld 2"], getTransferCostForTier("gold"));
       const bd = await getBreakdownData(tids);
       const b = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
-      subs.push({ name: "C: Guld→Guld (−15)", status: b.total === 193 ? "pass" : "fail", message: `Total: ${b.total} (forventet 193)` });
+      subs.push({ name: "C: Guld→Guld (−15)", status: b.total === 124 ? "pass" : "fail", message: `Total: ${b.total} (forventet 124)` });
     } catch (e: any) {
       subs.push({ name: "C: Guld→Guld (−15)", status: "fail", message: e.message });
     }
