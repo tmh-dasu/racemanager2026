@@ -773,6 +773,8 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
         website_url: form.website_url.trim() || null,
         tagline: form.tagline.trim() || null,
         prize_description: form.prize_description.trim() || null,
+        prize_category: form.prize_category,
+        prize_placement: form.prize_placement ? parseInt(form.prize_placement) : null,
         sort_order: editId ? undefined : sponsors.length,
       } as any);
       resetForm();
