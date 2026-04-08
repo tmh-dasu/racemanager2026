@@ -82,6 +82,38 @@ export default function PrizeLottery() {
     setDrawing(null);
   }
 
+  async function handleDrawAnother(prize: Prize) {
+    // Create a copy of the prize and draw a winner for it
+    const winnerIds = prizes
+      .filter((p) => p.winner_manager_id)
+      .map((p) => p.winner_manager_id);
+    const eligible = managers.filter((m) => !winnerIds.includes(m.id));
+    if (eligible.length === 0) {
+      toast({ title: "Ingen hold at trække fra – alle har vundet!", variant: "destructive" });
+      return;
+    }
+    setDrawing(prize.id + "-another");
+    await new Promise((r) => setTimeout(r, 1500));
+    const winner = eligible[Math.floor(Math.random() * eligible.length)];
+    try {
+      await upsertPrize({
+        name: prize.name,
+        description: prize.description,
+        prize_category: prize.prize_category,
+        winner_manager_id: winner.id,
+        drawn_at: new Date().toISOString(),
+      });
+      const { data: newPrizes } = await supabase.from("prizes").select("*").eq("winner_manager_id", winner.id).eq("name", prize.name).order("created_at", { ascending: false }).limit(1);
+      if (newPrizes?.[0]) {
+        await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: newPrizes[0].id } });
+      }
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["prizes"] });
+      toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"!` });
+    } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
+    setDrawing(null);
+  }
+
   async function handleResetDraw(prize: Prize) {
     if (!confirm(`Nulstil lodtrækning for "${prize.name}"?`)) return;
     try {
@@ -94,6 +126,12 @@ export default function PrizeLottery() {
   const managerMap = Object.fromEntries(managers.map((m) => [m.id, m]));
   const undrawnPrizes = prizes.filter((p) => !p.winner_manager_id);
   const drawnPrizes = prizes.filter((p) => p.winner_manager_id);
+  // Group drawn prizes by name for "draw another" button
+  const drawnByName = drawnPrizes.reduce<Record<string, Prize[]>>((acc, p) => {
+    if (!acc[p.name]) acc[p.name] = [];
+    acc[p.name].push(p);
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-6">
