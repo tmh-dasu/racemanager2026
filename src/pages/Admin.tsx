@@ -768,6 +768,7 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
         logo_url: form.logo_url.trim() || null,
         website_url: form.website_url.trim() || null,
         tagline: form.tagline.trim() || null,
+        prize_description: form.prize_description.trim() || null,
         sort_order: editId ? undefined : sponsors.length,
       } as any);
       resetForm();
