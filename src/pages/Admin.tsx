@@ -714,6 +714,9 @@ function SettingsAdmin() {
 
       {/* Sponsor settings */}
       <SponsorSettings settings={settings} refetch={refetch} queryClient={queryClient} />
+
+      {/* Prize settings */}
+      <PrizeSettings />
     </div>
   );
 }
