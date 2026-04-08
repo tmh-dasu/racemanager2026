@@ -42,6 +42,7 @@ export default function HomePage() {
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
   const { data: predictionQuestions = [] } = useQuery({ queryKey: ["prediction_questions_published"], queryFn: fetchPublishedPredictionQuestions });
   const { data: sponsors = [] } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
+  const { data: prizes = [] } = useQuery({ queryKey: ["prizes"], queryFn: fetchPrizes });
 
   const now = new Date();
   const nextRace = races.find((r) => r.race_date && new Date(r.race_date) > now);
