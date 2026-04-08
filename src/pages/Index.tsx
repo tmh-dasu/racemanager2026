@@ -202,6 +202,7 @@ export default function HomePage() {
             round: { label: "Afdelingspræmier", icon: Award },
             other: { label: "Øvrige præmier", icon: Gift },
           };
+          const managerMap = Object.fromEntries(managers.map((m) => [m.id, m]));
           const grouped = prizes.reduce<Record<string, Prize[]>>((acc, p) => {
             const cat = p.prize_category || "round";
             if (!acc[cat]) acc[cat] = [];
@@ -227,19 +228,25 @@ export default function HomePage() {
                         <span className="text-sm font-semibold text-foreground">{config.label}</span>
                       </div>
                       <div className="space-y-1.5">
-                        {items.map((prize) => (
-                          <div key={prize.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
-                            <div>
-                              <p className="text-sm font-medium text-foreground">{prize.name}</p>
-                              {prize.description && <p className="text-xs text-muted-foreground">{prize.description}</p>}
+                        {items.map((prize) => {
+                          const winner = prize.winner_manager_id ? managerMap[prize.winner_manager_id] : null;
+                          return (
+                            <div key={prize.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
+                              <div>
+                                <p className="text-sm font-medium text-foreground">{prize.name}</p>
+                                {prize.description && <p className="text-xs text-muted-foreground">{prize.description}</p>}
+                              </div>
+                              {winner ? (
+                                <div className="text-right">
+                                  <p className="text-xs text-success font-bold font-display">{winner.team_name}</p>
+                                  <p className="text-xs text-muted-foreground">{winner.name}</p>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Ikke trukket</span>
+                              )}
                             </div>
-                            {prize.winner_manager_id ? (
-                              <span className="text-xs text-success font-medium">Vundet</span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">Ikke trukket</span>
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   );
