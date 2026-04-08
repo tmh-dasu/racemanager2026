@@ -59,7 +59,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get race info
     const { data: race } = await supabase.from('races').select('name, round_number').eq('id', race_id).single()
     if (!race) {
       return new Response(JSON.stringify({ error: 'Race not found' }), {
@@ -67,7 +66,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get all managers sorted by points for ranking
+    // Fetch all needed data
     const { data: managers } = await supabase.from('managers').select('id, email, team_name, total_points').order('total_points', { ascending: false })
     if (!managers || managers.length === 0) {
       return new Response(JSON.stringify({ message: 'No managers' }), {
@@ -75,16 +74,21 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get each manager's drivers
     const { data: allMDs } = await supabase.from('manager_drivers').select('manager_id, driver_id')
     const { data: drivers } = await supabase.from('drivers').select('id, name, car_number, tier')
-
-    // Get race results for this round
     const { data: raceResults } = await supabase.from('race_results').select('driver_id, points, session_type').eq('race_id', race_id)
-
-    // Get captain selections for this race
     const { data: captains } = await supabase.from('captain_selections').select('manager_id, driver_id').eq('race_id', race_id)
     const captainMap = new Map((captains || []).map((c: any) => [c.manager_id, c.driver_id]))
+
+    // Prediction answers for this race's questions
+    const { data: raceQuestions } = await supabase.from('prediction_questions').select('id').eq('race_id', race_id)
+    const questionIds = (raceQuestions || []).map((q: any) => q.id)
+    const { data: predAnswers } = questionIds.length > 0
+      ? await supabase.from('prediction_answers').select('manager_id, is_correct').in('question_id', questionIds)
+      : { data: [] }
+
+    // Transfers per manager
+    const { data: allTransfers } = await supabase.from('transfers').select('manager_id, point_cost')
 
     const siteUrl = 'https://dasuracemanager.lovable.app'
     let sentCount = 0
@@ -95,27 +99,43 @@ Deno.serve(async (req) => {
       const driverIds = (allMDs || []).filter((md: any) => md.manager_id === mgr.id).map((md: any) => md.driver_id)
       const captainId = captainMap.get(mgr.id)
 
-      // Calculate round points for this manager
-      let roundPoints = 0
+      // Race points breakdown per driver
+      let roundRacePoints = 0
+      let roundCaptainBonus = 0
       const driverBreakdown: string[] = []
 
       for (const dId of driverIds) {
         const d = (drivers || []).find((dr: any) => dr.id === dId)
         if (!d) continue
         const results = (raceResults || []).filter((r: any) => r.driver_id === dId)
-        let driverPts = results.reduce((sum: number, r: any) => sum + (r.points || 0), 0)
+        const basePts = results.reduce((sum: number, r: any) => sum + (r.points || 0), 0)
         const isCaptain = captainId === dId
-        if (isCaptain) driverPts *= 2
-        roundPoints += driverPts
+        const captainBonus = isCaptain ? basePts : 0
+
+        roundRacePoints += basePts
+        roundCaptainBonus += captainBonus
 
         const tierBadge = d.tier === 'gold' ? '🥇' : d.tier === 'silver' ? '🥈' : '🥉'
         driverBreakdown.push(
           `<tr>
             <td style="padding:8px 12px;border-bottom:1px solid #f4f4f5;color:#18181b;">${tierBadge} #${d.car_number} ${d.name}${isCaptain ? ' ⭐' : ''}</td>
-            <td style="padding:8px 12px;border-bottom:1px solid #f4f4f5;text-align:right;font-weight:bold;color:#18181b;">${driverPts} pt</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f4f4f5;text-align:right;color:#18181b;">${basePts} pt</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f4f4f5;text-align:right;color:${isCaptain ? '#dc2626' : '#a1a1aa'};">${isCaptain ? `+${captainBonus}` : '—'}</td>
           </tr>`
         )
       }
+
+      // Prediction points for this race
+      const predPoints = (predAnswers || [])
+        .filter((a: any) => a.manager_id === mgr.id && a.is_correct === true)
+        .length * 5
+
+      // Total transfers cost (season total)
+      const transferCost = (allTransfers || [])
+        .filter((t: any) => t.manager_id === mgr.id)
+        .reduce((sum: number, t: any) => sum + (t.point_cost || 0), 0)
+
+      const roundTotal = roundRacePoints + roundCaptainBonus + predPoints
 
       const html = `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e4e4e7;">
@@ -126,24 +146,62 @@ Deno.serve(async (req) => {
             <p style="color:#18181b;">Hej <strong>${mgr.team_name}</strong>,</p>
             <p style="color:#52525b;">Resultaterne for Runde ${race.round_number} er nu opdateret!</p>
 
+            <!-- Driver breakdown table -->
             <div style="border:1px solid #e4e4e7;border-radius:6px;overflow:hidden;margin:16px 0;">
               <table style="width:100%;border-collapse:collapse;font-size:14px;">
                 <thead>
-                  <tr style="background:#f4f4f5;"><th style="text-align:left;padding:8px 12px;border-bottom:2px solid #e4e4e7;color:#71717a;">Kører</th><th style="text-align:right;padding:8px 12px;border-bottom:2px solid #e4e4e7;color:#71717a;">Point</th></tr>
+                  <tr style="background:#f4f4f5;">
+                    <th style="text-align:left;padding:8px 12px;border-bottom:2px solid #e4e4e7;color:#71717a;">Kører</th>
+                    <th style="text-align:right;padding:8px 12px;border-bottom:2px solid #e4e4e7;color:#71717a;">Race</th>
+                    <th style="text-align:right;padding:8px 12px;border-bottom:2px solid #e4e4e7;color:#71717a;">Kaptajn</th>
+                  </tr>
                 </thead>
                 <tbody>
                   ${driverBreakdown.join('')}
                 </tbody>
-                <tfoot>
-                  <tr style="background:#f4f4f5;"><td style="padding:8px 12px;font-weight:bold;color:#dc2626;">Runde-total</td><td style="padding:8px 12px;text-align:right;font-weight:bold;color:#dc2626;">${roundPoints} pt</td></tr>
-                </tfoot>
               </table>
             </div>
 
-            <div style="background:#f4f4f5;border-radius:6px;padding:16px;margin:16px 0;text-align:center;">
-              <p style="margin:0 0 4px;font-size:13px;color:#71717a;">Din samlede rangering</p>
-              <p style="margin:0;font-size:28px;font-weight:bold;color:#dc2626;">#${rank}</p>
-              <p style="margin:4px 0 0;font-size:18px;font-weight:bold;color:#18181b;">${mgr.total_points} point</p>
+            <!-- Point breakdown summary -->
+            <div style="border:1px solid #e4e4e7;border-radius:6px;overflow:hidden;margin:16px 0;">
+              <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                <tbody>
+                  <tr style="border-bottom:1px solid #f4f4f5;">
+                    <td style="padding:10px 12px;color:#52525b;">🏎️ Race-point</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:bold;color:#18181b;">${roundRacePoints} pt</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #f4f4f5;">
+                    <td style="padding:10px 12px;color:#52525b;">⭐ Holdkaptajn-bonus</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:bold;color:${roundCaptainBonus > 0 ? '#dc2626' : '#a1a1aa'};">+${roundCaptainBonus} pt</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #f4f4f5;">
+                    <td style="padding:10px 12px;color:#52525b;">🔮 Predictions</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:bold;color:${predPoints > 0 ? '#16a34a' : '#a1a1aa'};">+${predPoints} pt</td>
+                  </tr>
+                  <tr style="background:#f4f4f5;">
+                    <td style="padding:10px 12px;font-weight:bold;color:#dc2626;">Runde-total</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:bold;color:#dc2626;">${roundTotal} pt</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Season standing -->
+            <div style="background:#f4f4f5;border-radius:6px;padding:16px;margin:16px 0;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <tr>
+                  <td style="color:#71717a;padding:4px 0;">Samlet rangering</td>
+                  <td style="text-align:right;font-weight:bold;color:#dc2626;font-size:20px;">#${rank}</td>
+                </tr>
+                <tr>
+                  <td style="color:#71717a;padding:4px 0;">Samlet point</td>
+                  <td style="text-align:right;font-weight:bold;color:#18181b;font-size:18px;">${mgr.total_points} pt</td>
+                </tr>
+                ${transferCost > 0 ? `<tr>
+                  <td style="color:#71717a;padding:4px 0;">Heraf transferfradrag</td>
+                  <td style="text-align:right;font-weight:bold;color:#ef4444;">−${transferCost} pt</td>
+                </tr>` : ''}
+              </table>
             </div>
 
             <p style="text-align:center;margin:24px 0 8px;">
