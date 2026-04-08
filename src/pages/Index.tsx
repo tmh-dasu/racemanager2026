@@ -239,6 +239,9 @@ export default function HomePage() {
                           {sponsor.tagline && (
                             <p className="text-center text-sm text-muted-foreground mt-1">{sponsor.tagline}</p>
                           )}
+                          {sponsor.prize_description && (
+                            <p className="text-center text-xs text-muted-foreground mt-2 whitespace-pre-line">{sponsor.prize_description}</p>
+                          )}
                         </a>
                       </div>
                     ))}
