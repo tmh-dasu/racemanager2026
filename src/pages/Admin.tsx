@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Shield, Plus, Trash2, Save, AlertTriangle, Ticket, Copy, GripVertical, Trophy, Award, Gift } from "lucide-react";
-import { fetchDrivers, fetchRaces, fetchSettings, fetchManagers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, fetchPredictionQuestions, upsertPredictionQuestion, resolvePredictions, deletePredictionQuestion, withdrawDriver, fetchAllTransfers, fetchPredictionCategories, upsertPredictionCategory, deletePredictionCategory, fetchSponsors, upsertSponsor, deleteSponsor, fetchPrizes, upsertPrize, deletePrize, type Prize } from "@/lib/api";
+import { Shield, Plus, Trash2, Save, AlertTriangle, Ticket, Copy, GripVertical } from "lucide-react";
+import { fetchDrivers, fetchRaces, fetchSettings, fetchManagers, upsertDriver, deleteDriver, upsertRace, deleteRace, updateSetting, deleteManager, fetchPredictionQuestions, upsertPredictionQuestion, resolvePredictions, deletePredictionQuestion, withdrawDriver, fetchAllTransfers, fetchPredictionCategories, upsertPredictionCategory, deletePredictionCategory, fetchSponsors, upsertSponsor, deleteSponsor } from "@/lib/api";
 import PrizeLottery from "@/components/admin/PrizeLottery";
+import PrizeSettings from "@/components/admin/PrizeSettings";
 import { supabase } from "@/integrations/supabase/client";
 
 import ResultsAdmin from "@/components/admin/ResultsAdmin";
