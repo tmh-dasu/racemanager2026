@@ -161,14 +161,13 @@ export default function ResultsPage() {
               ) : (
                 <>
                   {/* Header */}
-                  <div className="grid gap-1 text-xs text-muted-foreground px-2 py-1" style={{ gridTemplateColumns: `2rem 1fr ${races.map(() => "3rem").join(" ")} 3.5rem 3.5rem` }}>
+                  <div className="grid gap-1 text-xs text-muted-foreground px-2 py-1" style={{ gridTemplateColumns: `2rem 1fr ${races.map(() => "3rem").join(" ")} 3.5rem` }}>
                     <span>Pos</span>
                     <span>Kører</span>
                     {races.map((r) => (
                       <span key={r.id} className="text-center">R{r.round_number}</span>
                     ))}
-                    <span className="text-right">Brutto</span>
-                    <span className="text-right font-semibold">Netto</span>
+                    <span className="text-right font-semibold">Total</span>
                   </div>
 
                   {/* Rows */}
