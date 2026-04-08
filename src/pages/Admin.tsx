@@ -732,7 +732,7 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
 
   function startEdit(s: any) {
     setEditId(s.id);
-    setForm({ name: s.name, logo_url: s.logo_url || "", website_url: s.website_url || "", tagline: s.tagline || "" });
+    setForm({ name: s.name, logo_url: s.logo_url || "", website_url: s.website_url || "", tagline: s.tagline || "", prize_description: s.prize_description || "" });
   }
 
   function resetForm() {
