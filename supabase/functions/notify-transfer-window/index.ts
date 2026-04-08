@@ -66,9 +66,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get transfer cost setting
-    const { data: settingsRows } = await supabase.from('settings').select('key, value').eq('key', 'transfer_cost')
-    const transferCost = settingsRows?.[0]?.value || '10'
+    // Transfer costs are differentiated by tier
 
     const siteUrl = 'https://dasuracemanager.lovable.app'
     let sentCount = 0
