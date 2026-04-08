@@ -496,17 +496,17 @@ export default function AdminTestPage() {
     }
 
     const functions = [
-      { name: "9A: captain-reminder", fn: "send-captain-reminder" },
-      { name: "9B: predictions", fn: "notify-predictions" },
-      { name: "9C: results", fn: "notify-results" },
-      { name: "9D: transfer-window", fn: "notify-transfer-window" },
+      { name: "9A: captain-reminder", fn: "send-captain-reminder", body: { test_email: testEmail, race_id: tids.raceId } },
+      { name: "9B: predictions", fn: "notify-predictions", body: { test_email: testEmail, race_id: tids.raceId } },
+      { name: "9C: results", fn: "notify-results", body: { test_email: testEmail, race_id: tids.raceId } },
+      { name: "9D: transfer-window", fn: "notify-transfer-window", body: { test_email: testEmail, race_id: tids.raceId, action: "opened" } },
     ];
 
     const subs: { name: string; status: TestStatus; message: string }[] = [];
     for (const f of functions) {
       try {
         const { error } = await supabase.functions.invoke(f.fn, {
-          body: { test_email: testEmail, race_id: tids.raceId },
+          body: f.body,
         });
         if (error) {
           subs.push({ name: f.name, status: "fail", message: error.message });
