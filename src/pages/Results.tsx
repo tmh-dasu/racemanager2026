@@ -172,13 +172,13 @@ export default function ResultsPage() {
 
                   {/* Rows */}
                   <div className="space-y-1">
-                    {driverStandings.map(({ driverId, perRound, grossTotal, netTotal }, i) => (
+                    {driverStandings.map(({ driverId, perRound, netTotal }, i) => (
                       <div
                         key={driverId}
                         className={`grid gap-1 items-center rounded px-2 py-1.5 text-sm ${
                           i === 0 ? "bg-gold/10 border border-gold/20" : i === 1 ? "bg-secondary/70" : i === 2 ? "bg-racing-red/5" : "bg-secondary/50"
                         }`}
-                        style={{ gridTemplateColumns: `2rem 1fr ${races.map(() => "3rem").join(" ")} 3.5rem 3.5rem` }}
+                        style={{ gridTemplateColumns: `2rem 1fr ${races.map(() => "3rem").join(" ")} 3.5rem` }}
                       >
                         <span className={`font-display font-bold ${i === 0 ? "text-gold" : i === 1 ? "text-muted-foreground" : i === 2 ? "text-racing-red" : "text-muted-foreground"}`}>
                           {i + 1}
@@ -201,7 +201,6 @@ export default function ResultsPage() {
                             </span>
                           );
                         })}
-                        <span className="text-right text-xs text-muted-foreground">{grossTotal}</span>
                         <span className="text-right font-display font-bold text-foreground">{netTotal}</span>
                       </div>
                     ))}
