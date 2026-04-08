@@ -105,6 +105,12 @@ export default function RulesPage() {
             <span>❌</span>
             <span className="text-sm text-muted-foreground">DNF (udgået): <strong className="text-foreground">0 point</strong></span>
           </div>
+          <div className="mt-2 flex items-start gap-2 rounded-md bg-accent/10 border border-accent/20 px-3 py-2">
+            <span>📊</span>
+            <p className="text-xs text-muted-foreground">
+              <strong className="text-foreground">Alle bruttoresultater tæller</strong> – der fratrækkes ingen dårlige resultater. Alle point fra alle sessioner indgår i den samlede pointtotal.
+            </p>
+          </div>
         </Section>
 
 
