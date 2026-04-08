@@ -75,8 +75,6 @@ export default function ResultsAdmin() {
             driver_id: driverId,
             session_type: session,
             position: data.dnf ? null : Number(data.position) || null,
-            fastest_lap: false,
-            pole_position: false,
             dnf: data.dnf,
             points: 0,
           });
