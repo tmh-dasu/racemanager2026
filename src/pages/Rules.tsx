@@ -20,12 +20,6 @@ const races = [
   { round: 6, name: "Padborg Park – Finaleløbet", location: "Padborg", date: "3. oktober" },
 ];
 
-const dropRules = [
-  { rounds: "7+ afdelinger gennemført", drop: "4 dårligste resultater" },
-  { rounds: "6 afdelinger gennemført", drop: "3 dårligste resultater" },
-  { rounds: "4–5 afdelinger gennemført", drop: "2 dårligste resultater" },
-  { rounds: "Under 4 afdelinger gennemført", drop: "Ingen fratræk" },
-];
 
 export default function RulesPage() {
   return (
