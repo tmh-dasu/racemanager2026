@@ -1,0 +1,1 @@
+UPDATE public.sponsors SET logo_url = 'https://tycjshrzxwjgotqetxvf.supabase.co/storage/v1/object/public/sponsor-logos/sponsor-logo-baseline-dark.png' WHERE id = '096a8098-0877-4343-a19a-ba393779c450';
