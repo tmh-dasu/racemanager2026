@@ -585,7 +585,7 @@ export interface Prize {
 }
 
 export async function fetchPrizes(): Promise<Prize[]> {
-  const { data } = await supabase.from("prizes").select("*").order("created_at");
+  const { data } = await supabase.from("prizes").select("*").order("prize_category").order("created_at");
   return (data || []) as unknown as Prize[];
 }
 
