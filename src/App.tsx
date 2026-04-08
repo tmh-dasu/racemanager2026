@@ -18,6 +18,7 @@ import Predictions from "./pages/Predictions";
 import DriverProfile from "./pages/DriverProfile";
 import ResetPassword from "./pages/ResetPassword";
 import Terms from "./pages/Terms";
+import AdminTest from "./pages/AdminTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
