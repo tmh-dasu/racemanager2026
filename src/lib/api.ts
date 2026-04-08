@@ -540,7 +540,11 @@ export async function resolvePredictions(questionId: string, correctAnswer: stri
   const { data: answers } = await supabase.from("prediction_answers").select("id, answer").eq("question_id", questionId);
   for (const a of (answers || [])) {
     const isCorrect = a.answer.toLowerCase() === correctAnswer.toLowerCase();
-    await supabase.from("prediction_answers").update({ is_correct: isCorrect }).eq("id", a.id);
+    const { error: updErr } = await supabase.from("prediction_answers").update({ is_correct: isCorrect }).eq("id", a.id);
+    if (updErr) {
+      console.error(`Failed to update prediction_answer ${a.id}:`, updErr);
+      throw updErr;
+    }
   }
 }
 
