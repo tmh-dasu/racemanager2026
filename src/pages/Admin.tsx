@@ -842,6 +842,47 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
           className="flex min-h-[60px] w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           rows={3}
         />
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Præmiekategori</label>
+          <div className="flex gap-1">
+            {(["season", "round", "other"] as const).map((cat) => {
+              const config = CATEGORY_CONFIG[cat];
+              const CatIcon = config.icon;
+              return (
+                <Button
+                  key={cat}
+                  type="button"
+                  variant={form.prize_category === cat ? "default" : "outline"}
+                  size="sm"
+                  className={`flex-1 font-display ${form.prize_category === cat ? config.iconClass : ""}`}
+                  onClick={() => setForm({ ...form, prize_category: cat, prize_placement: cat !== "season" ? "" : form.prize_placement })}
+                >
+                  <CatIcon className="h-3.5 w-3.5 mr-1" />
+                  {config.label}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+        {form.prize_category === "season" && (
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Præmieplacering (1., 2. eller 3. præmie)</label>
+            <div className="flex gap-1">
+              {[1, 2, 3].map((n) => (
+                <Button
+                  key={n}
+                  type="button"
+                  variant={form.prize_placement === String(n) ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1 font-display"
+                  onClick={() => setForm({ ...form, prize_placement: String(n) })}
+                >
+                  {n}. præmie
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="flex gap-2">
           <Button size="sm" onClick={handleSave} className="bg-gradient-racing text-primary-foreground font-display">
             {editId ? <><Save className="h-4 w-4 mr-1" />Gem</> : <><Plus className="h-4 w-4 mr-1" />Tilføj sponsor</>}
