@@ -209,6 +209,15 @@ export default function HomePage() {
             acc[cat].push(p);
             return acc;
           }, {});
+
+          // Group sponsors by category
+          const sponsorsByCategory = sponsors.reduce<Record<string, typeof sponsors>>((acc, s: any) => {
+            const cat = s.prize_category || "round";
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(s);
+            return acc;
+          }, {});
+
           return (
             <div className="rounded-lg border border-border bg-card p-5 shadow-card">
               <div className="flex items-center gap-2 mb-4">
@@ -217,13 +226,23 @@ export default function HomePage() {
                 <Gift className="h-4 w-4 text-gold" />
               </div>
 
-              {/* Sponsors */}
-              {sponsors.length > 0 && (
-                <div className="mb-4">
-                  <div className="space-y-0">
-                    {sponsors.map((sponsor, idx) => (
+              {(["season", "round", "other"] as const).map((cat) => {
+                const catSponsors = sponsorsByCategory[cat] || [];
+                const catPrizes = grouped[cat] || [];
+                if (catSponsors.length === 0 && catPrizes.length === 0) return null;
+                const config = CATEGORY_CONFIG[cat];
+                const Icon = config.icon;
+                return (
+                  <div key={cat} className="mb-4 last:mb-0">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-semibold text-foreground">{config.label}</span>
+                    </div>
+
+                    {/* Sponsors in this category */}
+                    {catSponsors.map((sponsor: any, idx: number) => (
                       <div key={sponsor.id}>
-                        {idx > 0 && <div className="h-px bg-racing-red my-4" />}
+                        {idx > 0 && <div className="h-px bg-racing-red my-3" />}
                         <a
                           href={sponsor.website_url || "#"}
                           target="_blank"
@@ -231,67 +250,50 @@ export default function HomePage() {
                           className="block hover:opacity-80 transition-opacity"
                         >
                           {sponsor.logo_url && (
-                            <div className="flex justify-center mb-3">
+                            <div className="flex justify-center mb-2">
                               <img src={sponsor.logo_url} alt={sponsor.name} className="h-16 w-auto object-contain" />
                             </div>
                           )}
-                          <h3 className="text-center font-display text-lg font-bold text-foreground">{sponsor.name}</h3>
+                          <h3 className="text-center font-display text-base font-bold text-foreground">
+                            {sponsor.prize_placement ? `${sponsor.prize_placement}. præmie – ` : ""}{sponsor.name}
+                          </h3>
                           {sponsor.tagline && (
                             <p className="text-center text-sm text-muted-foreground mt-1">{sponsor.tagline}</p>
                           )}
                           {sponsor.prize_description && (
-                            <p className="text-center text-xs text-muted-foreground mt-2 whitespace-pre-line">{sponsor.prize_description}</p>
+                            <p className="text-center text-xs text-muted-foreground mt-1 whitespace-pre-line">{sponsor.prize_description}</p>
                           )}
                         </a>
                       </div>
                     ))}
-                  </div>
-                  <p className="text-center text-xs text-muted-foreground mt-4 border-t border-border pt-3">
-                    Vinderens præmie leveres af {sponsors.map(s => s.name).join(" & ")}
-                  </p>
-                </div>
-              )}
 
-              {/* Prize list */}
-              {prizes.length > 0 && (
-                <div className={`space-y-4 ${sponsors.length > 0 ? "border-t border-border pt-4" : ""}`}>
-                  {(["season", "round", "other"] as const).map((cat) => {
-                    const items = grouped[cat];
-                    if (!items || items.length === 0) return null;
-                    const config = CATEGORY_CONFIG[cat];
-                    const Icon = config.icon;
-                    return (
-                      <div key={cat}>
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <Icon className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-semibold text-foreground">{config.label}</span>
-                        </div>
-                        <div className="space-y-1.5">
-                          {items.map((prize) => {
-                            const winner = prize.winner_manager_id ? managerMap[prize.winner_manager_id] : null;
-                            return (
-                              <div key={prize.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
-                                <div>
-                                  <p className="text-sm font-medium text-foreground">{prize.name}</p>
-                                  {prize.description && <p className="text-xs text-muted-foreground">{prize.description}</p>}
-                                </div>
-                                {winner ? (
-                                  <div className="text-right">
-                                    <p className="text-xs text-success font-bold font-display">{winner.team_name}</p>
-                                    <p className="text-xs text-muted-foreground">{winner.name}</p>
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">Ikke trukket</span>
-                                )}
+                    {/* Lottery prizes in this category */}
+                    {catPrizes.length > 0 && (
+                      <div className={`space-y-1.5 ${catSponsors.length > 0 ? "mt-3" : ""}`}>
+                        {catPrizes.map((prize) => {
+                          const winner = prize.winner_manager_id ? managerMap[prize.winner_manager_id] : null;
+                          return (
+                            <div key={prize.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
+                              <div>
+                                <p className="text-sm font-medium text-foreground">{prize.name}</p>
+                                {prize.description && <p className="text-xs text-muted-foreground">{prize.description}</p>}
                               </div>
-                            );
-                          })}
-                        </div>
+                              {winner ? (
+                                <div className="text-right">
+                                  <p className="text-xs text-success font-bold font-display">{winner.team_name}</p>
+                                  <p className="text-xs text-muted-foreground">{winner.name}</p>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Ikke trukket</span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    )}
+                  </div>
+                );
+              })}
             </div>
           );
         })()}
