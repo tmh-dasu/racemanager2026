@@ -829,6 +829,13 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
         </div>
         <Input placeholder="Website-URL" value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} className="bg-secondary border-border" />
         <Input placeholder="Tagline / beskrivelse (valgfri)" value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} className="bg-secondary border-border" />
+        <textarea
+          placeholder="Præmieoplysninger (valgfri) – f.eks. hvilke præmier sponsoren stiller til rådighed"
+          value={form.prize_description}
+          onChange={(e) => setForm({ ...form, prize_description: e.target.value })}
+          className="flex min-h-[60px] w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          rows={3}
+        />
         <div className="flex gap-2">
           <Button size="sm" onClick={handleSave} className="bg-gradient-racing text-primary-foreground font-display">
             {editId ? <><Save className="h-4 w-4 mr-1" />Gem</> : <><Plus className="h-4 w-4 mr-1" />Tilføj sponsor</>}
