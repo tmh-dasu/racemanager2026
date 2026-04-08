@@ -199,39 +199,39 @@ export default function AdminTestPage() {
     const sessions = [
       // Session 1 - qualifying
       { session: "qualifying", results: [
-        { driver: "Test Guld 1", position: 1, fastest_lap: true, dnf: false },
-        { driver: "Test Sølv 1", position: 3, fastest_lap: false, dnf: false },
-        { driver: "Test Bronze 1", position: 8, fastest_lap: false, dnf: false },
-        { driver: "Test Guld 2", position: 2, fastest_lap: false, dnf: false },
-        { driver: "Test Sølv 2", position: 5, fastest_lap: false, dnf: false },
-        { driver: "Test Bronze 2", position: null, fastest_lap: false, dnf: true },
+        { driver: "Test Guld 1", position: 1, dnf: false },
+        { driver: "Test Sølv 1", position: 3, dnf: false },
+        { driver: "Test Bronze 1", position: 8, dnf: false },
+        { driver: "Test Guld 2", position: 2, dnf: false },
+        { driver: "Test Sølv 2", position: 5, dnf: false },
+        { driver: "Test Bronze 2", position: null, dnf: true },
       ]},
       // Session 2 - heat1
       { session: "heat1", results: [
-        { driver: "Test Guld 1", position: 2, fastest_lap: false, dnf: false },
-        { driver: "Test Sølv 1", position: 4, fastest_lap: false, dnf: false },
-        { driver: "Test Bronze 1", position: 9, fastest_lap: false, dnf: false },
-        { driver: "Test Guld 2", position: 1, fastest_lap: true, dnf: false },
-        { driver: "Test Sølv 2", position: 6, fastest_lap: false, dnf: false },
-        { driver: "Test Bronze 2", position: null, fastest_lap: false, dnf: true },
+        { driver: "Test Guld 1", position: 2, dnf: false },
+        { driver: "Test Sølv 1", position: 4, dnf: false },
+        { driver: "Test Bronze 1", position: 9, dnf: false },
+        { driver: "Test Guld 2", position: 1, dnf: false },
+        { driver: "Test Sølv 2", position: 6, dnf: false },
+        { driver: "Test Bronze 2", position: null, dnf: true },
       ]},
       // Session 3 - heat2
       { session: "heat2", results: [
-        { driver: "Test Guld 1", position: 1, fastest_lap: false, dnf: false },
-        { driver: "Test Sølv 1", position: 3, fastest_lap: false, dnf: false },
-        { driver: "Test Bronze 1", position: 7, fastest_lap: false, dnf: false },
-        { driver: "Test Guld 2", position: 4, fastest_lap: false, dnf: false },
-        { driver: "Test Sølv 2", position: 8, fastest_lap: false, dnf: false },
-        { driver: "Test Bronze 2", position: 10, fastest_lap: false, dnf: false },
+        { driver: "Test Guld 1", position: 1, dnf: false },
+        { driver: "Test Sølv 1", position: 3, dnf: false },
+        { driver: "Test Bronze 1", position: 7, dnf: false },
+        { driver: "Test Guld 2", position: 4, dnf: false },
+        { driver: "Test Sølv 2", position: 8, dnf: false },
+        { driver: "Test Bronze 2", position: 10, dnf: false },
       ]},
       // Session 4 - heat3
       { session: "heat3", results: [
-        { driver: "Test Guld 1", position: 1, fastest_lap: true, dnf: false },
-        { driver: "Test Sølv 1", position: 5, fastest_lap: false, dnf: false },
-        { driver: "Test Bronze 1", position: 6, fastest_lap: false, dnf: false },
-        { driver: "Test Guld 2", position: 2, fastest_lap: false, dnf: false },
-        { driver: "Test Sølv 2", position: 9, fastest_lap: false, dnf: false },
-        { driver: "Test Bronze 2", position: null, fastest_lap: false, dnf: true },
+        { driver: "Test Guld 1", position: 1, dnf: false },
+        { driver: "Test Sølv 1", position: 5, dnf: false },
+        { driver: "Test Bronze 1", position: 6, dnf: false },
+        { driver: "Test Guld 2", position: 2, dnf: false },
+        { driver: "Test Sølv 2", position: 9, dnf: false },
+        { driver: "Test Bronze 2", position: null, dnf: true },
       ]},
     ];
 
@@ -242,10 +242,10 @@ export default function AdminTestPage() {
           driver_id: d[res.driver],
           session_type: s.session,
           position: res.position,
-          fastest_lap: res.fastest_lap,
+          fastest_lap: false,
           pole_position: false,
           dnf: res.dnf,
-          points: calculatePoints(res.position, res.dnf) + (res.fastest_lap ? 3 : 0),
+          points: calculatePoints(res.position, res.dnf),
         });
       }
     }
