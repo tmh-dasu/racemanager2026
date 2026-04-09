@@ -98,6 +98,7 @@ export default function AdminTestPage() {
       { name: "Test Sølv 2", car_number: 904, team: "Test Team", tier: "silver" },
       { name: "Test Bronze 1", car_number: 905, team: "Test Team", tier: "bronze" },
       { name: "Test Bronze 2", car_number: 906, team: "Test Team", tier: "bronze" },
+      { name: "Test Bronze 3", car_number: 907, team: "Test Team", tier: "bronze", withdrawn: true },
     ];
 
     const driverIds: Record<string, string> = {};
