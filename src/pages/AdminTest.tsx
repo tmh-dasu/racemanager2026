@@ -8,6 +8,7 @@ import {
   computePointBreakdown,
   getTransferCostForTier,
   performTransfer,
+  performEmergencyTransfer,
   upsertRaceResult,
   setCaptainSelection,
   submitPredictionAnswer,
