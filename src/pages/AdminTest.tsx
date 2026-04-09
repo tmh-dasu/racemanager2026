@@ -392,8 +392,106 @@ export default function AdminTestPage() {
       subs.push({ name: "D: Guld→Sølv (ulovlig)", status: "pass", message: `Afvist: ${e.message}` });
     }
 
+    // 5E: Trigger verification — insert transfer with wrong point_cost, verify trigger overrides
+    try {
+      // Insert a bronze transfer with point_cost=0 — trigger should override to 5
+      const { data: triggerTest, error: triggerErr } = await supabase.from("transfers").insert({
+        manager_id: tids.managers["Spiller A"],
+        old_driver_id: tids.drivers["Test Bronze 2"],
+        new_driver_id: tids.drivers["Test Bronze 2"],
+        point_cost: 0,
+        is_free: false,
+      } as any).select("point_cost, is_free").single();
+      if (triggerErr) throw triggerErr;
+      const triggerOk = triggerTest.point_cost === 5 && triggerTest.is_free === false;
+      subs.push({ name: "E: Trigger overskriver forkert point_cost", status: triggerOk ? "pass" : "fail", message: `point_cost: ${triggerTest.point_cost} (forventet 5), is_free: ${triggerTest.is_free}` });
+      // Clean up the extra transfer row
+      await supabase.from("transfers").delete().eq("manager_id", tids.managers["Spiller A"]).eq("old_driver_id", tids.drivers["Test Bronze 2"]).eq("new_driver_id", tids.drivers["Test Bronze 2"]);
+    } catch (e: any) {
+      subs.push({ name: "E: Trigger overskriver forkert point_cost", status: "fail", message: e.message });
+    }
+
+    // 5F: Emergency transfer (withdrawn driver) — is_free=true, point_cost=0
+    try {
+      // Test Bronze 3 is already marked withdrawn in seed
+      // First assign Test Bronze 3 to Spiller B's team so we can swap it out
+      // Spiller B currently has Bronze 2 — let's swap Bronze 2 for Bronze 3 (withdrawn)
+      // Actually: we need a withdrawn driver ON the team. Let's mark Bronze 2 as withdrawn temporarily.
+      await supabase.from("drivers").update({ withdrawn: true } as any).eq("id", tids.drivers["Test Bronze 2"]);
+
+      // Now Spiller A has Bronze 2 (withdrawn) — do emergency transfer to Bronze 3
+      // But Bronze 3 is also withdrawn... let's un-withdraw Bronze 3 first
+      await supabase.from("drivers").update({ withdrawn: false } as any).eq("id", tids.drivers["Test Bronze 3"]);
+
+      await performEmergencyTransfer(tids.managers["Spiller A"], tids.drivers["Test Bronze 2"], tids.drivers["Test Bronze 3"]);
+
+      // Verify the transfer record
+      const { data: emergencyTransfers } = await supabase.from("transfers")
+        .select("point_cost, is_free")
+        .eq("manager_id", tids.managers["Spiller A"])
+        .eq("old_driver_id", tids.drivers["Test Bronze 2"])
+        .eq("new_driver_id", tids.drivers["Test Bronze 3"]);
+      const et = emergencyTransfers?.[0];
+      // The trigger should see old_driver withdrawn=true → is_free=true, point_cost=0
+      const emergOk = et && et.point_cost === 0 && et.is_free === true;
+      subs.push({ name: "F: Nødtransfer (withdrawn → gratis)", status: emergOk ? "pass" : "fail", message: `point_cost: ${et?.point_cost} (forventet 0), is_free: ${et?.is_free} (forventet true)` });
+
+      // Restore withdrawn flags
+      await supabase.from("drivers").update({ withdrawn: false } as any).eq("id", tids.drivers["Test Bronze 2"]);
+      await supabase.from("drivers").update({ withdrawn: true } as any).eq("id", tids.drivers["Test Bronze 3"]);
+    } catch (e: any) {
+      subs.push({ name: "F: Nødtransfer (withdrawn → gratis)", status: "fail", message: e.message });
+      // Attempt cleanup
+      await supabase.from("drivers").update({ withdrawn: false } as any).eq("id", tids.drivers["Test Bronze 2"]);
+      await supabase.from("drivers").update({ withdrawn: true } as any).eq("id", tids.drivers["Test Bronze 3"]);
+    }
+
+    // 5G: Transfer history — verify all transfers are logged correctly
+    try {
+      const { data: allTransfers } = await supabase.from("transfers")
+        .select("old_driver_id, new_driver_id, point_cost, is_free")
+        .eq("manager_id", tids.managers["Spiller A"])
+        .order("created_at", { ascending: true });
+      
+      // Expected: A(silver,10), B(bronze,5), C(gold,15), F(emergency,0)
+      // (E was cleaned up)
+      const expected = [
+        { cost: 10, free: false },
+        { cost: 5, free: false },
+        { cost: 15, free: false },
+        { cost: 0, free: true },
+      ];
+      const count = allTransfers?.length || 0;
+      let historyOk = count === expected.length;
+      if (historyOk && allTransfers) {
+        for (let i = 0; i < expected.length; i++) {
+          if (allTransfers[i].point_cost !== expected[i].cost || allTransfers[i].is_free !== expected[i].free) {
+            historyOk = false;
+            break;
+          }
+        }
+      }
+      const details = (allTransfers || []).map((t, i) => `${i+1}: cost=${t.point_cost}, free=${t.is_free}`).join(" | ");
+      subs.push({ name: "G: Transfer-historik (4 rækker)", status: historyOk ? "pass" : "fail", message: `${count} transfers: ${details}` });
+    } catch (e: any) {
+      subs.push({ name: "G: Transfer-historik", status: "fail", message: e.message });
+    }
+
+    // 5H: recalculateManagerPoints — verify total_points in DB matches breakdown
+    try {
+      await recalculateManagerPoints();
+      const { data: mgrData } = await supabase.from("managers").select("total_points").eq("id", tids.managers["Spiller A"]).single();
+      const bd = await getBreakdownData(tids);
+      const b = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
+      const dbPoints = mgrData?.total_points || 0;
+      const calcOk = dbPoints === b.total;
+      subs.push({ name: "H: recalculateManagerPoints", status: calcOk ? "pass" : "fail", message: `DB: ${dbPoints}, Beregnet: ${b.total} (race=${b.racePoints}, captain=${b.captainBonus}, pred=${b.predictionPoints}, transfer=-${b.transferDeductions})` });
+    } catch (e: any) {
+      subs.push({ name: "H: recalculateManagerPoints", status: "fail", message: e.message });
+    }
+
     const allPass = subs.every(s => s.status === "pass");
-    updateTest(4, { status: allPass ? "pass" : "fail", message: allPass ? "Alle 4 transfer-tests bestået" : "Fejl i transfers", subTests: subs });
+    updateTest(4, { status: allPass ? "pass" : "fail", message: allPass ? "Alle 8 transfer-tests bestået" : "Fejl i transfers", subTests: subs });
   }
 
   async function runTest6(tids: TestIds) {
