@@ -346,7 +346,10 @@ export async function recalculateManagerPoints() {
       .filter((t: any) => t.manager_id === mgr.id)
       .reduce((sum: number, t: any) => sum + (t.point_cost || 0), 0);
 
-    await supabase.from("managers").update({ total_points: total + predictionBonus - transferCosts }).eq("id", mgr.id);
+    const newTotal = total + predictionBonus - transferCosts;
+    console.log(`[recalculate] Manager ${mgr.id}: base=${basePoints}, captain=${captainBonus}, pred=${predictionBonus}, transfers=${transferCosts}, newTotal=${newTotal}`);
+    const { error: updateErr } = await supabase.from("managers").update({ total_points: newTotal }).eq("id", mgr.id);
+    if (updateErr) console.error(`[recalculate] Update failed for ${mgr.id}:`, updateErr);
   }
 }
 
