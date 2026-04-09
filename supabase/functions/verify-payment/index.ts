@@ -117,9 +117,10 @@ serve(async (req) => {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const isStripeNotFound = message.includes("No such checkout.session") || message.includes("No such");
     return new Response(JSON.stringify({ error: message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: isStripeNotFound ? 400 : 500,
     });
   }
 });
