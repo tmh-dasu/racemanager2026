@@ -107,7 +107,7 @@ export default function AdminTestPage() {
       if (error) throw new Error(`Driver insert failed: ${error.message}`);
       driverIds[d.name] = data.id;
     }
-    addLog(`6 testkørere oprettet`);
+    addLog(`7 testkørere oprettet`);
 
     // 2) Managers (no auth user)
     const managerDefs = [
