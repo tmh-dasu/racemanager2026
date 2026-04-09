@@ -1,43 +1,37 @@
 
 
-## Plan: Udvid transfer-testsystemet
+## Plan: Opdater test-forventede værdier efter nødtransfer
 
-### Nuværende status
-Test 5 dækker allerede:
-- Sølv→Sølv transfer med −10 point ✓
-- Bronze→Bronze transfer med −5 point ✓
-- Guld→Guld transfer med −15 point ✓
-- Cross-tier afvisning (kun client-side check) ✓
+### Problem
+Test 5F (nødtransfer) blev tilføjet og ændrer Spiller A's hold: Bronze 2 → Bronze 3 (som har 0 race-point). Men Test 7's forventede værdier er stadig beregnet ud fra det gamle hold (med Bronze 2 = 11 point).
 
-### Identificerede mangler
-Test 5 har følgende huller:
+### Beregning efter alle transfers
 
-1. **Cross-tier afvisning testes kun som string-sammenligning** — den forsøger aldrig en reel database-insert, så `enforce_transfer_values`-triggeren testes ikke
-2. **Gratis nødtransfer (udgåede kørere)** testes ikke — `performEmergencyTransfer` + `is_free=true` + `point_cost=0`
-3. **Backend-trigger `enforce_transfer_values`** verificeres ikke direkte — triggeren overskriver `point_cost`, men testen sender allerede den korrekte værdi, så den fanger ikke en eventuel trigger-fejl
-4. **Transfer-historik** verificeres ikke — at der faktisk oprettes korrekte rækker i `transfers`-tabellen
-5. **`recalculateManagerPoints` efter transfers** testes ikke — at `total_points` på manageren opdateres korrekt i databasen
+Spiller A's hold efter Test 5:
+- Transfer A: Sølv 1 → Sølv 2
+- Transfer B: Bronze 1 → Bronze 2
+- Transfer C: Guld 1 → Guld 2
+- Transfer F: Bronze 2 → Bronze 3 (nødtransfer, gratis)
 
-### Plan for ændringer
+**Sluthold:** Guld 2, Sølv 2, Bronze 3
 
-**Fil: `src/pages/AdminTest.tsx`** — Udvid `runTest5` med nye sub-tests:
+Race-point for slutholdet:
+- Guld 2: P2(22) + P1(25) + P4(18) + P2(22) = **87**
+- Sølv 2: P5(16) + P6(15) + P8(13) + P9(12) = **56**
+- Bronze 3: ingen resultater = **0**
+- **Race total = 143**
 
-- **5E: Trigger-verifikation** — Indsæt en transfer med forkert `point_cost` (f.eks. 0) og verificer at triggeren overskriver til korrekt tier-pris
-- **5F: Gratis nødtransfer** — Marker en kører som `withdrawn`, kør `performEmergencyTransfer`, verificer `is_free=true` og `point_cost=0`
-- **5G: Transfer-historik** — Query `transfers`-tabellen og verificer at alle 4+ transfers er logget korrekt med rigtige `point_cost` og `is_free`-værdier
-- **5H: recalculateManagerPoints** — Kør `recalculateManagerPoints()` og verificer at `managers.total_points` matcher den beregnede breakdown
+Captain-bonus (Sølv 1, sat i Test 3): **74** (bevares efter transfer)
+Transfer-fradrag: 10 + 5 + 15 + 0 = **30**
 
-### Forventede værdier efter alle transfers
+### Ændringer
 
-Spiller A's flow:
-- Start: 225 race + 74 captain = 299
-- Transfer A (sølv −10): racepoints ændres (−74+56=207), total = 207+74−10 = 271
-- Transfer B (bronze −5): racepoints ændres (−54+11=164), total = 164+74−15 = 223
-- Transfer C (guld −15): racepoints ændres (−97+87=154), total = 154+74−30 = 198
-- Nødtransfer (gratis): point_cost=0, total uændret i fradrag
+**Fil: `src/pages/AdminTest.tsx`**
 
-### Tekniske detaljer
-- Nødtransfer-test kræver at en driver markeres som `withdrawn=true` via admin update
-- Trigger-test kræver direkte supabase insert med bevidst forkert `point_cost`
-- Cleanup skal håndtere de nye test-data (withdrawn-flag nulstilles)
+**Test 7 — linje 552-558:** Opdater forventede værdier:
+- `racePoints`: 154 → **143**
+- `total`: 213 → **202** (143 + 74 + 15 − 30)
+- Captain-bonus (74), prediction (15) og transferfradrag (30) er uændrede
+
+Det er den eneste test der har forkerte forventede værdier. Test 5H sammenligner blot DB mod beregnet og vil matche korrekt (begge giver 187 uden predictions, da Test 6 ikke er kørt endnu). Test 2 og 3 kører før transfers og er upåvirkede.
 
