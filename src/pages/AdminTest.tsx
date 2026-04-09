@@ -485,7 +485,7 @@ export default function AdminTestPage() {
       const b = computePointBreakdown(tids.managers["Spiller A"], bd.allMDs, bd.allResults, bd.allCaptains, bd.allPredAnswers, bd.allTransfers, bd.completedRounds);
       const dbPoints = mgrData?.total_points || 0;
       const calcOk = dbPoints === b.total;
-      subs.push({ name: "H: recalculateManagerPoints", status: calcOk ? "pass" : "fail", message: `DB: ${dbPoints}, Beregnet: ${b.total} (race=${b.racePoints}, captain=${b.captainBonus}, pred=${b.predictionPoints}, transfer=-${b.transferDeductions})` });
+      subs.push({ name: "H: recalculateManagerPoints", status: calcOk ? "pass" : "fail", message: `DB: ${dbPoints}, Beregnet: ${b.total} (race=${b.racePoints}, captain=${b.captainBonus}, pred=${b.predictionPoints}, transfer=-${b.transferCosts})` });
     } catch (e: any) {
       subs.push({ name: "H: recalculateManagerPoints", status: "fail", message: e.message });
     }
