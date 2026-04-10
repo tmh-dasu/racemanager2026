@@ -17,6 +17,7 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [voucherCode, setVoucherCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetSending, setResetSending] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -96,6 +97,33 @@ export default function AuthPage() {
     setLoading(false);
   }
 
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      toast({ title: "Indtast din email først", variant: "destructive" });
+      return;
+    }
+
+    setResetSending(true);
+
+    const { error } = await supabase.functions.invoke("send-password-reset", {
+      body: {
+        email,
+        redirectTo: `${window.location.origin}/reset-password`,
+      },
+    });
+
+    if (error) {
+      toast({ title: "Fejl", description: error.message, variant: "destructive" });
+    } else {
+      toast({
+        title: "Email sendt! 📧",
+        description: "Hvis kontoen findes, modtager du straks et nulstillingslink via email.",
+      });
+    }
+
+    setResetSending(false);
+  }
+
   return (
     <PageLayout>
       <div className="container flex min-h-[60vh] items-center justify-center py-12">
@@ -148,7 +176,6 @@ export default function AuthPage() {
               />
             </div>
 
-            {/* Voucher code - optional */}
             <div className="relative">
               <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -191,23 +218,11 @@ export default function AuthPage() {
             <div className="text-center">
               <button
                 type="button"
-                onClick={async () => {
-                  if (!email.trim()) {
-                    toast({ title: "Indtast din email først", variant: "destructive" });
-                    return;
-                  }
-                  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: `${window.location.origin}/reset-password`,
-                  });
-                  if (error) {
-                    toast({ title: "Fejl", description: error.message, variant: "destructive" });
-                  } else {
-                    toast({ title: "Email sendt! 📧", description: "Tjek din indbakke for et link til nulstilling." });
-                  }
-                }}
-                className="text-sm text-muted-foreground hover:text-racing-red hover:underline transition-colors"
+                onClick={handleForgotPassword}
+                disabled={resetSending}
+                className="text-sm text-muted-foreground hover:text-racing-red hover:underline transition-colors disabled:opacity-60 disabled:hover:text-muted-foreground"
               >
-                Glemt adgangskode?
+                {resetSending ? "Sender nulstillingslink..." : "Glemt adgangskode?"}
               </button>
             </div>
           )}
