@@ -94,7 +94,10 @@ export default function PickTeamPage() {
       toast({ title: "Hold oprettet! 🏁" });
       navigate("/mit-hold");
     } catch (err: any) {
-      toast({ title: "Fejl: " + err.message, variant: "destructive" });
+      const msg = err.message?.includes("managers_slug_unique")
+        ? "Holdnavnet er allerede taget – vælg venligst et andet holdnavn."
+        : "Fejl: " + err.message;
+      toast({ title: msg, variant: "destructive" });
     }
     setSubmitting(false);
   }
