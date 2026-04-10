@@ -59,7 +59,7 @@ export default function PredictionPanel({ managerId }: PredictionPanelProps) {
             <span className="text-sm text-muted-foreground">{openRace.raceName}</span>
             <Badge className={openRace.answered === openRace.total
               ? "bg-green-500/20 text-green-400 border-green-500/40"
-              : "bg-yellow-500/20 text-yellow-400 border-yellow-500/40"
+              : "bg-amber-100 text-amber-700 border-amber-300"
             }>
               {openRace.answered}/{openRace.total} besvaret
             </Badge>

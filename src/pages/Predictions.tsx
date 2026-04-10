@@ -31,7 +31,7 @@ function CountdownBadge({ deadline }: { deadline: Date }) {
   if (days === 0 && hours === 0) parts.push(`${secs}s`);
 
   return (
-    <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/40">
+    <Badge className="bg-amber-100 text-amber-700 border-amber-300">
       <Clock className="h-3 w-3 mr-1" />
       {parts.join(" ")}
     </Badge>
