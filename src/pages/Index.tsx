@@ -132,6 +132,9 @@ export default function HomePage() {
               {nextRace.race_date && (
                 <CountdownTimer deadline={new Date(new Date(nextRace.race_date).getTime() - 24 * 60 * 60 * 1000).toISOString()} label="Holdkaptajn/transfer deadline" />
               )}
+              {predictionDeadline && nextRacePredictions.length > 0 && (
+                <CountdownTimer deadline={predictionDeadline} label="Predictions lukker om" />
+              )}
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
