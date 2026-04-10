@@ -55,7 +55,7 @@ export default function HomePage() {
     : [];
   const predictionDeadline = nextRacePredictions.length > 0
     ? nextRacePredictions.reduce<string | null>((earliest, q) => {
-        const dl = q.prediction_deadline || (nextRace?.captain_deadline ?? null);
+        const dl = q.prediction_deadline || (nextRace?.race_date ? new Date(new Date(nextRace.race_date).getTime() - 24 * 60 * 60 * 1000).toISOString() : null);
         if (!dl) return earliest;
         if (!earliest) return dl;
         return new Date(dl) < new Date(earliest) ? dl : earliest;
