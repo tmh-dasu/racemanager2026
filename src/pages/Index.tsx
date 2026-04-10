@@ -53,10 +53,15 @@ export default function HomePage() {
   const nextRacePredictions = nextRace
     ? predictionQuestions.filter((q) => q.race_id === nextRace.id)
     : [];
-  const hasOpenPredictions = nextRacePredictions.some((q) => {
-    const deadline = q.prediction_deadline ? new Date(q.prediction_deadline) : null;
-    return deadline ? now < deadline : true;
-  });
+  const predictionDeadline = nextRacePredictions.length > 0
+    ? nextRacePredictions.reduce<string | null>((earliest, q) => {
+        const dl = q.prediction_deadline || (nextRace?.captain_deadline ?? null);
+        if (!dl) return earliest;
+        if (!earliest) return dl;
+        return new Date(dl) < new Date(earliest) ? dl : earliest;
+      }, null)
+    : null;
+  const hasOpenPredictions = predictionDeadline ? now < new Date(predictionDeadline) : false;
 
   return (
     <PageLayout>
@@ -126,6 +131,9 @@ export default function HomePage() {
               )}
               {nextRace.race_date && (
                 <CountdownTimer deadline={new Date(new Date(nextRace.race_date).getTime() - 24 * 60 * 60 * 1000).toISOString()} label="Holdkaptajn/transfer deadline" />
+              )}
+              {predictionDeadline && nextRacePredictions.length > 0 && (
+                <CountdownTimer deadline={predictionDeadline} label="Predictions lukker om" />
               )}
             </div>
 
