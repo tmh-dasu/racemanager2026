@@ -1,0 +1,1 @@
+ALTER TABLE public.prediction_questions DROP CONSTRAINT prediction_questions_question_type_check;
