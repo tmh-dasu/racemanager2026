@@ -193,7 +193,14 @@ export function generateSlug(teamName: string): string {
 }
 
 export async function createManager(name: string, email: string, teamName: string, userId?: string) {
-  const slug = generateSlug(teamName);
+  let slug = generateSlug(teamName);
+  
+  // Check if slug already exists, append random suffix if so
+  const { data: existing } = await supabase.from("managers").select("id").eq("slug", slug).maybeSingle();
+  if (existing) {
+    slug = `${slug}-${Math.random().toString(36).substring(2, 6)}`;
+  }
+  
   const insertData: any = { name, email, team_name: teamName, slug };
   if (userId) insertData.user_id = userId;
   const { data, error } = await supabase.from("managers").insert(insertData).select().single();
