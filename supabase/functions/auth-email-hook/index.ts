@@ -1,5 +1,3 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -8,26 +6,30 @@ const corsHeaders = {
 const SITE_NAME = 'DASU RaceManager'
 const SITE_URL = 'https://racemanager.dasu.dk'
 
-interface AuthEmailPayload {
-  type: string
-  email: string
-  confirmation_url?: string
-  token?: string
-  token_hash?: string
-  redirect_to?: string
-  email_data?: {
-    token?: string
-    token_hash?: string
-    redirect_to?: string
-    confirmation_url?: string
-    email_action_type?: string
-  }
+function extractEmail(payload: Record<string, any>): string | undefined {
+  return payload.email
+    || payload.user?.email
+    || payload.email_data?.email
+    || payload.record?.email
+    || undefined
 }
 
-function buildEmailContent(payload: AuthEmailPayload): { subject: string; html: string } {
-  const type = payload.type || payload.email_data?.email_action_type || ''
-  const confirmUrl = payload.confirmation_url || payload.email_data?.confirmation_url || ''
+function extractType(payload: Record<string, any>): string {
+  return payload.type
+    || payload.email_data?.email_action_type
+    || payload.email_action_type
+    || ''
+}
 
+function extractConfirmUrl(payload: Record<string, any>): string {
+  return payload.confirmation_url
+    || payload.email_data?.confirmation_url
+    || payload.action_link
+    || payload.email_data?.action_link
+    || ''
+}
+
+function buildEmailContent(type: string, confirmUrl: string): { subject: string; html: string } {
   const buttonStyle = `
     display: inline-block;
     background-color: #dc2626;
@@ -132,6 +134,19 @@ function buildEmailContent(payload: AuthEmailPayload): { subject: string; html: 
         `),
       }
 
+    case 'reauthentication':
+      return {
+        subject: `Bekræft din identitet — ${SITE_NAME}`,
+        html: wrapHtml('Bekræft din identitet', `
+          <p style="color:#3f3f46;font-size:14px;line-height:1.6;">
+            Du har anmodet om at bekræfte din identitet. Klik på knappen for at fortsætte.
+          </p>
+          <p style="text-align:center;margin:28px 0;">
+            <a href="${confirmUrl}" style="${buttonStyle}">Bekræft identitet</a>
+          </p>
+        `),
+      }
+
     default:
       return {
         subject: `Besked fra ${SITE_NAME}`,
@@ -150,8 +165,20 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const payload: AuthEmailPayload = await req.json()
-    console.log('Auth email hook received:', JSON.stringify({ type: payload.type, email: payload.email }))
+    const payload = await req.json()
+    const email = extractEmail(payload)
+    const type = extractType(payload)
+    const confirmUrl = extractConfirmUrl(payload)
+
+    console.log('Auth email hook received:', JSON.stringify({ type, email: email || 'MISSING', hasConfirmUrl: !!confirmUrl }))
+
+    if (!email) {
+      console.error('No email found in payload:', JSON.stringify(payload))
+      return new Response(JSON.stringify({ error: 'No recipient email found in payload' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
     if (!resendApiKey) {
@@ -162,9 +189,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { subject, html } = buildEmailContent(payload)
+    const { subject, html } = buildEmailContent(type, confirmUrl)
 
-    console.log(`Sending auth email via Resend: type=${payload.type}, to=${payload.email}, subject=${subject}`)
+    console.log(`Sending auth email via Resend: type=${type}, to=${email}, subject=${subject}`)
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -174,7 +201,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: `${SITE_NAME} <noreply@racemanager.dasu.dk>`,
-        to: [payload.email],
+        to: [email],
         subject,
         html,
       }),
