@@ -83,7 +83,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
             <Lock className="h-3 w-3 mr-1" />Låst
           </Badge>
         ) : deadlineStr ? (
-          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/40">
+          <Badge className="bg-amber-100 text-amber-700 border-amber-300">
             <Clock className="h-3 w-3 mr-1" />Deadline: {deadlineStr}
           </Badge>
         ) : null}
@@ -100,7 +100,7 @@ export default function CaptainSelector({ managerId, drivers, races }: CaptainSe
       )}
 
       {!currentCaptainForNextRace && !isLocked && nextRace && (
-        <p className="text-xs text-yellow-400">⚠️ Du har ikke valgt holdkaptajn endnu — ingen bonus uden valg!</p>
+        <p className="text-xs text-amber-600 font-medium">⚠️ Du har ikke valgt holdkaptajn endnu — ingen bonus uden valg!</p>
       )}
 
       {/* Tier budget summary */}
