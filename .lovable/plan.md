@@ -1,30 +1,37 @@
 
 
-## Plan: Pre-launch fixes
+## Plan: Top 5 managers per runde i Admin
 
-### Problem
-Flere kritiske ting mangler før systemet kan gå live sikkert.
+### Formål
+Tilføj en ny fane i Admin-panelet der viser de 5 bedst scorende managers pr. løbsrunde. Dette giver admin et hurtigt overblik over hvem der performer bedst i hver runde.
 
-### Trin
+### Implementering
 
-**1. Verificer at database-triggers er aktive**
-- Kør en SQL-forespørgsel for at tjekke om de 6 triggers eksisterer i databasen
-- Hvis de mangler, undersøg hvorfor migrationen ikke blev kørt, og opret dem igen
+**1. Ny admin-komponent: `src/components/admin/RoundTopManagers.tsx`**
 
-**2. Fix leaderboard-adgang: Tilføj offentlig SELECT-policy på managers**
-- Nuværende RLS tillader kun ejeren at se sin egen manager-record
-- Leaderboard-siden kræver at alle kan læse `team_name`, `total_points` og `name`
-- Opret en ny policy: `Anyone can read managers` med `USING (true)` for SELECT
+- Henter: races, managers, manager_drivers, race_results, captain_selections, prediction_answers, transfers
+- For hver race (runde) beregnes point pr. manager kun for den specifikke runde:
+  - Race-point fra holdets kørere i den pågældende runde
+  - Holdkaptajn-bonus for runden
+  - Prediction-point for spørgsmål tilknyttet runden
+  - Transfer-costs (fordeles ikke pr. runde, men kan vises samlet)
+- Sorterer managers efter runde-point og viser top 5 i en tabel/kort pr. runde
+- Viser: Rank, Holdnavn, Manager-navn, Runde-point
 
-**3. Ryd op i Bent Hansens konti**
-- Identificer hvilken af de 3 konti der har et aktivt hold (manager-record)
-- Informer dig om situationen, så du kan kontakte brugeren
+**2. Tilføj fane i `src/pages/Admin.tsx`**
 
-**4. Verificer prediction_questions_public view**
-- Bekræft at frontend-API'en bruger viewet og ikke tabellen direkte
-- Sikr at `correct_answer` ikke lækkes til almindelige brugere
+- Ny TabsTrigger: "Runde-top" 
+- Ny TabsContent med `<RoundTopManagers />` komponenten
 
-### Tekniske detaljer
-- Managers-policy: `CREATE POLICY "Anyone can read managers" ON public.managers FOR SELECT TO public USING (true);`
-- Trigger-check: `SELECT tgname FROM pg_trigger WHERE tgrelid = 'public.prediction_answers'::regclass;`
+### Beregningslogik
+
+For hver runde (race_id):
+- Sum af `race_results.points` for managerens kørere i den runde
+- Plus captain bonus (dobbelt point for captain-køreren i runden)
+- Plus prediction points for spørgsmål med matching `race_id`
+- Ranger alle managers og vis top 5
+
+### UI
+
+Én sektion pr. afholdt runde (kun runder med resultater), nyeste først. Hver sektion viser en simpel tabel med rank, holdnavn, managernavn og point for runden.
 
