@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, Crown } from "lucide-react";
-import { fetchRaces, fetchManagers, fetchRaceResults, fetchAllCaptainSelections, fetchPredictionQuestions, type Race } from "@/lib/api";
+import { fetchRaces, fetchRaceResults, fetchAllCaptainSelections, fetchPredictionQuestions, type Race } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ManagerRoundScore {
