@@ -1,37 +1,30 @@
 
 
-## Plan: Opdater test-forventede værdier efter nødtransfer
+## Plan: Pre-launch fixes
 
 ### Problem
-Test 5F (nødtransfer) blev tilføjet og ændrer Spiller A's hold: Bronze 2 → Bronze 3 (som har 0 race-point). Men Test 7's forventede værdier er stadig beregnet ud fra det gamle hold (med Bronze 2 = 11 point).
+Flere kritiske ting mangler før systemet kan gå live sikkert.
 
-### Beregning efter alle transfers
+### Trin
 
-Spiller A's hold efter Test 5:
-- Transfer A: Sølv 1 → Sølv 2
-- Transfer B: Bronze 1 → Bronze 2
-- Transfer C: Guld 1 → Guld 2
-- Transfer F: Bronze 2 → Bronze 3 (nødtransfer, gratis)
+**1. Verificer at database-triggers er aktive**
+- Kør en SQL-forespørgsel for at tjekke om de 6 triggers eksisterer i databasen
+- Hvis de mangler, undersøg hvorfor migrationen ikke blev kørt, og opret dem igen
 
-**Sluthold:** Guld 2, Sølv 2, Bronze 3
+**2. Fix leaderboard-adgang: Tilføj offentlig SELECT-policy på managers**
+- Nuværende RLS tillader kun ejeren at se sin egen manager-record
+- Leaderboard-siden kræver at alle kan læse `team_name`, `total_points` og `name`
+- Opret en ny policy: `Anyone can read managers` med `USING (true)` for SELECT
 
-Race-point for slutholdet:
-- Guld 2: P2(22) + P1(25) + P4(18) + P2(22) = **87**
-- Sølv 2: P5(16) + P6(15) + P8(13) + P9(12) = **56**
-- Bronze 3: ingen resultater = **0**
-- **Race total = 143**
+**3. Ryd op i Bent Hansens konti**
+- Identificer hvilken af de 3 konti der har et aktivt hold (manager-record)
+- Informer dig om situationen, så du kan kontakte brugeren
 
-Captain-bonus (Sølv 1, sat i Test 3): **74** (bevares efter transfer)
-Transfer-fradrag: 10 + 5 + 15 + 0 = **30**
+**4. Verificer prediction_questions_public view**
+- Bekræft at frontend-API'en bruger viewet og ikke tabellen direkte
+- Sikr at `correct_answer` ikke lækkes til almindelige brugere
 
-### Ændringer
-
-**Fil: `src/pages/AdminTest.tsx`**
-
-**Test 7 — linje 552-558:** Opdater forventede værdier:
-- `racePoints`: 154 → **143**
-- `total`: 213 → **202** (143 + 74 + 15 − 30)
-- Captain-bonus (74), prediction (15) og transferfradrag (30) er uændrede
-
-Det er den eneste test der har forkerte forventede værdier. Test 5H sammenligner blot DB mod beregnet og vil matche korrekt (begge giver 187 uden predictions, da Test 6 ikke er kørt endnu). Test 2 og 3 kører før transfers og er upåvirkede.
+### Tekniske detaljer
+- Managers-policy: `CREATE POLICY "Anyone can read managers" ON public.managers FOR SELECT TO public USING (true);`
+- Trigger-check: `SELECT tgname FROM pg_trigger WHERE tgrelid = 'public.prediction_answers'::regclass;`
 
