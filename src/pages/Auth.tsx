@@ -163,17 +163,25 @@ export default function AuthPage() {
                 required
               />
             </div>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="password"
-                placeholder="Adgangskode"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-secondary border-border pl-10"
-                required
-                minLength={6}
-              />
+            <div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="password"
+                  placeholder="Adgangskode"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-secondary border-border pl-10"
+                  required
+                  minLength={6}
+                />
+              </div>
+              {!isLogin ? null : null}
+              {!isLogin && (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Mindst 6 tegn
+                </p>
+              )}
             </div>
 
             <div className="relative">
