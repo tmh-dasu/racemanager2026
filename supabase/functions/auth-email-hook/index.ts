@@ -164,6 +164,19 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // Restrict to service-role callers (Supabase auth hook) to prevent abuse
+  const authHeader = req.headers.get('Authorization') || ''
+  const hookSecret = Deno.env.get('SEND_EMAIL_HOOK_SECRET')
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const presented = authHeader.replace(/^Bearer\s+/i, '').trim()
+  const allowed = (hookSecret && presented === hookSecret) || (serviceRoleKey && presented === serviceRoleKey)
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
   try {
     const payload = await req.json()
     const email = extractEmail(payload)
@@ -173,7 +186,7 @@ Deno.serve(async (req) => {
     console.log('Auth email hook received:', JSON.stringify({ type, email: email || 'MISSING', hasConfirmUrl: !!confirmUrl }))
 
     if (!email) {
-      console.error('No email found in payload:', JSON.stringify(payload))
+      console.error('No email found in payload')
       return new Response(JSON.stringify({ error: 'No recipient email found in payload' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
