@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift, MapPin, ExternalLink, Award } from "lucide-react";
 import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, type Prize } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
+import dslLogo from "@/assets/dsl-logo.png";
 
 function CountdownTimer({ deadline, label }: { deadline: string; label: string }) {
   const [now, setNow] = useState(new Date());
