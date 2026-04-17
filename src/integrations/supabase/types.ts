@@ -686,6 +686,33 @@ export type Database = {
           },
         ]
       }
+      user_payments: {
+        Row: {
+          amount: number | null
+          created_at: string
+          id: string
+          paid_at: string
+          stripe_session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          paid_at?: string
+          stripe_session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          paid_at?: string
+          stripe_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
