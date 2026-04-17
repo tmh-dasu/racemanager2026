@@ -50,13 +50,24 @@ serve(async (req) => {
       });
     }
 
-    // Send confirmation email via send-email (service role)
+    // Record verified payment + send confirmation email (service role)
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    const userId = claimsData.claims.sub as string;
     const amountPaid = session.amount_total ? (session.amount_total / 100).toFixed(0) : "49";
+
+    // Persist verified payment so RLS allows team creation
+    await supabaseAdmin.from("user_payments").upsert(
+      {
+        user_id: userId,
+        stripe_session_id: session.id,
+        amount: session.amount_total ?? null,
+      },
+      { onConflict: "user_id" }
+    );
 
     await supabaseAdmin.functions.invoke("send-email", {
       body: {
