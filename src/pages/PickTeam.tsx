@@ -117,7 +117,7 @@ export default function PickTeamPage() {
     setSubmitting(false);
   }
 
-  if (authLoading) {
+  if (authLoading || (user && paymentLoading)) {
     return <PageLayout><div className="container py-12 text-center"><p className="text-muted-foreground">Indlæser...</p></div></PageLayout>;
   }
   if (!user) {
