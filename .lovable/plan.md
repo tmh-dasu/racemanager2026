@@ -1,37 +1,47 @@
 
 
-## Plan: Top 5 managers per runde i Admin
+Brugeren har lige fået bekræftet at payment-gaten virker og spørger nu hvilke andre vigtige flows vi bør teste end-to-end. Sikkerhedsscanneren viser ingen åbne issues (alle er enten fixed eller bevidst ignoreret), så fokus bør være på funktionelle/forretningskritiske flows.
 
-### Formål
-Tilføj en ny fane i Admin-panelet der viser de 5 bedst scorende managers pr. løbsrunde. Dette giver admin et hurtigt overblik over hvem der performer bedst i hver runde.
+Jeg laver en kort, prioriteret testplan med de mest kritiske flows der involverer penge, point, deadlines og rettigheder.
 
-### Implementering
+## Forslag: End-to-end testplan
 
-**1. Ny admin-komponent: `src/components/admin/RoundTopManagers.tsx`**
+Her er de mest kritiske flows at teste, prioriteret efter forretningsrisiko:
 
-- Henter: races, managers, manager_drivers, race_results, captain_selections, prediction_answers, transfers
-- For hver race (runde) beregnes point pr. manager kun for den specifikke runde:
-  - Race-point fra holdets kørere i den pågældende runde
-  - Holdkaptajn-bonus for runden
-  - Prediction-point for spørgsmål tilknyttet runden
-  - Transfer-costs (fordeles ikke pr. runde, men kan vises samlet)
-- Sorterer managers efter runde-point og viser top 5 i en tabel/kort pr. runde
-- Viser: Rank, Holdnavn, Manager-navn, Runde-point
+### 1. Pointintegritet (HØJEST prioritet)
+- **Cheat-forsøg**: Prøv som almindelig bruger at opdatere `total_points` direkte via Supabase-klienten — triggeren `trg_protect_manager_fields` skal blokere det.
+- **Transfer-bypass**: Prøv at indsætte en transfer med `is_free=true, point_cost=0` — triggeren `enforce_transfer_values` skal overskrive værdierne baseret på kørerens kategori (Guld 15 / Sølv 10 / Bronze 5).
+- **Holdkaptajn-grænse**: Vælg samme kategori som kaptajn 3 gange — `enforce_captain_limit` skal afvise det 3. valg.
 
-**2. Tilføj fane i `src/pages/Admin.tsx`**
+### 2. Deadlines (24h-låsen)
+- **Holdkaptajn**: Forsøg at ændre kaptajn <24h før race_date — skal afvises (ikke-admin).
+- **Transfer**: Samme test for transfers.
+- **Predictions**: Samme test for prediction_answers.
+- Verificér at admin kan bypasse alle tre.
 
-- Ny TabsTrigger: "Runde-top" 
-- Ny TabsContent med `<RoundTopManagers />` komponenten
+### 3. Betalingsflow
+- **Ny bruger uden betaling**: Bekræft at `/vaelg-hold` viser "Betaling påkrævet"-skærmen og at evt. direkte API-kald til at oprette manager fejler på RLS.
+- **Verify-payment**: Test at `verify-payment` edge function kun registrerer betalinger med `payment_status === "paid"` fra Stripe.
+- **Voucher**: Test at en gyldig voucherkode opretter `user_payments`-record uden Stripe.
 
-### Beregningslogik
+### 4. Holdregler
+- **Max 3 kørere**: Forsøg at tilføje en 4. kører — `enforce_max_drivers` skal afvise.
+- **Slug-kollision**: Opret hold med samme navn som eksisterende — skal vise dansk fejlbesked.
+- **Tilbagetrukken kører**: Marker en kører som withdrawn og test at gratis transfer (`is_free=true`, `point_cost=0`) automatisk sættes.
 
-For hver runde (race_id):
-- Sum af `race_results.points` for managerens kørere i den runde
-- Plus captain bonus (dobbelt point for captain-køreren i runden)
-- Plus prediction points for spørgsmål med matching `race_id`
-- Ranger alle managers og vis top 5
+### 5. Rettigheder & data
+- **Admin-check**: Login som ikke-admin og kald `/admin` — skal redirecte/blokere.
+- **Predictions-svar**: Bekræft at andre brugeres svar er skjulte indtil deadline er passeret (ny RLS).
+- **Egen data**: Bekræft at man kun kan se sin egen `user_payments`-række.
 
-### UI
+### 6. Email-flow
+- **Holdoprettelse**: Bekræft at `send-team-confirmation` sender mail.
+- **Betalingsbekræftelse**: Bekræft at `verify-payment` sender kvittering.
+- **Auth-emails**: Test password-reset flow.
 
-Én sektion pr. afholdt runde (kun runder med resultater), nyeste først. Hver sektion viser en simpel tabel med rank, holdnavn, managernavn og point for runden.
+### Foreslået rækkefølge
+
+Start med **#1 (pointintegritet)** og **#3 (betaling)** — det er der hvor cheat eller fejl gør mest skade. Resten kan testes løbende.
+
+Det automatiserede testpanel ligger allerede på `/admin/test` — det dækker en del af #3 og #4. Vil du have mig til at udvide testpanelet med de manglende cheat-forsøg under #1, så du kan køre det hele med ét klik?
 
