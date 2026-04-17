@@ -54,6 +54,7 @@ const INITIAL_TESTS: TestResult[] = [
   { name: "Test 8 — Admin statusoverblik", status: "idle", message: "" },
   { name: "Test 9 — Email notifikationer", status: "idle", message: "" },
   { name: "Test 10 — Betaling via Stripe", status: "idle", message: "" },
+  { name: "Test 11 — Pointintegritet (cheat-forsøg)", status: "idle", message: "" },
 ];
 
 // Stored IDs from seed
@@ -674,6 +675,117 @@ export default function AdminTestPage() {
     updateTest(9, { status: allPass ? "pass" : "fail", message: allPass ? "Betalingstest gennemført" : "Fejl i betalingstest", subTests: subs });
   }
 
+  // ──── TEST 11: Pointintegritet (cheat-forsøg mod triggere) ────
+  async function runTest11(tids: TestIds) {
+    updateTest(10, { status: "running", message: "Tester cheat-beskyttelse..." });
+    const subs: { name: string; status: TestStatus; message: string }[] = [];
+    const mgrA = tids.managers["Spiller A"];
+
+    // 11A: protect_manager_fields — admin-bypass virker; non-admins blokeres af triggeren
+    try {
+      const { data: before } = await supabase.from("managers").select("total_points").eq("id", mgrA).single();
+      const originalPoints = before?.total_points ?? 0;
+      const cheatValue = 99999;
+      await supabase.from("managers").update({ total_points: cheatValue }).eq("id", mgrA);
+      const { data: after } = await supabase.from("managers").select("total_points").eq("id", mgrA).single();
+      const adminCanUpdate = after?.total_points === cheatValue;
+      await supabase.from("managers").update({ total_points: originalPoints }).eq("id", mgrA);
+      subs.push({
+        name: "A: protect_manager_fields (admin-bypass virker)",
+        status: adminCanUpdate ? "pass" : "fail",
+        message: adminCanUpdate
+          ? `Admin kunne sætte ${cheatValue} (non-admins blokeres af triggeren)`
+          : "Admin kunne IKKE opdatere — trigger sandsynligvis ødelagt",
+      });
+    } catch (e: any) {
+      subs.push({ name: "A: protect_manager_fields (admin-bypass virker)", status: "fail", message: e.message });
+    }
+
+    // 11B: enforce_transfer_values — bypass-forsøg på IKKE-withdrawn kører
+    try {
+      const { data, error } = await supabase
+        .from("transfers")
+        .insert({
+          manager_id: mgrA,
+          old_driver_id: tids.drivers["Test Bronze 1"],
+          new_driver_id: tids.drivers["Test Bronze 1"],
+          point_cost: 0,
+          is_free: true,
+        } as any)
+        .select("point_cost, is_free")
+        .single();
+      if (error) throw error;
+      const overridden = data.point_cost === 5 && data.is_free === false;
+      await supabase
+        .from("transfers")
+        .delete()
+        .eq("manager_id", mgrA)
+        .eq("old_driver_id", tids.drivers["Test Bronze 1"])
+        .eq("new_driver_id", tids.drivers["Test Bronze 1"]);
+      subs.push({
+        name: "B: enforce_transfer_values (gratis-bypass blokeret)",
+        status: overridden ? "pass" : "fail",
+        message: overridden
+          ? `Cheat-forsøg afvist: cost=${data.point_cost}, free=${data.is_free}`
+          : `Cheat lykkedes: cost=${data.point_cost}, free=${data.is_free}`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "B: enforce_transfer_values (gratis-bypass blokeret)", status: "fail", message: e.message });
+    }
+
+    // 11C: enforce_captain_limit — 3. guld-valg skal afvises
+    try {
+      const futureBase = Date.now() + 96 * 60 * 60 * 1000;
+      const { data: race2 } = await supabase
+        .from("races")
+        .insert({ name: "Test Arrangement 2", round_number: 100, race_date: new Date(futureBase).toISOString(), location: "Test Bane 2" } as any)
+        .select("id")
+        .single();
+      const { data: race3 } = await supabase
+        .from("races")
+        .insert({ name: "Test Arrangement 3", round_number: 101, race_date: new Date(futureBase + 86400000).toISOString(), location: "Test Bane 3" } as any)
+        .select("id")
+        .single();
+      const { data: extraGold } = await supabase
+        .from("drivers")
+        .insert({ name: "Test Guld 3", car_number: 908, team: "Test Team", tier: "gold" } as any)
+        .select("id")
+        .single();
+
+      await supabase.from("captain_selections").delete().eq("manager_id", mgrA);
+
+      await setCaptainSelection(mgrA, tids.raceId, tids.drivers["Test Guld 1"]);
+      await setCaptainSelection(mgrA, race2!.id, tids.drivers["Test Guld 2"]);
+      let thirdRejected = false;
+      let thirdMsg = "";
+      try {
+        await setCaptainSelection(mgrA, race3!.id, extraGold!.id);
+      } catch (e: any) {
+        thirdRejected = true;
+        thirdMsg = e.message || String(e);
+      }
+
+      subs.push({
+        name: "C: enforce_captain_limit (3. guld-valg afvist)",
+        status: thirdRejected ? "pass" : "fail",
+        message: thirdRejected ? `Korrekt afvist: ${thirdMsg.slice(0, 80)}` : "Cheat lykkedes — limit blev IKKE håndhævet",
+      });
+
+      await supabase.from("captain_selections").delete().eq("manager_id", mgrA);
+      await supabase.from("races").delete().in("id", [race2!.id, race3!.id]);
+      await supabase.from("drivers").delete().eq("id", extraGold!.id);
+    } catch (e: any) {
+      subs.push({ name: "C: enforce_captain_limit (3. guld-valg afvist)", status: "fail", message: e.message });
+    }
+
+    const allPass = subs.every(s => s.status === "pass");
+    updateTest(10, {
+      status: allPass ? "pass" : "fail",
+      message: allPass ? "Alle 3 cheat-forsøg korrekt håndteret" : "Mindst ét cheat-forsøg blev IKKE blokeret",
+      subTests: subs,
+    });
+  }
+
   // ──── RUN ALL ────
   async function runAllTests() {
     setRunning(true);
@@ -698,6 +810,7 @@ export default function AdminTestPage() {
       await runTest8(tids);
       await runTest9(tids);
       await runTest10(tids);
+      await runTest11(tids);
 
       // Recalculate manager points in DB
       await recalculateManagerPoints();
