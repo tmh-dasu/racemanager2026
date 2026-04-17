@@ -77,6 +77,7 @@ export default function HomePage() {
             <div className="flex items-center gap-4 mb-4">
               <img src="/images/dasu-logo.png" alt="DASU" className="h-12 w-auto" />
               <img src="/images/supergt-logo.png" alt="Super GT Danmark" className="h-12 w-auto" />
+              <img src={dslLogo} alt="DEKRA Danish Supercar League" className="ml-auto h-16 w-auto" />
             </div>
             <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
               DASU <span className="text-gradient-racing">RaceManager</span>
