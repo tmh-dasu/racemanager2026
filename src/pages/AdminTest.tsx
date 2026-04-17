@@ -54,6 +54,7 @@ const INITIAL_TESTS: TestResult[] = [
   { name: "Test 8 — Admin statusoverblik", status: "idle", message: "" },
   { name: "Test 9 — Email notifikationer", status: "idle", message: "" },
   { name: "Test 10 — Betaling via Stripe", status: "idle", message: "" },
+  { name: "Test 11 — Pointintegritet (cheat-forsøg)", status: "idle", message: "" },
 ];
 
 // Stored IDs from seed
