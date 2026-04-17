@@ -24,7 +24,6 @@ export default function PickTeamPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const hasPaid = searchParams.get("paid") === "true";
   const sessionId = searchParams.get("session_id");
   const { user, loading: authLoading } = useAuth();
   const verifiedRef = useRef(false);
@@ -38,6 +37,21 @@ export default function PickTeamPage() {
     enabled: !!user,
   });
 
+  // Server-verified payment status (replaces trust in ?paid=true URL param)
+  const { data: paymentRecord, isLoading: paymentLoading, refetch: refetchPayment } = useQuery({
+    queryKey: ["user_payment", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_payments")
+        .select("id")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+  const hasPaid = !!paymentRecord;
+
   const [teamName, setTeamName] = useState("");
   const [selectedDriverIds, setSelectedDriverIds] = useState<Record<Tier, string | null>>({
     gold: null, silver: null, bronze: null,
@@ -50,14 +64,15 @@ export default function PickTeamPage() {
     if (existingManager) navigate("/mit-hold", { replace: true });
   }, [existingManager, navigate]);
 
-  // Verify Stripe payment and send confirmation email
+  // Verify Stripe payment server-side, then refetch payment status
   useEffect(() => {
-    if (!sessionId || !hasPaid || verifiedRef.current) return;
+    if (!sessionId || verifiedRef.current) return;
     verifiedRef.current = true;
-    supabase.functions.invoke("verify-payment", {
-      body: { session_id: sessionId },
-    }).catch(console.error);
-  }, [sessionId, hasPaid]);
+    supabase.functions
+      .invoke("verify-payment", { body: { session_id: sessionId } })
+      .then(() => refetchPayment())
+      .catch(console.error);
+  }, [sessionId, refetchPayment]);
 
   function toggleDriver(id: string, tier: Tier) {
     setSelectedDriverIds((prev) => ({
