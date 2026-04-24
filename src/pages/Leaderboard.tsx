@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, Crown, ArrowLeftRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { fetchManagers, fetchManagerDrivers, fetchManagerByUserId, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, fetchAllPredictionAnswers, computePointBreakdown, type Manager, type Driver, type CaptainSelection, type Race, type Transfer, type PointBreakdown } from "@/lib/api";
+import { fetchManagers, fetchManagerDrivers, fetchManagerByUserId, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, fetchAllPredictionAnswers, computePointBreakdown, getFirstEligibleRace, type Manager, type Driver, type CaptainSelection, type Race, type Transfer, type PointBreakdown } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,10 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
   breakdown: PointBreakdown; isMyTeam: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  // If manager joined after R1's deadline, show which round they first scored in
+  const firstEligible = getFirstEligibleRace(races, manager.created_at);
+  const sortedRaces = [...races].sort((a, b) => a.round_number - b.round_number);
+  const joinedLate = !!firstEligible && !!sortedRaces[0] && firstEligible.id !== sortedRaces[0].id;
   const { data: managerDrivers } = useQuery({
     queryKey: ["manager_drivers", manager.id],
     queryFn: () => fetchManagerDrivers(manager.id),
@@ -93,6 +97,11 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
             <p className="font-display font-semibold text-foreground truncate flex items-center gap-1.5">
               {manager.team_name}
               {isMyTeam && <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary">Mit hold</Badge>}
+              {joinedLate && firstEligible && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 text-amber-600" title={`Tilmeldt efter R1 — scorer fra runde ${firstEligible.round_number}`}>
+                  Fra R{firstEligible.round_number}
+                </Badge>
+              )}
             </p>
           </Link>
           <p className="text-xs text-muted-foreground truncate">{manager.name}</p>
