@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, AlertTriangle, XCircle, Send } from "lucide-react";
 import { fetchRaces, fetchPredictionQuestions, fetchSettings, type Race, type PredictionQuestion } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 type StatusLevel = "green" | "yellow" | "red";
 
@@ -64,6 +68,8 @@ export default function AdminStatusCard({ onNavigateTab }: { onNavigateTab?: (ta
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: questions = [] } = useQuery({ queryKey: ["prediction_questions"], queryFn: fetchPredictionQuestions });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
+  const { toast } = useToast();
+  const [sending, setSending] = useState(false);
 
   const now = new Date();
   const nextRace = races
@@ -74,6 +80,27 @@ export default function AdminStatusCard({ onNavigateTab }: { onNavigateTab?: (ta
   const overall = getOverallLevel(items);
   const config = LEVEL_CONFIG[overall];
   const OverallIcon = config.icon;
+
+  async function handleSendReminders() {
+    if (!nextRace) return;
+    if (!confirm(`Send påmindelse til alle managere der mangler holdkaptajn eller predictions for Runde ${nextRace.round_number}?`)) return;
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-captain-reminder", { body: {} });
+      if (error) throw error;
+      const sent = (data as { sent?: number; message?: string })?.sent ?? 0;
+      const msg = (data as { message?: string })?.message;
+      toast({
+        title: "Påmindelser sendt",
+        description: msg ?? `${sent} mail(s) sendt til managere der mangler valg.`,
+      });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Ukendt fejl";
+      toast({ title: "Kunne ikke sende påmindelser", description: message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <div className={`rounded-lg border p-4 shadow-card mb-4 ${config.bg}`}>
@@ -108,6 +135,23 @@ export default function AdminStatusCard({ onNavigateTab }: { onNavigateTab?: (ta
           );
         })}
       </div>
+
+      {nextRace && (
+        <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between gap-3 flex-wrap">
+          <div className="text-xs text-muted-foreground">
+            Sender mail til alle managere der mangler holdkaptajn eller prediction-svar.
+          </div>
+          <Button
+            size="sm"
+            onClick={handleSendReminders}
+            disabled={sending}
+            className="bg-racing-red hover:bg-racing-red/90 text-primary-foreground font-display"
+          >
+            <Send className="h-3.5 w-3.5 mr-1.5" />
+            {sending ? "Sender..." : "Send påmindelser nu"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
