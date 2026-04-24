@@ -324,6 +324,49 @@ export async function upsertRaceResult(result: Omit<RaceResult, "id">) {
   if (error) throw error;
 }
 
+/**
+ * Parse a results CSV. Format: header row + rows of `position, car_number, ...`.
+ * Position can be a number, or DNF/DNS/DSQ. Delimiter: comma, semicolon, or tab.
+ * Returns rows matched against the provided drivers array (unknown car numbers skipped).
+ * Pure function — used by ResultsAdmin and Test 14.
+ */
+export interface ParsedCSVRow {
+  driver_id: string;
+  car_number: number;
+  position: number | null;
+  dnf: boolean;
+}
+export function parseResultsCSV(
+  text: string,
+  drivers: { id: string; car_number: number }[],
+): { rows: ParsedCSVRow[]; matched: number; skipped: number } {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return { rows: [], matched: 0, skipped: 0 };
+  const rows: ParsedCSVRow[] = [];
+  let skipped = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(/[,;\t]/).map(c => c.trim());
+    if (cols.length < 2) { skipped++; continue; }
+    const pos = cols[0]?.toUpperCase();
+    const carNum = parseInt(cols[1]);
+    if (isNaN(carNum)) { skipped++; continue; }
+    const driver = drivers.find(d => d.car_number === carNum);
+    if (!driver) { skipped++; continue; }
+    if (!pos) { skipped++; continue; }
+    let position: number | null = null;
+    let dnf = false;
+    if (pos === "DNF" || pos === "DNS" || pos === "DSQ") {
+      dnf = true;
+    } else {
+      const p = parseInt(pos);
+      if (isNaN(p)) { skipped++; continue; }
+      position = p;
+    }
+    rows.push({ driver_id: driver.id, car_number: carNum, position, dnf });
+  }
+  return { rows, matched: rows.length, skipped };
+}
+
 export async function recalculateManagerPoints() {
   const { data: managerRows } = await supabase.from("managers").select("id, created_at");
   if (!managerRows || managerRows.length === 0) return;
