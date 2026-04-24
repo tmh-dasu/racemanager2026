@@ -1234,6 +1234,104 @@ export default function AdminTestPage() {
     });
   }
 
+  // ──── TEST 15: Gratis transfers før første runde (DB-trigger) ────
+  async function runTest15(tids: TestIds) {
+    updateTest(14, { status: "running", message: "Tester gratis transfer-trigger..." });
+    const subs: { name: string; status: TestStatus; message: string }[] = [];
+
+    // Snapshot eksisterende race_results, så vi kan restore efter testen
+    const { data: snapshot } = await supabase
+      .from("race_results")
+      .select("race_id, driver_id, session_type, position, dnf, points, fastest_lap, pole_position");
+    const hadResults = (snapshot || []).length > 0;
+    addLog(`Test 15: Snapshot tog ${snapshot?.length || 0} race_results-rækker`);
+
+    try {
+      // 15A: Tøm race_results og verificér at transfer bliver gratis
+      if (hadResults) {
+        await supabase.from("race_results").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      }
+
+      // Indsæt en transfer for Spiller B (silver → silver) — trigger skal sætte is_free=true, point_cost=0
+      const mgrB = tids.managers["Spiller B"];
+      const oldDriver = tids.drivers["Test Sølv 2"];
+      const newDriver = tids.drivers["Test Sølv 1"];
+
+      // Først skal manager_drivers opdateres (trigger på transfers læser ikke det, men vi er konsistente)
+      const { data: insertedFree, error: freeErr } = await supabase
+        .from("transfers")
+        .insert({
+          manager_id: mgrB,
+          old_driver_id: oldDriver,
+          new_driver_id: newDriver,
+          is_free: false,    // bevidst sat til false — trigger skal overskrive
+          point_cost: 999,   // bevidst sat højt — trigger skal overskrive
+        })
+        .select("is_free, point_cost")
+        .single();
+
+      if (freeErr) {
+        subs.push({ name: "A: Transfer før første runde → gratis", status: "fail", message: freeErr.message });
+      } else {
+        const ok = insertedFree?.is_free === true && insertedFree?.point_cost === 0;
+        subs.push({
+          name: "A: Transfer før første runde → gratis",
+          status: ok ? "pass" : "fail",
+          message: ok
+            ? `Trigger sat is_free=true, point_cost=0 ✓`
+            : `FEJL: is_free=${insertedFree?.is_free}, point_cost=${insertedFree?.point_cost}`,
+        });
+      }
+
+      // 15B: Restore resultater og verificér at trigger igen kræver point
+      if (hadResults && snapshot) {
+        await supabase.from("race_results").insert(snapshot);
+      }
+
+      // Indsæt en ny transfer (silver → silver) — nu skal det koste 10 point
+      const { data: insertedPaid, error: paidErr } = await supabase
+        .from("transfers")
+        .insert({
+          manager_id: mgrB,
+          old_driver_id: newDriver, // omvendt af forrige
+          new_driver_id: oldDriver,
+          is_free: true,    // bevidst — trigger skal overskrive til false
+          point_cost: 0,    // bevidst — trigger skal overskrive til 10
+        })
+        .select("is_free, point_cost")
+        .single();
+
+      if (paidErr) {
+        subs.push({ name: "B: Transfer efter første runde → koster point", status: "fail", message: paidErr.message });
+      } else {
+        const ok = insertedPaid?.is_free === false && insertedPaid?.point_cost === 10;
+        subs.push({
+          name: "B: Transfer efter første runde → koster point (sølv = 10)",
+          status: ok ? "pass" : "fail",
+          message: ok
+            ? `Trigger sat is_free=false, point_cost=10 ✓`
+            : `FEJL: is_free=${insertedPaid?.is_free}, point_cost=${insertedPaid?.point_cost}`,
+        });
+      }
+
+      // Ryd op: slet de to test-transfers vi lige oprettede
+      await supabase.from("transfers").delete().eq("manager_id", mgrB);
+    } catch (e: any) {
+      // Sørg altid for at restore data hvis noget gik galt
+      if (hadResults && snapshot) {
+        await supabase.from("race_results").insert(snapshot).select();
+      }
+      subs.push({ name: "Test 15 — uventet fejl", status: "fail", message: e.message });
+    }
+
+    const allPass = subs.every(s => s.status === "pass");
+    updateTest(14, {
+      status: allPass ? "pass" : "fail",
+      message: allPass ? "Trigger håndterer gratis-vs-betalte transfers korrekt" : "Mindst ét scenarie fejler",
+      subTests: subs,
+    });
+  }
+
   // ──── RUN ALL ────
   async function runAllTests() {
     setRunning(true);
