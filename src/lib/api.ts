@@ -394,6 +394,8 @@ export function computePointBreakdown(
   allPredAnswers: { manager_id: string; is_correct: boolean | null }[],
   allTransfers: { manager_id: string; point_cost: number }[],
   completedRounds: number,
+  managerCreatedAt?: string | null,
+  races?: { id: string; race_date: string | null }[],
 ): PointBreakdown {
   const driverIds = allMDs.filter((md) => md.manager_id === managerId).map((md) => md.driver_id);
 
@@ -402,14 +404,28 @@ export function computePointBreakdown(
     captainMap.set(c.race_id, c.driver_id);
   });
 
-  // Base race points from current team drivers
+  // Eligibility: manager must be created at or before (race_date - 24h) to score
+  const mgrCreated = managerCreatedAt ? new Date(managerCreatedAt).getTime() : 0;
+  const cutoffs = new Map<string, number>();
+  (races || []).forEach((r) => {
+    if (r.race_date) cutoffs.set(r.id, new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000);
+  });
+  const isEligible = (raceId: string) => {
+    if (!races || races.length === 0) return true; // backward compat: no race info passed
+    const c = cutoffs.get(raceId);
+    if (c === undefined) return true;
+    return mgrCreated <= c;
+  };
+
+  // Base race points from current team drivers — only for eligible races
   const baseTotal = allResults
-    .filter((r) => driverIds.includes(r.driver_id))
+    .filter((r) => driverIds.includes(r.driver_id) && isEligible(r.race_id))
     .reduce((sum, r) => sum + (r.points || 0), 0);
 
-  // Captain bonus: persists even if captain driver was transferred out
+  // Captain bonus: only for eligible races
   let captainBonus = 0;
   captainMap.forEach((captainDriverId, raceId) => {
+    if (!isEligible(raceId)) return;
     const captainPts = allResults
       .filter((r) => r.driver_id === captainDriverId && r.race_id === raceId)
       .reduce((sum, r) => sum + (r.points || 0), 0);
