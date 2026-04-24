@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save, Upload, CheckCircle2, AlertCircle, Mail } from "lucide-react";
-import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, SESSION_TYPES, SESSION_LABELS, type Driver, type Race } from "@/lib/api";
+import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, parseResultsCSV, SESSION_TYPES, SESSION_LABELS, type Driver, type Race } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -114,44 +114,22 @@ export default function ResultsAdmin() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
-      const lines = text.trim().split("\n");
-      if (lines.length < 2) {
-        toast({ title: "CSV-fil er tom", variant: "destructive" });
+      const { rows, matched } = parseResultsCSV(text, drivers);
+      if (rows.length === 0 && matched === 0) {
+        toast({ title: "CSV-fil er tom eller ingen matchende kørere", variant: "destructive" });
         return;
       }
-
       const newGrid = { ...grid };
-      let matched = 0;
-
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(/[,;\t]/).map((c) => c.trim());
-        if (cols.length < 2) continue;
-
-        const pos = cols[0]?.toUpperCase();
-        const carNum = parseInt(cols[1]);
-        const driver = drivers.find((d) => d.car_number === carNum);
-        if (!driver) continue;
-
-        if (!newGrid[driver.id]) {
-          newGrid[driver.id] = {};
-          SESSION_TYPES.forEach((s) => {
-            newGrid[driver.id][s] = { position: "", dnf: false };
-          });
+      for (const r of rows) {
+        if (!newGrid[r.driver_id]) {
+          newGrid[r.driver_id] = {};
+          SESSION_TYPES.forEach(s => { newGrid[r.driver_id][s] = { position: "", dnf: false }; });
         }
-
-        if (!pos) continue;
-
-        if (pos === "DNF" || pos === "DNS" || pos === "DSQ") {
-          newGrid[driver.id][uploadSession] = { position: "", dnf: true };
-        } else {
-          const p = parseInt(pos);
-          if (!isNaN(p)) {
-            newGrid[driver.id][uploadSession] = { position: String(p), dnf: false };
-          }
-        }
-        matched++;
+        newGrid[r.driver_id][uploadSession] = {
+          position: r.dnf ? "" : (r.position !== null ? String(r.position) : ""),
+          dnf: r.dnf,
+        };
       }
-
       setGrid(newGrid);
       toast({ title: `${matched} kørere indlæst til ${SESSION_LABELS[uploadSession]}` });
     };
