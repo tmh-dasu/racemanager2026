@@ -57,6 +57,7 @@ const INITIAL_TESTS: TestResult[] = [
   { name: "Test 10 — Betaling via Stripe", status: "idle", message: "" },
   { name: "Test 11 — Pointintegritet (cheat-forsøg)", status: "idle", message: "" },
   { name: "Test 12 — Fairness ved sen tilmelding", status: "idle", message: "" },
+  { name: "Test 13 — Transfer-deadline (race_end_date + 24t)", status: "idle", message: "" },
 ];
 
 // Stored IDs from seed
