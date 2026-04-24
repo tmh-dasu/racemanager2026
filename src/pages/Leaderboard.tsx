@@ -98,7 +98,7 @@ function ExpandableTeam({ manager, rank, allDrivers, captainSelections, races, t
               {manager.team_name}
               {isMyTeam && <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary">Mit hold</Badge>}
               {joinedLate && firstEligible && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 text-amber-600" title={`Tilmeldt efter R1 — scorer fra runde ${firstEligible.round_number}`}>
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-muted-foreground/40 text-muted-foreground" title={`Tilmeldt efter R1 — scorer fra runde ${firstEligible.round_number}`}>
                   Fra R{firstEligible.round_number}
                 </Badge>
               )}
