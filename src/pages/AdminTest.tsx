@@ -55,6 +55,7 @@ const INITIAL_TESTS: TestResult[] = [
   { name: "Test 9 — Email notifikationer", status: "idle", message: "" },
   { name: "Test 10 — Betaling via Stripe", status: "idle", message: "" },
   { name: "Test 11 — Pointintegritet (cheat-forsøg)", status: "idle", message: "" },
+  { name: "Test 12 — Fairness ved sen tilmelding", status: "idle", message: "" },
 ];
 
 // Stored IDs from seed
@@ -786,6 +787,120 @@ export default function AdminTestPage() {
     });
   }
 
+  // ──── TEST 12: Fairness ved sen tilmelding (løsning 3) ────
+  async function runTest12(_tids: TestIds) {
+    updateTest(11, { status: "running", message: "Tester at sen tilmelding ikke giver retroaktive point..." });
+    const subs: { name: string; status: TestStatus; message: string }[] = [];
+
+    // Build a synthetic scenario for computePointBreakdown — pure unit test, ingen DB-mutation
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+
+    const races = [
+      { id: "race-1", race_date: new Date(now - 10 * oneDay).toISOString() }, // R1: kørt for 10 dage siden
+      { id: "race-2", race_date: new Date(now + 10 * oneDay).toISOString() }, // R2: om 10 dage (deadline om 9)
+    ];
+
+    const allMDs = [{ manager_id: "M-late", driver_id: "D1" }];
+    const allResults = [
+      { driver_id: "D1", points: 50, race_id: "race-1" }, // før tilmelding
+      { driver_id: "D1", points: 30, race_id: "race-2" }, // efter tilmelding
+    ];
+    const allCaptains = [
+      { manager_id: "M-late", race_id: "race-1", driver_id: "D1" }, // captain R1 — bør ikke tælle
+      { manager_id: "M-late", race_id: "race-2", driver_id: "D1" }, // captain R2 — bør tælle
+    ];
+    const allPredAnswers: { manager_id: string; is_correct: boolean | null }[] = [];
+    const allTransfers: { manager_id: string; point_cost: number }[] = [];
+
+    // Sub A: Manager oprettet EFTER R1's deadline → R1 tæller IKKE, R2 tæller
+    try {
+      const lateCreated = new Date(now - 2 * oneDay).toISOString(); // 2 dage siden, R1 var 10 dage siden
+      const bd = computePointBreakdown(
+        "M-late", allMDs, allResults, allCaptains, allPredAnswers, allTransfers,
+        2, lateCreated, races,
+      );
+      const expectedRace = 30; // kun R2
+      const expectedCaptain = 30; // kun R2's captain
+      const ok = bd.racePoints === expectedRace && bd.captainBonus === expectedCaptain;
+      subs.push({
+        name: "A: Sen manager — kun R2-point tæller",
+        status: ok ? "pass" : "fail",
+        message: ok
+          ? `Race=${bd.racePoints} (forventet ${expectedRace}), Captain=${bd.captainBonus} (forventet ${expectedCaptain})`
+          : `FEJL: race=${bd.racePoints}≠${expectedRace} eller captain=${bd.captainBonus}≠${expectedCaptain}`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "A: Sen manager — kun R2-point tæller", status: "fail", message: e.message });
+    }
+
+    // Sub B: Manager oprettet FØR R1's deadline → begge runder tæller
+    try {
+      const earlyCreated = new Date(now - 30 * oneDay).toISOString(); // 30 dage siden — før R1
+      const bd = computePointBreakdown(
+        "M-late", allMDs, allResults, allCaptains, allPredAnswers, allTransfers,
+        2, earlyCreated, races,
+      );
+      const ok = bd.racePoints === 80 && bd.captainBonus === 80;
+      subs.push({
+        name: "B: Tidlig manager — alle runder tæller",
+        status: ok ? "pass" : "fail",
+        message: ok
+          ? `Race=${bd.racePoints}, Captain=${bd.captainBonus} (forventet 80/80)`
+          : `FEJL: race=${bd.racePoints}, captain=${bd.captainBonus} (forventet 80/80)`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "B: Tidlig manager — alle runder tæller", status: "fail", message: e.message });
+    }
+
+    // Sub C: Manager oprettet PRÆCIS PÅ deadlinen (race_date - 24h) → runden bør tælle (≤)
+    try {
+      const r1Date = new Date(races[0].race_date).getTime();
+      const exactDeadline = new Date(r1Date - oneDay).toISOString();
+      const bd = computePointBreakdown(
+        "M-late", allMDs, allResults, allCaptains, allPredAnswers, allTransfers,
+        2, exactDeadline, races,
+      );
+      const ok = bd.racePoints === 80; // begge runder tæller
+      subs.push({
+        name: "C: Manager præcis på deadline — runden tæller",
+        status: ok ? "pass" : "fail",
+        message: ok
+          ? `Race=${bd.racePoints} (forventet 80, ≤-grænse korrekt)`
+          : `FEJL: race=${bd.racePoints} (forventet 80)`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "C: Manager præcis på deadline — runden tæller", status: "fail", message: e.message });
+    }
+
+    // Sub D: Manager oprettet 1 sekund EFTER deadlinen → runden bør IKKE tælle
+    try {
+      const r1Date = new Date(races[0].race_date).getTime();
+      const justAfter = new Date(r1Date - oneDay + 1000).toISOString();
+      const bd = computePointBreakdown(
+        "M-late", allMDs, allResults, allCaptains, allPredAnswers, allTransfers,
+        2, justAfter, races,
+      );
+      const ok = bd.racePoints === 30; // kun R2
+      subs.push({
+        name: "D: Manager 1s efter deadline — runden tæller IKKE",
+        status: ok ? "pass" : "fail",
+        message: ok
+          ? `Race=${bd.racePoints} (forventet 30, R1 ekskluderet)`
+          : `FEJL: race=${bd.racePoints} (forventet 30)`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "D: Manager 1s efter deadline — runden tæller IKKE", status: "fail", message: e.message });
+    }
+
+    const allPass = subs.every(s => s.status === "pass");
+    updateTest(11, {
+      status: allPass ? "pass" : "fail",
+      message: allPass ? "Fairness-reglen virker korrekt for alle scenarier" : "Mindst ét scenarie fejler",
+      subTests: subs,
+    });
+  }
+
   // ──── RUN ALL ────
   async function runAllTests() {
     setRunning(true);
@@ -811,6 +926,7 @@ export default function AdminTestPage() {
       await runTest9(tids);
       await runTest10(tids);
       await runTest11(tids);
+      await runTest12(tids);
 
       // Recalculate manager points in DB
       await recalculateManagerPoints();
