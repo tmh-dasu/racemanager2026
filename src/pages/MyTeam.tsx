@@ -45,6 +45,18 @@ export default function MyTeamPage() {
 
   const completedRounds = useMemo(() => new Set(allResults.map(r => r.race_id)).size, [allResults]);
 
+  // Auto deadline: 24h before next upcoming race
+  const transferDeadline = useMemo(() => {
+    const now = Date.now();
+    const next = races
+      .filter(r => r.race_date && new Date(r.race_date).getTime() > now)
+      .sort((a, b) => new Date(a.race_date!).getTime() - new Date(b.race_date!).getTime())[0];
+    if (!next?.race_date) return null;
+    return new Date(new Date(next.race_date).getTime() - 24 * 60 * 60 * 1000);
+  }, [races]);
+  const deadlinePassed = transferDeadline ? new Date() >= transferDeadline : true;
+  const transfersAllowed = (settings?.transfer_window_open ?? false) && !deadlinePassed;
+
   const breakdown = useMemo(() => {
     if (!manager) return null;
     return computePointBreakdown(
@@ -245,11 +257,15 @@ export default function MyTeamPage() {
         {/* Transfer Window Status */}
         <div className="flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm">
           <span className="relative flex h-2.5 w-2.5">
-            <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${settings?.transfer_window_open ? "bg-success animate-ping" : "bg-muted-foreground"}`}></span>
-            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${settings?.transfer_window_open ? "bg-success" : "bg-muted-foreground"}`}></span>
+            <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${transfersAllowed ? "bg-success animate-ping" : "bg-muted-foreground"}`}></span>
+            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${transfersAllowed ? "bg-success" : "bg-muted-foreground"}`}></span>
           </span>
           <span className="text-muted-foreground">
-            {settings?.transfer_window_open ? "Transfervinduet er åbent" : "Transfervinduet er lukket"}
+            {transfersAllowed
+              ? "Transfervinduet er åbent"
+              : deadlinePassed && settings?.transfer_window_open
+                ? "Transfervinduet er lukket (deadline passeret)"
+                : "Transfervinduet er lukket"}
           </span>
         </div>
 
@@ -280,7 +296,10 @@ export default function MyTeamPage() {
         {/* Transfer Button */}
         <div className="flex items-center gap-3">
           <Button
-            onClick={() => settings?.transfer_window_open ? setTransferOpen(true) : toast({ title: "Transfervinduet er lukket" })}
+            onClick={() => transfersAllowed
+              ? setTransferOpen(true)
+              : toast({ title: deadlinePassed ? "Deadline passeret (24t før løb)" : "Transfervinduet er lukket" })}
+            disabled={!transfersAllowed}
             className="bg-accent text-accent-foreground font-display font-semibold hover:bg-accent/90"
           >
             <ArrowLeftRight className="mr-2 h-4 w-4" />
