@@ -473,6 +473,24 @@ export function getNextRaceWithDeadline(races: Race[]): Race | null {
     .sort((a, b) => getEffectiveDeadline(a)!.getTime() - getEffectiveDeadline(b)!.getTime())[0] || null;
 }
 
+/**
+ * Returns the first race that a manager (created at `managerCreatedAt`, or "now" if undefined)
+ * is eligible to score in. A manager is eligible if they were created at or before
+ * (race_date - 24h). Used to show "Du starter fra runde X" on signup and badges on leaderboard.
+ */
+export function getFirstEligibleRace(races: Race[], managerCreatedAt?: string | Date): Race | null {
+  const created = managerCreatedAt
+    ? (managerCreatedAt instanceof Date ? managerCreatedAt : new Date(managerCreatedAt))
+    : new Date();
+  const sorted = [...races].sort((a, b) => a.round_number - b.round_number);
+  for (const r of sorted) {
+    if (!r.race_date) continue;
+    const cutoff = new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000;
+    if (created.getTime() <= cutoff) return r;
+  }
+  return null;
+}
+
 // getCaptaincyBudget is now handled in CaptainSelector component (per tier slot, not per driver)
 
 // Prediction types
