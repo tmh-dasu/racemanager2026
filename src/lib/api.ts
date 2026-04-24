@@ -44,7 +44,7 @@ export function getEffectiveDeadline(race: Race): Date | null {
 /**
  * Compute the transfer deadline for the next upcoming race.
  * "Next race" = first race whose effective end (race_end_date, or race_date if missing) is still in the future.
- * Deadline = race_date - 24h. Returns null if no upcoming race.
+ * Deadline = race_date - 1h. Returns null if no upcoming race.
  * Pure function — used by both UI and the Test 13 verification suite.
  */
 export function computeTransferDeadline(
@@ -381,7 +381,7 @@ export async function recalculateManagerPoints() {
   const { data: allTransfers } = await supabase.from("transfers").select("manager_id, point_cost");
   const { data: allRaces } = await supabase.from("races").select("id, race_date");
 
-  // Build map: race_id -> eligibility cutoff (race_date - 24h). Managers must be created BEFORE this to score.
+  // Build map: race_id -> eligibility cutoff (race_date - 1h). Managers must be created BEFORE this to score.
   const raceCutoffs = new Map<string, number>();
   (allRaces || []).forEach((r: any) => {
     if (r.race_date) {
@@ -466,7 +466,7 @@ export function computePointBreakdown(
     captainMap.set(c.race_id, c.driver_id);
   });
 
-  // Eligibility: manager must be created at or before (race_date - 24h) to score
+  // Eligibility: manager must be created at or before (race_date - 1h) to score
   const mgrCreated = managerCreatedAt ? new Date(managerCreatedAt).getTime() : 0;
   const cutoffs = new Map<string, number>();
   (races || []).forEach((r) => {
@@ -538,7 +538,7 @@ export function getNextRaceWithDeadline(races: Race[]): Race | null {
 /**
  * Returns the first race that a manager (created at `managerCreatedAt`, or "now" if undefined)
  * is eligible to score in. A manager is eligible if they were created at or before
- * (race_date - 24h). Used to show "Du starter fra runde X" on signup and badges on leaderboard.
+ * (race_date - 1h). Used to show "Du starter fra runde X" on signup and badges on leaderboard.
  */
 export function getFirstEligibleRace(races: Race[], managerCreatedAt?: string | Date): Race | null {
   const created = managerCreatedAt
