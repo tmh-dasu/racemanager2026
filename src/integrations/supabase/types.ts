@@ -517,6 +517,7 @@ export type Database = {
           location: string | null
           name: string
           race_date: string | null
+          race_end_date: string | null
           round_number: number
         }
         Insert: {
@@ -528,6 +529,7 @@ export type Database = {
           location?: string | null
           name: string
           race_date?: string | null
+          race_end_date?: string | null
           round_number: number
         }
         Update: {
@@ -539,6 +541,7 @@ export type Database = {
           location?: string | null
           name?: string
           race_date?: string | null
+          race_end_date?: string | null
           round_number?: number
         }
         Relationships: []
