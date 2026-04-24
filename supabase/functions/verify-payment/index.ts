@@ -50,6 +50,24 @@ serve(async (req) => {
       });
     }
 
+    // Verify the Stripe session belongs to the authenticated user (prevent session_id replay/claim)
+    const stripeCustomerEmail =
+      (session.customer_details?.email as string | undefined) ||
+      (session.customer_email as string | undefined);
+    if (
+      !stripeCustomerEmail ||
+      !email ||
+      stripeCustomerEmail.toLowerCase() !== email.toLowerCase()
+    ) {
+      return new Response(
+        JSON.stringify({ verified: false, error: "Session tilhører en anden bruger" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403,
+        }
+      );
+    }
+
     // Record verified payment + send confirmation email (service role)
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
