@@ -298,6 +298,10 @@ function RacesAdmin() {
           <label className="text-xs text-muted-foreground">Løbsdato & tid</label>
           <Input type="datetime-local" value={form.race_date} onChange={(e) => setForm({ ...form, race_date: e.target.value })} className="bg-secondary border-border" />
         </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Slutter (åbner transfer igen)</label>
+          <Input type="datetime-local" value={form.race_end_date} onChange={(e) => setForm({ ...form, race_end_date: e.target.value })} className="bg-secondary border-border" />
+        </div>
       </div>
       <Input placeholder="Adresse (f.eks. Bøgelundvej 42, 6330 Padborg)" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="bg-secondary border-border" />
       <LinksEditor links={formLinks} setLinks={setFormLinks} />
@@ -317,6 +321,10 @@ function RacesAdmin() {
                   <div>
                     <label className="text-xs text-muted-foreground">Løbsdato & tid</label>
                     <Input type="datetime-local" value={editForm.race_date} onChange={(e) => setEditForm({ ...editForm, race_date: e.target.value })} className="bg-card border-border" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Slutter (åbner transfer igen)</label>
+                    <Input type="datetime-local" value={editForm.race_end_date} onChange={(e) => setEditForm({ ...editForm, race_end_date: e.target.value })} className="bg-card border-border" />
                   </div>
                 </div>
                 <Input placeholder="Adresse" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="bg-card border-border" />

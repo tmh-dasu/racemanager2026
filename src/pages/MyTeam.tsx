@@ -49,7 +49,7 @@ export default function MyTeamPage() {
   const transferDeadline = useMemo(() => {
     const now = Date.now();
     const next = races
-      .filter(r => r.race_date && new Date(r.race_date).getTime() > now)
+      .filter(r => r.race_date && new Date((r as any).race_end_date || r.race_date).getTime() > now)
       .sort((a, b) => new Date(a.race_date!).getTime() - new Date(b.race_date!).getTime())[0];
     if (!next?.race_date) return null;
     return new Date(new Date(next.race_date).getTime() - 24 * 60 * 60 * 1000);
