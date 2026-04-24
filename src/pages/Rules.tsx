@@ -1,5 +1,5 @@
 import PageLayout from "@/components/PageLayout";
-import { Trophy, Zap, Target, Calendar, ArrowRightLeft, Crown, Brain, ShieldAlert } from "lucide-react";
+import { Trophy, Zap, Target, Calendar, ArrowRightLeft, Crown, Brain, ShieldAlert, UserPlus } from "lucide-react";
 
 const pointsTable = [
   { pos: "1.", pts: 25 }, { pos: "2.", pts: 22 }, { pos: "3.", pts: 20 },
@@ -58,6 +58,26 @@ export default function RulesPage() {
             <Trophy className="h-4 w-4 text-gold mt-0.5 shrink-0" />
             <p className="text-xs text-muted-foreground">
               Alle tilmeldingsgebyrer går til en <strong className="text-foreground">præmie til bedste am-kører</strong> i klassen.
+            </p>
+          </div>
+        </Section>
+
+        {/* Late signup fairness rule */}
+        <Section icon={<UserPlus className="h-5 w-5 text-accent" />} title="Tilmelding i løbet af sæsonen 📅">
+          <p className="text-sm text-muted-foreground mb-3">
+            Du kan tilmelde dig hele sæsonen igennem – men for at konkurrencen er fair, gælder følgende regel:
+          </p>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>• Dit hold scorer kun point i runder, hvor du var oprettet <strong className="text-foreground">senest 24 timer før løbets start</strong></li>
+            <li>• Tilmelder du dig <strong className="text-foreground">før første løbs deadline</strong>, er du med fra runde 1 og hele sæsonen</li>
+            <li>• Tilmelder du dig <strong className="text-foreground">efter en runde er afgjort</strong>, kan du ikke score retroaktivt på den runde – du starter først fra næste runde, hvor du når deadlinen</li>
+            <li>• Det samme gælder holdkaptajn-bonus: kun bonus for runder du var tilmeldt rettidigt</li>
+            <li>• På leaderboardet får hold tilmeldt efter sæsonstart et lille <strong className="text-foreground">"Fra R{"{X}"}"</strong> mærkat, så det er gennemsigtigt</li>
+          </ul>
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-accent/10 border border-accent/20 px-3 py-2">
+            <UserPlus className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              Når du opretter dit hold, viser systemet tydeligt <strong className="text-foreground">hvilken runde du starter fra</strong>, så der er ingen tvivl.
             </p>
           </div>
         </Section>
