@@ -196,10 +196,10 @@ export default function LeaderboardPage() {
   const breakdowns = useMemo(() => {
     const map = new Map<string, PointBreakdown>();
     for (const m of managers) {
-      map.set(m.id, computePointBreakdown(m.id, allMDs, allResults, captainSelections, predAnswers, transfers, completedRounds));
+      map.set(m.id, computePointBreakdown(m.id, allMDs, allResults, captainSelections, predAnswers, transfers, completedRounds, m.created_at, races));
     }
     return map;
-  }, [managers, allMDs, allResults, captainSelections, predAnswers, transfers, completedRounds]);
+  }, [managers, allMDs, allResults, captainSelections, predAnswers, transfers, completedRounds, races]);
 
   return (
     <PageLayout>
