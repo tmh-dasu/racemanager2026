@@ -30,10 +30,10 @@ export interface Race {
   links: RaceLink[];
 }
 
-/** Derive the effective deadline (24h before race_date). Falls back to captain_deadline for legacy data. */
+/** Derive the effective deadline (1h before race_date). Falls back to captain_deadline for legacy data. */
 export function getEffectiveDeadline(race: Race): Date | null {
   if (race.race_date) {
-    return new Date(new Date(race.race_date).getTime() - 24 * 60 * 60 * 1000);
+    return new Date(new Date(race.race_date).getTime() - 60 * 60 * 1000);
   }
   if (race.captain_deadline) {
     return new Date(race.captain_deadline);
@@ -44,7 +44,7 @@ export function getEffectiveDeadline(race: Race): Date | null {
 /**
  * Compute the transfer deadline for the next upcoming race.
  * "Next race" = first race whose effective end (race_end_date, or race_date if missing) is still in the future.
- * Deadline = race_date - 24h. Returns null if no upcoming race.
+ * Deadline = race_date - 1h. Returns null if no upcoming race.
  * Pure function — used by both UI and the Test 13 verification suite.
  */
 export function computeTransferDeadline(
@@ -56,7 +56,7 @@ export function computeTransferDeadline(
     .filter(r => r.race_date && new Date(r.race_end_date || r.race_date).getTime() > nowMs)
     .sort((a, b) => new Date(a.race_date!).getTime() - new Date(b.race_date!).getTime())[0];
   if (!next?.race_date) return null;
-  return new Date(new Date(next.race_date).getTime() - 24 * 60 * 60 * 1000);
+  return new Date(new Date(next.race_date).getTime() - 60 * 60 * 1000);
 }
 
 export interface CaptainSelection {
@@ -381,11 +381,11 @@ export async function recalculateManagerPoints() {
   const { data: allTransfers } = await supabase.from("transfers").select("manager_id, point_cost");
   const { data: allRaces } = await supabase.from("races").select("id, race_date");
 
-  // Build map: race_id -> eligibility cutoff (race_date - 24h). Managers must be created BEFORE this to score.
+  // Build map: race_id -> eligibility cutoff (race_date - 1h). Managers must be created BEFORE this to score.
   const raceCutoffs = new Map<string, number>();
   (allRaces || []).forEach((r: any) => {
     if (r.race_date) {
-      raceCutoffs.set(r.id, new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000);
+      raceCutoffs.set(r.id, new Date(r.race_date).getTime() - 60 * 60 * 1000);
     }
   });
 
@@ -466,11 +466,11 @@ export function computePointBreakdown(
     captainMap.set(c.race_id, c.driver_id);
   });
 
-  // Eligibility: manager must be created at or before (race_date - 24h) to score
+  // Eligibility: manager must be created at or before (race_date - 1h) to score
   const mgrCreated = managerCreatedAt ? new Date(managerCreatedAt).getTime() : 0;
   const cutoffs = new Map<string, number>();
   (races || []).forEach((r) => {
-    if (r.race_date) cutoffs.set(r.id, new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000);
+    if (r.race_date) cutoffs.set(r.id, new Date(r.race_date).getTime() - 60 * 60 * 1000);
   });
   const isEligible = (raceId: string) => {
     if (!races || races.length === 0) return true; // backward compat: no race info passed
@@ -538,7 +538,7 @@ export function getNextRaceWithDeadline(races: Race[]): Race | null {
 /**
  * Returns the first race that a manager (created at `managerCreatedAt`, or "now" if undefined)
  * is eligible to score in. A manager is eligible if they were created at or before
- * (race_date - 24h). Used to show "Du starter fra runde X" on signup and badges on leaderboard.
+ * (race_date - 1h). Used to show "Du starter fra runde X" on signup and badges on leaderboard.
  */
 export function getFirstEligibleRace(races: Race[], managerCreatedAt?: string | Date): Race | null {
   const created = managerCreatedAt
@@ -547,7 +547,7 @@ export function getFirstEligibleRace(races: Race[], managerCreatedAt?: string | 
   const sorted = [...races].sort((a, b) => a.round_number - b.round_number);
   for (const r of sorted) {
     if (!r.race_date) continue;
-    const cutoff = new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000;
+    const cutoff = new Date(r.race_date).getTime() - 60 * 60 * 1000;
     if (created.getTime() <= cutoff) return r;
   }
   return null;

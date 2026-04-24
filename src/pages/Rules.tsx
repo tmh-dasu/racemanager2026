@@ -68,7 +68,7 @@ export default function RulesPage() {
             Du kan tilmelde dig hele sæsonen igennem – men for at konkurrencen er fair, gælder følgende regel:
           </p>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• Dit hold scorer kun point i runder, hvor du var oprettet <strong className="text-foreground">senest 24 timer før løbets start</strong></li>
+            <li>• Dit hold scorer kun point i runder, hvor du var oprettet <strong className="text-foreground">senest 1 time før løbets start</strong></li>
             <li>• Tilmelder du dig <strong className="text-foreground">før første løbs deadline</strong>, er du med fra runde 1 og hele sæsonen</li>
             <li>• Tilmelder du dig <strong className="text-foreground">efter en runde er afgjort</strong>, kan du ikke score retroaktivt på den runde – du starter først fra næste runde, hvor du når deadlinen</li>
             <li>• Det samme gælder holdkaptajn-bonus: kun bonus for runder du var tilmeldt rettidigt</li>
@@ -142,7 +142,7 @@ export default function RulesPage() {
             <li>• Der er <strong className="text-foreground">ingen grænse</strong> for antal transfers – men hvert koster point</li>
             <li>• Pointfradraget er <strong className="text-foreground">permanent</strong> og kan ikke fortrydes</li>
             <li>• Transfervinduet er <strong className="text-foreground">lukket</strong> indtil admin åbner det efter hvert arrangements resultater er indtastet</li>
-            <li>• Vinduet lukker automatisk <strong className="text-foreground">24 timer inden næste arrangement starter</strong></li>
+            <li>• Vinduet lukker automatisk <strong className="text-foreground">1 time inden næste arrangement starter</strong></li>
             <li>• Vinduet kan også <strong className="text-foreground">lukkes manuelt</strong> af admin</li>
             <li>• Holdkaptajn-budgettet følger <strong className="text-foreground">kategoripladsen</strong>, ikke den individuelle kører — se holdkaptajn-regler nedenfor</li>
             <li>• <strong className="text-foreground">Gæstekørere</strong> er ikke en del af spillet — kun kørere tilmeldt den fulde sæson kan vælges</li>
@@ -201,7 +201,7 @@ export default function RulesPage() {
             <li className="ml-4">– Guld-pladsen: præcis <strong className="text-foreground">2 holdkaptajner</strong> hele sæsonen</li>
             <li className="ml-4">– Sølv-pladsen: præcis <strong className="text-foreground">2 holdkaptajner</strong> hele sæsonen</li>
             <li className="ml-4">– Bronze-pladsen: præcis <strong className="text-foreground">2 holdkaptajner</strong> hele sæsonen</li>
-            <li>• Deadline for holdkaptajn: <strong className="text-foreground">24 timer inden arrangementet starter</strong></li>
+            <li>• Deadline for holdkaptajn: <strong className="text-foreground">1 time inden arrangementet starter</strong></li>
             <li>• Hvis du ikke vælger holdkaptajn inden deadline, tæller alle point <strong className="text-foreground">normalt</strong> (ingen bonus) — systemet tildeler <strong className="text-foreground">ikke</strong> automatisk en holdkaptajn</li>
             <li>• Ved transfer: holdkaptajn-budgettet følger <strong className="text-foreground">kategoripladsen</strong> — hvis begge sølv-holdkaptajner er brugt, kan den nye sølvkører ikke vælges som holdkaptajn</li>
           </ul>
@@ -231,7 +231,7 @@ export default function RulesPage() {
           <h3 className="font-display font-semibold text-foreground text-sm mb-2">Predictions-vindue</h3>
           <ul className="space-y-1 text-sm text-muted-foreground">
             <li>• Vinduet åbner når admin publicerer spørgsmålene</li>
-            <li>• Vinduet lukker <strong className="text-foreground">24 timer inden arrangementet starter</strong></li>
+            <li>• Vinduet lukker <strong className="text-foreground">1 time inden arrangementet starter</strong></li>
             <li>• Du kan ændre dine svar <strong className="text-foreground">indtil vinduet lukker</strong></li>
             <li>• Efter vinduet lukker kan du se dine svar men ikke ændre dem</li>
           </ul>

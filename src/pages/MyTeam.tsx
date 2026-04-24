@@ -45,7 +45,7 @@ export default function MyTeamPage() {
 
   const completedRounds = useMemo(() => new Set(allResults.map(r => r.race_id)).size, [allResults]);
 
-  // Auto deadline: 24h before next upcoming race
+  // Auto deadline: 1h before next upcoming race
   const transferDeadline = useMemo(() => computeTransferDeadline(races), [races]);
   const deadlinePassed = transferDeadline ? new Date() >= transferDeadline : true;
   const transfersAllowed = (settings?.transfer_window_open ?? false) && !deadlinePassed;

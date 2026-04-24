@@ -237,7 +237,7 @@ function RacesAdmin() {
     try {
       const raceDate = form.race_date || null;
       const raceEndDate = form.race_end_date || null;
-      const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 24 * 60 * 60 * 1000).toISOString() : null;
+      const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 60 * 60 * 1000).toISOString() : null;
       const validLinks = formLinks.filter(l => l.label && l.url);
       await upsertRace({ round_number: Number(form.round_number), name: form.name, location: form.location || null, race_date: raceDate, race_end_date: raceEndDate, captain_deadline: captainDeadline, address: form.address || null, links: validLinks } as any);
       setForm({ round_number: "", name: "", location: "", race_date: "", race_end_date: "", address: "" });
@@ -263,7 +263,7 @@ function RacesAdmin() {
     try {
       const raceDate = editForm.race_date || null;
       const raceEndDate = editForm.race_end_date || null;
-      const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 24 * 60 * 60 * 1000).toISOString() : null;
+      const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 60 * 60 * 1000).toISOString() : null;
       const validLinks = editLinks.filter(l => l.label && l.url);
       await upsertRace({ id: r.id, round_number: r.round_number, name: editForm.name, location: editForm.location || null, race_date: raceDate, race_end_date: raceEndDate, captain_deadline: captainDeadline, address: editForm.address || null, links: validLinks } as any);
       setEditingId(null);
@@ -306,7 +306,7 @@ function RacesAdmin() {
       <Input placeholder="Adresse (f.eks. Bøgelundvej 42, 6330 Padborg)" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="bg-secondary border-border" />
       <LinksEditor links={formLinks} setLinks={setFormLinks} />
       {form.race_date && (
-        <p className="text-xs text-muted-foreground">⏰ Deadline (captain + transfer) lukker automatisk: <strong className="text-foreground">{new Date(new Date(form.race_date).getTime() - 24 * 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong></p>
+        <p className="text-xs text-muted-foreground">⏰ Deadline (captain + transfer) lukker automatisk: <strong className="text-foreground">{new Date(new Date(form.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong></p>
       )}
       <Button onClick={handleAdd} className="bg-gradient-racing text-primary-foreground font-display"><Plus className="h-4 w-4 mr-1" />Tilføj løb</Button>
       <div className="space-y-2">
@@ -330,7 +330,7 @@ function RacesAdmin() {
                 <Input placeholder="Adresse" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="bg-card border-border" />
                 <LinksEditor links={editLinks} setLinks={setEditLinks} />
                 {editForm.race_date && (
-                  <p className="text-xs text-muted-foreground">⏰ Deadline lukker: <strong className="text-foreground">{new Date(new Date(editForm.race_date).getTime() - 24 * 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong></p>
+                  <p className="text-xs text-muted-foreground">⏰ Deadline lukker: <strong className="text-foreground">{new Date(new Date(editForm.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong></p>
                 )}
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => handleSaveEdit(r)} className="bg-success text-success-foreground"><Save className="h-3 w-3 mr-1" />Gem</Button>
@@ -345,7 +345,7 @@ function RacesAdmin() {
                   {r.race_date && (
                     <span className="text-muted-foreground ml-2">
                       • {new Date(r.race_date).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                      <span className="text-xs ml-1">(DL: {new Date(new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})</span>
+                      <span className="text-xs ml-1">(DL: {new Date(new Date(r.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})</span>
                     </span>
                   )}
                   {r.address && <div className="text-xs text-muted-foreground mt-0.5">📍 {r.address}</div>}
