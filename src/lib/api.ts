@@ -306,7 +306,7 @@ export async function upsertRaceResult(result: Omit<RaceResult, "id">) {
 }
 
 export async function recalculateManagerPoints() {
-  const { data: managerRows } = await supabase.from("managers").select("id");
+  const { data: managerRows } = await supabase.from("managers").select("id, created_at");
   if (!managerRows || managerRows.length === 0) return;
 
   const { data: resultRaces } = await supabase.from("race_results").select("race_id");
@@ -317,8 +317,24 @@ export async function recalculateManagerPoints() {
   const { data: allCaptains } = await supabase.from("captain_selections").select("manager_id, race_id, driver_id");
   const { data: allPredAnswers } = await supabase.from("prediction_answers").select("manager_id, is_correct");
   const { data: allTransfers } = await supabase.from("transfers").select("manager_id, point_cost");
+  const { data: allRaces } = await supabase.from("races").select("id, race_date");
 
-  for (const mgr of managerRows) {
+  // Build map: race_id -> eligibility cutoff (race_date - 24h). Managers must be created BEFORE this to score.
+  const raceCutoffs = new Map<string, number>();
+  (allRaces || []).forEach((r: any) => {
+    if (r.race_date) {
+      raceCutoffs.set(r.id, new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000);
+    }
+  });
+
+  for (const mgr of managerRows as any[]) {
+    const mgrCreated = mgr.created_at ? new Date(mgr.created_at).getTime() : 0;
+    const isEligibleForRace = (raceId: string) => {
+      const cutoff = raceCutoffs.get(raceId);
+      if (cutoff === undefined) return true; // races without race_date: allow
+      return mgrCreated <= cutoff;
+    };
+
     const driverIds = (allMDs || []).filter((md: any) => md.manager_id === mgr.id).map((md: any) => md.driver_id);
     if (driverIds.length === 0) {
       await supabase.from("managers").update({ total_points: 0 }).eq("id", mgr.id);
@@ -330,14 +346,15 @@ export async function recalculateManagerPoints() {
       captainMap.set(c.race_id, c.driver_id);
     });
 
-    // Base race points from current team drivers
+    // Base race points from current team drivers — only for races the manager was eligible for
     const basePoints = (allResults || [])
-      .filter((r: any) => driverIds.includes(r.driver_id))
+      .filter((r: any) => driverIds.includes(r.driver_id) && isEligibleForRace(r.race_id))
       .reduce((sum: number, r: any) => sum + (r.points || 0), 0);
 
-    // Captain bonus: calculated from captain driver's results (persists even after transfer)
+    // Captain bonus: only counts for eligible races
     let captainBonus = 0;
     captainMap.forEach((captainDriverId, raceId) => {
+      if (!isEligibleForRace(raceId)) return;
       const captainPts = (allResults || [])
         .filter((r: any) => r.driver_id === captainDriverId && r.race_id === raceId)
         .reduce((sum: number, r: any) => sum + (r.points || 0), 0);
