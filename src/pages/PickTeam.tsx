@@ -212,6 +212,18 @@ export default function PickTeamPage() {
           </div>
         )}
 
+        {/* Captain reminder */}
+        <div className="rounded-lg border border-gold/40 bg-gold/10 px-4 py-3 flex gap-3 items-start">
+          <Crown className="h-5 w-5 text-gold shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-display font-semibold text-foreground">Husk holdkaptajn til hver runde</p>
+            <p className="text-muted-foreground mt-0.5">
+              Inden hver runde skal du vælge én af dine 3 kørere som <strong>holdkaptajn</strong> – kaptajnens point tæller dobbelt!
+              Valget foretages på <em>Mit Hold</em> og skal være på plads senest 24 timer før løbsstart. Glemmer du det, får du ingen bonus den runde.
+            </p>
+          </div>
+        </div>
+
         <div className="max-w-md">
           <Input placeholder="Holdnavn" value={teamName} onChange={(e) => setTeamName(e.target.value)} className="bg-secondary border-border" />
         </div>
