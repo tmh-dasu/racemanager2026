@@ -214,10 +214,10 @@ function DriversAdmin() {
 function RacesAdmin() {
   const { toast } = useToast();
   const { data: races = [], refetch } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
-  const [form, setForm] = useState({ round_number: "", name: "", location: "", race_date: "", address: "" });
+  const [form, setForm] = useState({ round_number: "", name: "", location: "", race_date: "", race_end_date: "", address: "" });
   const [formLinks, setFormLinks] = useState<{ label: string; url: string }[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", location: "", race_date: "", address: "" });
+  const [editForm, setEditForm] = useState({ name: "", location: "", race_date: "", race_end_date: "", address: "" });
   const [editLinks, setEditLinks] = useState<{ label: string; url: string }[]>([]);
 
   function addLink(links: { label: string; url: string }[], setLinks: (l: { label: string; url: string }[]) => void) {
@@ -236,10 +236,11 @@ function RacesAdmin() {
     if (!form.round_number || !form.name) { toast({ title: "Udfyld runde og navn", variant: "destructive" }); return; }
     try {
       const raceDate = form.race_date || null;
+      const raceEndDate = form.race_end_date || null;
       const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 24 * 60 * 60 * 1000).toISOString() : null;
       const validLinks = formLinks.filter(l => l.label && l.url);
-      await upsertRace({ round_number: Number(form.round_number), name: form.name, location: form.location || null, race_date: raceDate, captain_deadline: captainDeadline, address: form.address || null, links: validLinks } as any);
-      setForm({ round_number: "", name: "", location: "", race_date: "", address: "" });
+      await upsertRace({ round_number: Number(form.round_number), name: form.name, location: form.location || null, race_date: raceDate, race_end_date: raceEndDate, captain_deadline: captainDeadline, address: form.address || null, links: validLinks } as any);
+      setForm({ round_number: "", name: "", location: "", race_date: "", race_end_date: "", address: "" });
       setFormLinks([]);
       refetch();
       toast({ title: "Løb tilføjet" });
@@ -252,6 +253,7 @@ function RacesAdmin() {
       name: r.name || "",
       location: r.location || "",
       race_date: r.race_date ? new Date(r.race_date).toISOString().slice(0, 16) : "",
+      race_end_date: r.race_end_date ? new Date(r.race_end_date).toISOString().slice(0, 16) : "",
       address: r.address || "",
     });
     setEditLinks(Array.isArray(r.links) ? r.links : []);
@@ -260,9 +262,10 @@ function RacesAdmin() {
   async function handleSaveEdit(r: any) {
     try {
       const raceDate = editForm.race_date || null;
+      const raceEndDate = editForm.race_end_date || null;
       const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 24 * 60 * 60 * 1000).toISOString() : null;
       const validLinks = editLinks.filter(l => l.label && l.url);
-      await upsertRace({ id: r.id, round_number: r.round_number, name: editForm.name, location: editForm.location || null, race_date: raceDate, captain_deadline: captainDeadline, address: editForm.address || null, links: validLinks } as any);
+      await upsertRace({ id: r.id, round_number: r.round_number, name: editForm.name, location: editForm.location || null, race_date: raceDate, race_end_date: raceEndDate, captain_deadline: captainDeadline, address: editForm.address || null, links: validLinks } as any);
       setEditingId(null);
       refetch();
       toast({ title: "Løb opdateret" });
@@ -295,6 +298,10 @@ function RacesAdmin() {
           <label className="text-xs text-muted-foreground">Løbsdato & tid</label>
           <Input type="datetime-local" value={form.race_date} onChange={(e) => setForm({ ...form, race_date: e.target.value })} className="bg-secondary border-border" />
         </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Slutter (åbner transfer igen)</label>
+          <Input type="datetime-local" value={form.race_end_date} onChange={(e) => setForm({ ...form, race_end_date: e.target.value })} className="bg-secondary border-border" />
+        </div>
       </div>
       <Input placeholder="Adresse (f.eks. Bøgelundvej 42, 6330 Padborg)" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="bg-secondary border-border" />
       <LinksEditor links={formLinks} setLinks={setFormLinks} />
@@ -314,6 +321,10 @@ function RacesAdmin() {
                   <div>
                     <label className="text-xs text-muted-foreground">Løbsdato & tid</label>
                     <Input type="datetime-local" value={editForm.race_date} onChange={(e) => setEditForm({ ...editForm, race_date: e.target.value })} className="bg-card border-border" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Slutter (åbner transfer igen)</label>
+                    <Input type="datetime-local" value={editForm.race_end_date} onChange={(e) => setEditForm({ ...editForm, race_end_date: e.target.value })} className="bg-card border-border" />
                   </div>
                 </div>
                 <Input placeholder="Adresse" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="bg-card border-border" />

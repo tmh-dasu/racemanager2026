@@ -24,6 +24,7 @@ export interface Race {
   name: string;
   location: string | null;
   race_date: string | null;
+  race_end_date: string | null;
   captain_deadline: string | null;
   address: string | null;
   links: RaceLink[];
