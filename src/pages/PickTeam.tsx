@@ -107,7 +107,10 @@ export default function PickTeamPage() {
       }).catch(console.error);
 
       queryClient.invalidateQueries({ queryKey: ["managers"] });
-      toast({ title: "Hold oprettet! 🏁" });
+      toast({
+        title: "Hold oprettet! 🏁",
+        description: "Husk at vælge holdkaptajn på Mit Hold inden hver runde – kaptajnens point tæller dobbelt!",
+      });
       navigate("/mit-hold");
     } catch (err: any) {
       const msg = err.message?.includes("managers_slug_unique")
