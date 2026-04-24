@@ -916,21 +916,21 @@ export default function AdminTestPage() {
     const oneDay = 24 * oneHour;
     const now = new Date("2026-05-01T12:00:00Z");
 
-    // 13A: 24t-regel — deadline = race_date - 24h
+    // 13A: 1t-regel — deadline = race_date - 1h
     try {
       const races = [
         { race_date: new Date(now.getTime() + 5 * oneDay).toISOString(), race_end_date: null },
       ];
       const deadline = computeTransferDeadline(races, now);
-      const expected = new Date(now.getTime() + 4 * oneDay).getTime();
+      const expected = new Date(now.getTime() + 5 * oneDay - oneHour).getTime();
       const ok = deadline?.getTime() === expected;
       subs.push({
-        name: "A: Deadline = race_date − 24t",
+        name: "A: Deadline = race_date − 1t",
         status: ok ? "pass" : "fail",
         message: ok ? `Deadline korrekt: ${deadline?.toISOString()}` : `FEJL: fik ${deadline?.toISOString()}, forventet ${new Date(expected).toISOString()}`,
       });
     } catch (e: any) {
-      subs.push({ name: "A: Deadline = race_date − 24t", status: "fail", message: e.message });
+      subs.push({ name: "A: Deadline = race_date − 1t", status: "fail", message: e.message });
     }
 
     // 13B: Race i gang (start passeret, end_date i fremtiden) → "næste løb" er stadig dette løb, deadline er passeret
@@ -943,7 +943,7 @@ export default function AdminTestPage() {
         { race_date: nextRaceStart, race_end_date: null },
       ];
       const deadline = computeTransferDeadline(races, now);
-      // Næste løb = det igangværende (end_date > now). Deadline = start - 24t = i fortiden.
+      // Næste løb = det igangværende (end_date > now). Deadline = start - 1t = i fortiden.
       const ok = deadline !== null && deadline.getTime() < now.getTime();
       subs.push({
         name: "B: Igangværende løb → deadline i fortiden (transfers lukket)",
@@ -964,7 +964,7 @@ export default function AdminTestPage() {
         { race_date: nextStart, race_end_date: null },
       ];
       const deadline = computeTransferDeadline(races, now);
-      const expected = new Date(now.getTime() + 6 * oneDay).getTime();
+      const expected = new Date(now.getTime() + 7 * oneDay - oneHour).getTime();
       const ok = deadline?.getTime() === expected && deadline.getTime() > now.getTime();
       subs.push({
         name: "C: Afsluttet løb → deadline hopper til næste runde (åbner igen)",
@@ -984,7 +984,7 @@ export default function AdminTestPage() {
         { race_date: futureStart, race_end_date: null },
       ];
       const deadline = computeTransferDeadline(races, now);
-      const expected = new Date(now.getTime() + 4 * oneDay).getTime();
+      const expected = new Date(now.getTime() + 5 * oneDay - oneHour).getTime();
       const ok = deadline?.getTime() === expected;
       subs.push({
         name: "D: Fallback til race_date når race_end_date mangler",
@@ -1020,7 +1020,7 @@ export default function AdminTestPage() {
         { race_date: sooner, race_end_date: null },
       ];
       const deadline = computeTransferDeadline(races, now);
-      const expected = new Date(now.getTime() + 2 * oneDay).getTime();
+      const expected = new Date(now.getTime() + 3 * oneDay - oneHour).getTime();
       const ok = deadline?.getTime() === expected;
       subs.push({
         name: "F: Vælger tidligste kommende løb",
