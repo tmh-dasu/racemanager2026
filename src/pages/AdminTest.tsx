@@ -929,6 +929,7 @@ export default function AdminTestPage() {
       await runTest10(tids);
       await runTest11(tids);
       await runTest12(tids);
+      await runTest13(tids);
 
       // Recalculate manager points in DB
       await recalculateManagerPoints();
