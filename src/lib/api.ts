@@ -33,7 +33,7 @@ export interface Race {
 /** Derive the effective deadline (24h before race_date). Falls back to captain_deadline for legacy data. */
 export function getEffectiveDeadline(race: Race): Date | null {
   if (race.race_date) {
-    return new Date(new Date(race.race_date).getTime() - 24 * 60 * 60 * 1000);
+    return new Date(new Date(race.race_date).getTime() - 60 * 60 * 1000);
   }
   if (race.captain_deadline) {
     return new Date(race.captain_deadline);
@@ -56,7 +56,7 @@ export function computeTransferDeadline(
     .filter(r => r.race_date && new Date(r.race_end_date || r.race_date).getTime() > nowMs)
     .sort((a, b) => new Date(a.race_date!).getTime() - new Date(b.race_date!).getTime())[0];
   if (!next?.race_date) return null;
-  return new Date(new Date(next.race_date).getTime() - 24 * 60 * 60 * 1000);
+  return new Date(new Date(next.race_date).getTime() - 60 * 60 * 1000);
 }
 
 export interface CaptainSelection {
@@ -385,7 +385,7 @@ export async function recalculateManagerPoints() {
   const raceCutoffs = new Map<string, number>();
   (allRaces || []).forEach((r: any) => {
     if (r.race_date) {
-      raceCutoffs.set(r.id, new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000);
+      raceCutoffs.set(r.id, new Date(r.race_date).getTime() - 60 * 60 * 1000);
     }
   });
 
@@ -470,7 +470,7 @@ export function computePointBreakdown(
   const mgrCreated = managerCreatedAt ? new Date(managerCreatedAt).getTime() : 0;
   const cutoffs = new Map<string, number>();
   (races || []).forEach((r) => {
-    if (r.race_date) cutoffs.set(r.id, new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000);
+    if (r.race_date) cutoffs.set(r.id, new Date(r.race_date).getTime() - 60 * 60 * 1000);
   });
   const isEligible = (raceId: string) => {
     if (!races || races.length === 0) return true; // backward compat: no race info passed
@@ -547,7 +547,7 @@ export function getFirstEligibleRace(races: Race[], managerCreatedAt?: string | 
   const sorted = [...races].sort((a, b) => a.round_number - b.round_number);
   for (const r of sorted) {
     if (!r.race_date) continue;
-    const cutoff = new Date(r.race_date).getTime() - 24 * 60 * 60 * 1000;
+    const cutoff = new Date(r.race_date).getTime() - 60 * 60 * 1000;
     if (created.getTime() <= cutoff) return r;
   }
   return null;

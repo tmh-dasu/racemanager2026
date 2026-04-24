@@ -31,7 +31,7 @@ function getStatusItems(nextRace: Race | null, questions: PredictionQuestion[], 
 
   // Holdkaptajn/transfer deadline (auto-calculated: race_date - 24h)
   if (nextRace.race_date) {
-    const deadline = new Date(new Date(nextRace.race_date).getTime() - 24 * 60 * 60 * 1000);
+    const deadline = new Date(new Date(nextRace.race_date).getTime() - 60 * 60 * 1000);
     items.push({ level: "green", message: `Deadline (holdkaptajn + transfer): ${deadline.toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` });
   }
 
