@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, AlertTriangle, LogOut, ShieldAlert, History } from "lucide-react";
-import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers, fetchAllCaptainSelections, fetchAllPredictionAnswers, fetchAllTransfers, computePointBreakdown, getTransferCostForTier } from "@/lib/api";
+import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers, fetchAllCaptainSelections, fetchAllPredictionAnswers, fetchAllTransfers, computePointBreakdown, getTransferCostForTier, computeTransferDeadline } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -46,14 +46,7 @@ export default function MyTeamPage() {
   const completedRounds = useMemo(() => new Set(allResults.map(r => r.race_id)).size, [allResults]);
 
   // Auto deadline: 24h before next upcoming race
-  const transferDeadline = useMemo(() => {
-    const now = Date.now();
-    const next = races
-      .filter(r => r.race_date && new Date((r as any).race_end_date || r.race_date).getTime() > now)
-      .sort((a, b) => new Date(a.race_date!).getTime() - new Date(b.race_date!).getTime())[0];
-    if (!next?.race_date) return null;
-    return new Date(new Date(next.race_date).getTime() - 24 * 60 * 60 * 1000);
-  }, [races]);
+  const transferDeadline = useMemo(() => computeTransferDeadline(races), [races]);
   const deadlinePassed = transferDeadline ? new Date() >= transferDeadline : true;
   const transfersAllowed = (settings?.transfer_window_open ?? false) && !deadlinePassed;
 

@@ -41,6 +41,24 @@ export function getEffectiveDeadline(race: Race): Date | null {
   return null;
 }
 
+/**
+ * Compute the transfer deadline for the next upcoming race.
+ * "Next race" = first race whose effective end (race_end_date, or race_date if missing) is still in the future.
+ * Deadline = race_date - 24h. Returns null if no upcoming race.
+ * Pure function — used by both UI and the Test 13 verification suite.
+ */
+export function computeTransferDeadline(
+  races: Pick<Race, "race_date" | "race_end_date">[],
+  now: Date = new Date(),
+): Date | null {
+  const nowMs = now.getTime();
+  const next = races
+    .filter(r => r.race_date && new Date(r.race_end_date || r.race_date).getTime() > nowMs)
+    .sort((a, b) => new Date(a.race_date!).getTime() - new Date(b.race_date!).getTime())[0];
+  if (!next?.race_date) return null;
+  return new Date(new Date(next.race_date).getTime() - 24 * 60 * 60 * 1000);
+}
+
 export interface CaptainSelection {
   id: string;
   manager_id: string;
