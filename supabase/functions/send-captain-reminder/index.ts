@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
             </div>
             <div style="padding:20px 24px;">
               <p style="color:#18181b;">Hej ${mgr.team_name},</p>
-              <p style="color:#52525b;">Deadline er <strong>${deadlineStr}</strong> (24 timer inden arrangementet starter). Du mangler:</p>
+              <p style="color:#52525b;">Deadline er <strong>${deadlineStr}</strong> (1 time inden arrangementet starter). Du mangler:</p>
               <ul style="margin:16px 0;padding-left:20px;color:#18181b;">
                 ${reminderItems}
               </ul>
