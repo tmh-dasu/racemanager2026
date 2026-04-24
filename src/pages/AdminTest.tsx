@@ -799,6 +799,7 @@ export default function AdminTestPage() {
 
     // Build a synthetic scenario for computePointBreakdown — pure unit test, ingen DB-mutation
     const now = Date.now();
+    const oneHour = 60 * 60 * 1000;
     const oneDay = 24 * 60 * 60 * 1000;
 
     const races = [
@@ -861,27 +862,27 @@ export default function AdminTestPage() {
     // Sub C: Manager oprettet PRÆCIS PÅ deadlinen (race_date - 24h) → runden bør tælle (≤)
     try {
       const r1Date = new Date(races[0].race_date).getTime();
-      const exactDeadline = new Date(r1Date - oneDay).toISOString();
+      const exactDeadline = new Date(r1Date - oneHour).toISOString();
       const bd = computePointBreakdown(
         "M-late", allMDs, allResults, allCaptains, allPredAnswers, allTransfers,
         2, exactDeadline, races,
       );
       const ok = bd.racePoints === 80; // begge runder tæller
       subs.push({
-        name: "C: Manager præcis på deadline — runden tæller",
+        name: "C: Manager præcis på deadline (race − 1t) — runden tæller",
         status: ok ? "pass" : "fail",
         message: ok
           ? `Race=${bd.racePoints} (forventet 80, ≤-grænse korrekt)`
           : `FEJL: race=${bd.racePoints} (forventet 80)`,
       });
     } catch (e: any) {
-      subs.push({ name: "C: Manager præcis på deadline — runden tæller", status: "fail", message: e.message });
+      subs.push({ name: "C: Manager præcis på deadline (race − 1t) — runden tæller", status: "fail", message: e.message });
     }
 
     // Sub D: Manager oprettet 1 sekund EFTER deadlinen → runden bør IKKE tælle
     try {
       const r1Date = new Date(races[0].race_date).getTime();
-      const justAfter = new Date(r1Date - oneDay + 1000).toISOString();
+      const justAfter = new Date(r1Date - oneHour + 1000).toISOString();
       const bd = computePointBreakdown(
         "M-late", allMDs, allResults, allCaptains, allPredAnswers, allTransfers,
         2, justAfter, races,
