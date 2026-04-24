@@ -51,11 +51,11 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   try {
-    // Deadline = race_date - 24h. We send reminders 48h before deadline (= 72h before race).
-    // Find races where race_date is between now+24h and now+72h+1h (so deadline is 0-48h away).
+    // Deadline = race_date - 1h. We send reminders up to ~48h before deadline (= ~49h before race).
+    // Find races where race_date is between now+1h and now+49h (so deadline is 0-48h away).
     const now = new Date()
-    const minRaceDate = new Date(now.getTime() + 24 * 60 * 60 * 1000) // deadline = now
-    const maxRaceDate = new Date(now.getTime() + 72 * 60 * 60 * 1000 + 60 * 60 * 1000) // deadline ~48h away + buffer
+    const minRaceDate = new Date(now.getTime() + 60 * 60 * 1000) // deadline = now
+    const maxRaceDate = new Date(now.getTime() + 49 * 60 * 60 * 1000) // deadline ~48h away
 
     const { data: races } = await supabase
       .from('races')
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     const siteUrl = 'https://dasuracemanager.lovable.app'
 
     for (const race of races) {
-      const deadline = new Date(new Date(race.race_date!).getTime() - 24 * 60 * 60 * 1000)
+      const deadline = new Date(new Date(race.race_date!).getTime() - 60 * 60 * 1000)
       const deadlineStr = deadline.toLocaleString('da-DK', {
         day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
       })
