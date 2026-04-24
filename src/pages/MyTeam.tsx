@@ -88,7 +88,8 @@ export default function MyTeamPage() {
   const availableDrivers = drivers.filter((d) => !myDriverIds.includes(d.id) && !d.withdrawn && (!swapOutDriver || d.tier === swapOutDriver.tier));
 
   const swapInDriver = drivers.find(d => d.id === swapInId);
-  const transferCost = swapInDriver ? getTransferCostForTier(swapInDriver.tier) : 10;
+  const preSeason = completedRounds === 0;
+  const transferCost = preSeason ? 0 : (swapInDriver ? getTransferCostForTier(swapInDriver.tier) : 10);
 
   function getDriverPoints(driverId: string) {
     return allResults.filter((r) => r.driver_id === driverId).reduce((s, r) => s + r.points, 0);
@@ -117,7 +118,7 @@ export default function MyTeamPage() {
       setConfirmOpen(false);
       setSwapOutId(null);
       setSwapInId(null);
-      toast({ title: `Transfer gennemført! ${transferCost} point fratrukket 🔄` });
+      toast({ title: transferCost === 0 ? "Transfer gennemført! Gratis inden første runde 🔄" : `Transfer gennemført! ${transferCost} point fratrukket 🔄` });
       refetchManager();
     } catch (err: any) {
       toast({ title: "Fejl: " + err.message, variant: "destructive" });
