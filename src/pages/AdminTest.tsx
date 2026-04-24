@@ -903,6 +903,138 @@ export default function AdminTestPage() {
     });
   }
 
+  // ──── TEST 13: Transfer-deadline-logik (race_end_date + 24t-regel) ────
+  async function runTest13(_tids: TestIds) {
+    updateTest(12, { status: "running", message: "Tester transfer-deadline-beregning..." });
+    const subs: { name: string; status: TestStatus; message: string }[] = [];
+
+    const oneHour = 60 * 60 * 1000;
+    const oneDay = 24 * oneHour;
+    const now = new Date("2026-05-01T12:00:00Z");
+
+    // 13A: 24t-regel — deadline = race_date - 24h
+    try {
+      const races = [
+        { race_date: new Date(now.getTime() + 5 * oneDay).toISOString(), race_end_date: null },
+      ];
+      const deadline = computeTransferDeadline(races, now);
+      const expected = new Date(now.getTime() + 4 * oneDay).getTime();
+      const ok = deadline?.getTime() === expected;
+      subs.push({
+        name: "A: Deadline = race_date − 24t",
+        status: ok ? "pass" : "fail",
+        message: ok ? `Deadline korrekt: ${deadline?.toISOString()}` : `FEJL: fik ${deadline?.toISOString()}, forventet ${new Date(expected).toISOString()}`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "A: Deadline = race_date − 24t", status: "fail", message: e.message });
+    }
+
+    // 13B: Race i gang (start passeret, end_date i fremtiden) → "næste løb" er stadig dette løb, deadline er passeret
+    try {
+      const raceStart = new Date(now.getTime() - 2 * oneHour).toISOString(); // startede for 2t siden
+      const raceEnd = new Date(now.getTime() + 4 * oneHour).toISOString();   // slutter om 4t
+      const nextRaceStart = new Date(now.getTime() + 7 * oneDay).toISOString();
+      const races = [
+        { race_date: raceStart, race_end_date: raceEnd },
+        { race_date: nextRaceStart, race_end_date: null },
+      ];
+      const deadline = computeTransferDeadline(races, now);
+      // Næste løb = det igangværende (end_date > now). Deadline = start - 24t = i fortiden.
+      const ok = deadline !== null && deadline.getTime() < now.getTime();
+      subs.push({
+        name: "B: Igangværende løb → deadline i fortiden (transfers lukket)",
+        status: ok ? "pass" : "fail",
+        message: ok ? `Deadline passeret: ${deadline?.toISOString()}` : `FEJL: fik ${deadline?.toISOString()}`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "B: Igangværende løb → deadline i fortiden", status: "fail", message: e.message });
+    }
+
+    // 13C: Løb afsluttet (end_date passeret) → "næste løb" hopper til næste, transfers åbner igen
+    try {
+      const finishedStart = new Date(now.getTime() - 2 * oneDay).toISOString();
+      const finishedEnd = new Date(now.getTime() - 1 * oneHour).toISOString(); // sluttede for 1t siden
+      const nextStart = new Date(now.getTime() + 7 * oneDay).toISOString();
+      const races = [
+        { race_date: finishedStart, race_end_date: finishedEnd },
+        { race_date: nextStart, race_end_date: null },
+      ];
+      const deadline = computeTransferDeadline(races, now);
+      const expected = new Date(now.getTime() + 6 * oneDay).getTime();
+      const ok = deadline?.getTime() === expected && deadline.getTime() > now.getTime();
+      subs.push({
+        name: "C: Afsluttet løb → deadline hopper til næste runde (åbner igen)",
+        status: ok ? "pass" : "fail",
+        message: ok ? `Genåbnet til ${deadline?.toISOString()}` : `FEJL: fik ${deadline?.toISOString()}, forventet ${new Date(expected).toISOString()}`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "C: Afsluttet løb → deadline hopper til næste runde", status: "fail", message: e.message });
+    }
+
+    // 13D: Fallback — race_end_date mangler, brug race_date til at afgøre om løbet er forbi
+    try {
+      const pastStart = new Date(now.getTime() - 1 * oneDay).toISOString();
+      const futureStart = new Date(now.getTime() + 5 * oneDay).toISOString();
+      const races = [
+        { race_date: pastStart, race_end_date: null }, // intet end_date → race_date bruges → forbi
+        { race_date: futureStart, race_end_date: null },
+      ];
+      const deadline = computeTransferDeadline(races, now);
+      const expected = new Date(now.getTime() + 4 * oneDay).getTime();
+      const ok = deadline?.getTime() === expected;
+      subs.push({
+        name: "D: Fallback til race_date når race_end_date mangler",
+        status: ok ? "pass" : "fail",
+        message: ok ? `Korrekt: bruger næste fremtidige løb` : `FEJL: fik ${deadline?.toISOString()}, forventet ${new Date(expected).toISOString()}`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "D: Fallback til race_date når race_end_date mangler", status: "fail", message: e.message });
+    }
+
+    // 13E: Ingen kommende løb → null
+    try {
+      const races = [
+        { race_date: new Date(now.getTime() - 10 * oneDay).toISOString(), race_end_date: new Date(now.getTime() - 9 * oneDay).toISOString() },
+      ];
+      const deadline = computeTransferDeadline(races, now);
+      const ok = deadline === null;
+      subs.push({
+        name: "E: Ingen kommende løb → null",
+        status: ok ? "pass" : "fail",
+        message: ok ? "Korrekt null" : `FEJL: fik ${deadline?.toISOString()}`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "E: Ingen kommende løb → null", status: "fail", message: e.message });
+    }
+
+    // 13F: Sortering — vælger det tidligste fremtidige løb selv hvis input er omvendt
+    try {
+      const later = new Date(now.getTime() + 10 * oneDay).toISOString();
+      const sooner = new Date(now.getTime() + 3 * oneDay).toISOString();
+      const races = [
+        { race_date: later, race_end_date: null },
+        { race_date: sooner, race_end_date: null },
+      ];
+      const deadline = computeTransferDeadline(races, now);
+      const expected = new Date(now.getTime() + 2 * oneDay).getTime();
+      const ok = deadline?.getTime() === expected;
+      subs.push({
+        name: "F: Vælger tidligste kommende løb",
+        status: ok ? "pass" : "fail",
+        message: ok ? `Korrekt valg af nærmeste løb` : `FEJL: fik ${deadline?.toISOString()}`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "F: Vælger tidligste kommende løb", status: "fail", message: e.message });
+    }
+
+    const allPass = subs.every(s => s.status === "pass");
+    updateTest(12, {
+      status: allPass ? "pass" : "fail",
+      message: allPass ? "Transfer-deadline-logik virker korrekt i alle scenarier" : "Mindst ét scenarie fejler",
+      subTests: subs,
+    });
+  }
+
   // ──── RUN ALL ────
   async function runAllTests() {
     setRunning(true);
