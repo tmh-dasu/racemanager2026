@@ -1111,8 +1111,8 @@ export default function AdminTestPage() {
           session_type: session,
           position: r.position,
           dnf: r.dnf,
-          fastest_lap: false,
-          pole_position: false,
+
+
           points: calculatePoints(r.position, r.dnf),
         });
       }
@@ -1150,8 +1150,8 @@ export default function AdminTestPage() {
           session_type: session,
           position: r.position,
           dnf: r.dnf,
-          fastest_lap: false,
-          pole_position: false,
+
+
           points: calculatePoints(r.position, r.dnf),
         });
       }
@@ -1203,8 +1203,8 @@ export default function AdminTestPage() {
           session_type: otherSession,
           position: r.position,
           dnf: r.dnf,
-          fastest_lap: false,
-          pole_position: false,
+
+
           points: calculatePoints(r.position, r.dnf),
         });
       }
