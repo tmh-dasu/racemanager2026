@@ -65,6 +65,7 @@ export interface Manager {
   team_name: string;
   total_points: number;
   slug?: string;
+  created_at?: string;
 }
 
 export interface ManagerDriver {
