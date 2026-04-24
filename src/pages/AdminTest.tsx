@@ -60,6 +60,7 @@ const INITIAL_TESTS: TestResult[] = [
   { name: "Test 12 — Fairness ved sen tilmelding", status: "idle", message: "" },
   { name: "Test 13 — Transfer-deadline (race_end_date + 24t)", status: "idle", message: "" },
   { name: "Test 14 — CSV-parsing & upsert (ingen duplikater)", status: "idle", message: "" },
+  { name: "Test 15 — Gratis transfers før første runde", status: "idle", message: "" },
 ];
 
 // Stored IDs from seed
