@@ -68,7 +68,7 @@ export default function RulesPage() {
             Du kan tilmelde dig hele sæsonen igennem – men for at konkurrencen er fair, gælder følgende regel:
           </p>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• Dit hold scorer kun point i runder, hvor du var oprettet <strong className="text-foreground">senest 24 timer før løbets start</strong></li>
+            <li>• Dit hold scorer kun point i runder, hvor du var oprettet <strong className="text-foreground">senest 1 time før løbets start</strong></li>
             <li>• Tilmelder du dig <strong className="text-foreground">før første løbs deadline</strong>, er du med fra runde 1 og hele sæsonen</li>
             <li>• Tilmelder du dig <strong className="text-foreground">efter en runde er afgjort</strong>, kan du ikke score retroaktivt på den runde – du starter først fra næste runde, hvor du når deadlinen</li>
             <li>• Det samme gælder holdkaptajn-bonus: kun bonus for runder du var tilmeldt rettidigt</li>

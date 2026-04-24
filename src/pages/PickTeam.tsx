@@ -222,7 +222,7 @@ export default function PickTeamPage() {
             <p className="font-display font-semibold text-foreground">Husk holdkaptajn til hver runde</p>
             <p className="text-muted-foreground mt-0.5">
               Inden hver runde skal du vælge én af dine 3 kørere som <strong>holdkaptajn</strong> – kaptajnens point tæller dobbelt!
-              Valget foretages på <em>Mit Hold</em> og skal være på plads senest 24 timer før løbsstart. Glemmer du det, får du ingen bonus den runde.
+              Valget foretages på <em>Mit Hold</em> og skal være på plads senest 1 time før løbsstart. Glemmer du det, får du ingen bonus den runde.
             </p>
           </div>
         </div>
