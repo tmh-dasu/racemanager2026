@@ -53,13 +53,23 @@ export default function TransferConfirmContent({ swapOutDriver, swapInDriver, tr
         </p>
       </div>
 
-      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
-        <p className="text-sm text-muted-foreground">Pointfradrag ({TIER_EMOJI[swapInDriver?.tier || "bronze"]} {TIER_LABELS[swapInDriver?.tier || "bronze"]}kører)</p>
-        <p className="font-display text-2xl font-bold text-destructive">−{transferCost} point</p>
-      </div>
-      <p className="text-xs text-muted-foreground text-center">
-        Fradraget er permanent og kan ikke fortrydes.
-      </p>
+      {transferCost === 0 ? (
+        <div className="rounded-lg border border-success/30 bg-success/10 p-4 text-center">
+          <p className="text-sm text-muted-foreground">Pointfradrag</p>
+          <p className="font-display text-2xl font-bold text-success">Gratis</p>
+          <p className="text-xs text-muted-foreground mt-1">Transfers er gratis indtil første runde er kørt.</p>
+        </div>
+      ) : (
+        <>
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
+            <p className="text-sm text-muted-foreground">Pointfradrag ({TIER_EMOJI[swapInDriver?.tier || "bronze"]} {TIER_LABELS[swapInDriver?.tier || "bronze"]}kører)</p>
+            <p className="font-display text-2xl font-bold text-destructive">−{transferCost} point</p>
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            Fradraget er permanent og kan ikke fortrydes.
+          </p>
+        </>
+      )}
       <div className="flex gap-2">
         <Button variant="outline" onClick={onCancel} className="flex-1">Annuller</Button>
         <Button onClick={onConfirm} className="flex-1 bg-gradient-racing text-primary-foreground font-display">
