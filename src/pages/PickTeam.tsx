@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Check, AlertTriangle, Info, Trophy } from "lucide-react";
+import { Check, AlertTriangle, Info, Trophy, Crown } from "lucide-react";
 import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByUserId, fetchRaces, getFirstEligibleRace, type Driver } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -107,7 +107,10 @@ export default function PickTeamPage() {
       }).catch(console.error);
 
       queryClient.invalidateQueries({ queryKey: ["managers"] });
-      toast({ title: "Hold oprettet! 🏁" });
+      toast({
+        title: "Hold oprettet! 🏁",
+        description: "Husk at vælge holdkaptajn på Mit Hold inden hver runde – kaptajnens point tæller dobbelt!",
+      });
       navigate("/mit-hold");
     } catch (err: any) {
       const msg = err.message?.includes("managers_slug_unique")
@@ -211,6 +214,18 @@ export default function PickTeamPage() {
             </div>
           </div>
         )}
+
+        {/* Captain reminder */}
+        <div className="rounded-lg border border-gold/40 bg-gold/10 px-4 py-3 flex gap-3 items-start">
+          <Crown className="h-5 w-5 text-gold shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-display font-semibold text-foreground">Husk holdkaptajn til hver runde</p>
+            <p className="text-muted-foreground mt-0.5">
+              Inden hver runde skal du vælge én af dine 3 kørere som <strong>holdkaptajn</strong> – kaptajnens point tæller dobbelt!
+              Valget foretages på <em>Mit Hold</em> og skal være på plads senest 24 timer før løbsstart. Glemmer du det, får du ingen bonus den runde.
+            </p>
+          </div>
+        </div>
 
         <div className="max-w-md">
           <Input placeholder="Holdnavn" value={teamName} onChange={(e) => setTeamName(e.target.value)} className="bg-secondary border-border" />
