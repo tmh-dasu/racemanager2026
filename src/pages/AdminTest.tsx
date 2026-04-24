@@ -17,6 +17,7 @@ import {
   fetchRaces,
   fetchPredictionQuestions,
   computeTransferDeadline,
+  parseResultsCSV,
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +59,7 @@ const INITIAL_TESTS: TestResult[] = [
   { name: "Test 11 — Pointintegritet (cheat-forsøg)", status: "idle", message: "" },
   { name: "Test 12 — Fairness ved sen tilmelding", status: "idle", message: "" },
   { name: "Test 13 — Transfer-deadline (race_end_date + 24t)", status: "idle", message: "" },
+  { name: "Test 14 — CSV-parsing & upsert (ingen duplikater)", status: "idle", message: "" },
 ];
 
 // Stored IDs from seed
