@@ -1037,6 +1037,202 @@ export default function AdminTestPage() {
     });
   }
 
+  // ──── TEST 14: CSV-parsing og upsert af resultater ────
+  async function runTest14(tids: TestIds) {
+    updateTest(13, { status: "running", message: "Tester CSV-parsing og upsert..." });
+    const subs: { name: string; status: TestStatus; message: string }[] = [];
+
+    // Build the same drivers list that the live UI would have
+    const driverList = [
+      { id: tids.drivers["Test Guld 1"], car_number: 901 },
+      { id: tids.drivers["Test Guld 2"], car_number: 902 },
+      { id: tids.drivers["Test Sølv 1"], car_number: 903 },
+      { id: tids.drivers["Test Sølv 2"], car_number: 904 },
+      { id: tids.drivers["Test Bronze 1"], car_number: 905 },
+      { id: tids.drivers["Test Bronze 2"], car_number: 906 },
+    ];
+
+    // 14A: Basal CSV-parsing — komma, semikolon, tab, DNF, ukendt bilnummer
+    try {
+      const csv = [
+        "Pos,No,Name",
+        "1,901,Test Guld 1",
+        "2;903;Test Sølv 1",       // semikolon
+        "DNF,905,Test Bronze 1",   // DNF
+        "3\t902\tTest Guld 2",     // tab
+        "4,99999,Ukendt Kører",    // ukendt bilnummer → skip
+        "5,,Tom række",            // tomt bilnummer → skip
+      ].join("\n");
+      const { rows, matched, skipped } = parseResultsCSV(csv, driverList);
+      const expectedMatched = 4;
+      const expectedSkipped = 2;
+      const dnfRow = rows.find(r => r.car_number === 905);
+      const ok = matched === expectedMatched && skipped === expectedSkipped &&
+        dnfRow?.dnf === true && dnfRow?.position === null &&
+        rows.find(r => r.car_number === 901)?.position === 1;
+      subs.push({
+        name: "A: Parser komma/semikolon/tab + DNF + ukendt bilnummer",
+        status: ok ? "pass" : "fail",
+        message: ok ? `Matched=${matched}, Skipped=${skipped}, DNF korrekt` : `FEJL: matched=${matched}≠${expectedMatched}, skipped=${skipped}≠${expectedSkipped}`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "A: Parser komma/semikolon/tab + DNF + ukendt bilnummer", status: "fail", message: e.message });
+    }
+
+    // 14B: Tom CSV → 0 rows
+    try {
+      const { rows, matched } = parseResultsCSV("Pos,No,Name", driverList);
+      const ok = rows.length === 0 && matched === 0;
+      subs.push({ name: "B: Tom CSV → 0 rækker", status: ok ? "pass" : "fail", message: ok ? "Korrekt tom" : `FEJL: rows=${rows.length}` });
+    } catch (e: any) {
+      subs.push({ name: "B: Tom CSV → 0 rækker", status: "fail", message: e.message });
+    }
+
+    // 14C: Upsert — første upload til ny session, alle rækker oprettes
+    try {
+      // Brug en separat session for ikke at kollidere med Test 2's data
+      const session = "qualifying"; // Test 2 indsætter også her — vi rydder først
+      await supabase.from("race_results")
+        .delete()
+        .eq("race_id", tids.raceId)
+        .eq("session_type", session);
+
+      const csv = [
+        "Pos,No,Name",
+        "1,901,Test Guld 1",
+        "2,903,Test Sølv 1",
+        "3,905,Test Bronze 1",
+      ].join("\n");
+      const parsed = parseResultsCSV(csv, driverList);
+      for (const r of parsed.rows) {
+        await upsertRaceResult({
+          race_id: tids.raceId,
+          driver_id: r.driver_id,
+          session_type: session,
+          position: r.position,
+          dnf: r.dnf,
+          fastest_lap: false,
+          pole_position: false,
+          points: calculatePoints(r.position, r.dnf),
+        });
+      }
+
+      const { data: after1 } = await supabase.from("race_results")
+        .select("driver_id, position, points")
+        .eq("race_id", tids.raceId)
+        .eq("session_type", session);
+
+      const ok = (after1 || []).length === 3 &&
+        after1!.find(r => r.driver_id === driverList[0].id)?.position === 1;
+      subs.push({
+        name: "C: Første upload opretter 3 rækker",
+        status: ok ? "pass" : "fail",
+        message: ok ? `3 rækker oprettet, P1 korrekt` : `FEJL: ${after1?.length || 0} rækker fundet`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "C: Første upload opretter 3 rækker", status: "fail", message: e.message });
+    }
+
+    // 14D: Re-upload med ændrede placeringer → opdaterer eksisterende, INGEN duplikater
+    try {
+      const session = "qualifying";
+      const csv = [
+        "Pos,No,Name",
+        "3,901,Test Guld 1",   // 1 → 3
+        "1,903,Test Sølv 1",   // 2 → 1
+        "DNF,905,Test Bronze 1", // 3 → DNF
+      ].join("\n");
+      const parsed = parseResultsCSV(csv, driverList);
+      for (const r of parsed.rows) {
+        await upsertRaceResult({
+          race_id: tids.raceId,
+          driver_id: r.driver_id,
+          session_type: session,
+          position: r.position,
+          dnf: r.dnf,
+          fastest_lap: false,
+          pole_position: false,
+          points: calculatePoints(r.position, r.dnf),
+        });
+      }
+
+      const { data: after2 } = await supabase.from("race_results")
+        .select("driver_id, position, dnf, points")
+        .eq("race_id", tids.raceId)
+        .eq("session_type", session);
+
+      const guld = after2?.find(r => r.driver_id === driverList[0].id);
+      const solv = after2?.find(r => r.driver_id === driverList[2].id);
+      const bronze = after2?.find(r => r.driver_id === driverList[4].id);
+
+      const noDups = (after2 || []).length === 3;
+      const updated = guld?.position === 3 && solv?.position === 1 && bronze?.dnf === true;
+      const dnfPoints = bronze?.points === 0;
+      const ok = noDups && updated && dnfPoints;
+      subs.push({
+        name: "D: Re-upload opdaterer in-place (ingen duplikater)",
+        status: ok ? "pass" : "fail",
+        message: ok
+          ? `3 rækker (ingen duplikater), placeringer opdateret, DNF=0 point`
+          : `FEJL: rows=${after2?.length}, Guld=${guld?.position}, Sølv=${solv?.position}, Bronze.dnf=${bronze?.dnf}, Bronze.points=${bronze?.points}`,
+      });
+    } catch (e: any) {
+      subs.push({ name: "D: Re-upload opdaterer in-place (ingen duplikater)", status: "fail", message: e.message });
+    }
+
+    // 14E: Session-isolation — upload til en anden session må ikke ændre den første
+    try {
+      const otherSession = "heat1";
+      // Snapshot af qualifying FØR upload til heat1
+      const { data: qBefore } = await supabase.from("race_results")
+        .select("driver_id, position, dnf")
+        .eq("race_id", tids.raceId)
+        .eq("session_type", "qualifying")
+        .order("driver_id");
+
+      const csv = [
+        "Pos,No,Name",
+        "1,902,Test Guld 2",
+        "2,904,Test Sølv 2",
+      ].join("\n");
+      const parsed = parseResultsCSV(csv, driverList);
+      for (const r of parsed.rows) {
+        await upsertRaceResult({
+          race_id: tids.raceId,
+          driver_id: r.driver_id,
+          session_type: otherSession,
+          position: r.position,
+          dnf: r.dnf,
+          fastest_lap: false,
+          pole_position: false,
+          points: calculatePoints(r.position, r.dnf),
+        });
+      }
+
+      const { data: qAfter } = await supabase.from("race_results")
+        .select("driver_id, position, dnf")
+        .eq("race_id", tids.raceId)
+        .eq("session_type", "qualifying")
+        .order("driver_id");
+
+      const unchanged = JSON.stringify(qBefore) === JSON.stringify(qAfter);
+      subs.push({
+        name: "E: Upload til ny session påvirker ikke andre sessioner",
+        status: unchanged ? "pass" : "fail",
+        message: unchanged ? "Qualifying uændret efter heat1-upload" : "FEJL: qualifying blev ændret af heat1-upload",
+      });
+    } catch (e: any) {
+      subs.push({ name: "E: Upload til ny session påvirker ikke andre sessioner", status: "fail", message: e.message });
+    }
+
+    const allPass = subs.every(s => s.status === "pass");
+    updateTest(13, {
+      status: allPass ? "pass" : "fail",
+      message: allPass ? "CSV-parsing og upsert virker korrekt" : "Mindst ét scenarie fejler",
+      subTests: subs,
+    });
+  }
+
   // ──── RUN ALL ────
   async function runAllTests() {
     setRunning(true);
