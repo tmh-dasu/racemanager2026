@@ -29,7 +29,7 @@ function getStatusItems(nextRace: Race | null, questions: PredictionQuestion[], 
     items.push({ level: "green", message: `Arrangementsdato sat: ${new Date(nextRace.race_date).toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}` });
   }
 
-  // Holdkaptajn/transfer deadline (auto-calculated: race_date - 24h)
+  // Holdkaptajn/transfer deadline (auto-calculated: race_date - 1h)
   if (nextRace.race_date) {
     const deadline = new Date(new Date(nextRace.race_date).getTime() - 60 * 60 * 1000);
     items.push({ level: "green", message: `Deadline (holdkaptajn + transfer): ${deadline.toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` });

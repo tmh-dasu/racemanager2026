@@ -30,7 +30,7 @@ export interface Race {
   links: RaceLink[];
 }
 
-/** Derive the effective deadline (24h before race_date). Falls back to captain_deadline for legacy data. */
+/** Derive the effective deadline (1h before race_date). Falls back to captain_deadline for legacy data. */
 export function getEffectiveDeadline(race: Race): Date | null {
   if (race.race_date) {
     return new Date(new Date(race.race_date).getTime() - 60 * 60 * 1000);
