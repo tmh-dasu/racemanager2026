@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Check, AlertTriangle } from "lucide-react";
-import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByUserId, type Driver } from "@/lib/api";
+import { Check, AlertTriangle, Info, Trophy } from "lucide-react";
+import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByUserId, fetchRaces, getFirstEligibleRace, type Driver } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,7 @@ export default function PickTeamPage() {
   const { data: allDrivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const drivers = allDrivers.filter((d) => !d.withdrawn);
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
+  const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: existingManager } = useQuery({
     queryKey: ["manager", user?.id],
     queryFn: () => fetchManagerByUserId(user!.id),
@@ -158,6 +159,13 @@ export default function PickTeamPage() {
 
   const tierOrder: Tier[] = ["gold", "silver", "bronze"];
 
+  // Determine the first round this new manager will score in (Solution 3 fairness rule)
+  const firstEligible = getFirstEligibleRace(races);
+  const sortedRaces = [...races].sort((a, b) => a.round_number - b.round_number);
+  const firstSeasonRace = sortedRaces[0];
+  const startsLate = !!firstEligible && !!firstSeasonRace && firstEligible.id !== firstSeasonRace.id;
+  const noEligibleRace = !firstEligible && races.length > 0;
+
   return (
     <PageLayout>
       <div className="container py-6 space-y-8">
@@ -165,6 +173,44 @@ export default function PickTeamPage() {
           <h1 className="font-display text-2xl font-bold text-foreground">Vælg dit hold</h1>
           <p className="text-sm text-muted-foreground">Vælg præcis 1 kører fra hver kategori: Guld, Sølv og Bronze</p>
         </div>
+
+        {/* Fairness notice: when does this manager start scoring? */}
+        {firstEligible && (
+          <div className={`rounded-lg border px-4 py-3 flex gap-3 items-start ${
+            startsLate
+              ? "border-gold/40 bg-gold/10"
+              : "border-success/40 bg-success/10"
+          }`}>
+            {startsLate ? (
+              <Info className="h-5 w-5 text-gold shrink-0 mt-0.5" />
+            ) : (
+              <Trophy className="h-5 w-5 text-success shrink-0 mt-0.5" />
+            )}
+            <div className="text-sm">
+              <p className="font-display font-semibold text-foreground">
+                {startsLate
+                  ? `Du starter fra runde ${firstEligible.round_number}`
+                  : `Du er med fra runde ${firstEligible.round_number} – hele sæsonen!`}
+              </p>
+              <p className="text-muted-foreground mt-0.5">
+                {startsLate
+                  ? `Tidligere runder er allerede afgjort, så dit hold scorer først point fra ${firstEligible.name}. Det sikrer fair konkurrence – ingen kan vælge kørere efter resultaterne er kendt.`
+                  : `Deadline for runde ${firstEligible.round_number} er ikke nået endnu, så du får point fra første løb af sæsonen.`}
+              </p>
+            </div>
+          </div>
+        )}
+        {noEligibleRace && (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 flex gap-3 items-start">
+            <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-display font-semibold text-foreground">Sæsonen er afgjort</p>
+              <p className="text-muted-foreground mt-0.5">
+                Alle runder har passeret deadlinen, så et nyoprettet hold vil ikke kunne score point i denne sæson.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="max-w-md">
           <Input placeholder="Holdnavn" value={teamName} onChange={(e) => setTeamName(e.target.value)} className="bg-secondary border-border" />
