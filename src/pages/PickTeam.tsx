@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Check, AlertTriangle, Info, Trophy } from "lucide-react";
+import { Check, AlertTriangle, Info, Trophy, Crown } from "lucide-react";
 import { fetchDrivers, fetchSettings, createManager, addManagerDriver, fetchManagerByUserId, fetchRaces, getFirstEligibleRace, type Driver } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
