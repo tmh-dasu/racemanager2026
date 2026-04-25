@@ -48,7 +48,19 @@ export default function MyTeamPage() {
   // Auto deadline: 1h before next upcoming race
   const transferDeadline = useMemo(() => computeTransferDeadline(races), [races]);
   const deadlinePassed = transferDeadline ? new Date() >= transferDeadline : true;
-  const transfersAllowed = (settings?.transfer_window_open ?? false) && !deadlinePassed;
+
+  // Block transfers when a finished race is missing results (matches DB trigger)
+  const awaitingResults = useMemo(() => {
+    const now = new Date();
+    const scoredRaceIds = new Set(allResults.map(r => r.race_id));
+    return races.some(r => {
+      if (!r.race_date) return false;
+      const end = new Date(r.race_end_date || r.race_date);
+      return end <= now && !scoredRaceIds.has(r.id);
+    });
+  }, [races, allResults]);
+
+  const transfersAllowed = (settings?.transfer_window_open ?? false) && !deadlinePassed && !awaitingResults;
 
   const breakdown = useMemo(() => {
     if (!manager) return null;
