@@ -105,6 +105,7 @@ Deno.serve(async (req) => {
       const deadline = new Date(new Date(race.race_date!).getTime() - 60 * 60 * 1000)
       const deadlineStr = deadline.toLocaleString('da-DK', {
         day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+        timeZone: 'Europe/Copenhagen',
       })
 
       const raceQuestion = (predQuestions || []).find(q => q.race_id === race.id)
