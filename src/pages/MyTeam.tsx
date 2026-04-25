@@ -48,7 +48,19 @@ export default function MyTeamPage() {
   // Auto deadline: 1h before next upcoming race
   const transferDeadline = useMemo(() => computeTransferDeadline(races), [races]);
   const deadlinePassed = transferDeadline ? new Date() >= transferDeadline : true;
-  const transfersAllowed = (settings?.transfer_window_open ?? false) && !deadlinePassed;
+
+  // Block transfers when a finished race is missing results (matches DB trigger)
+  const awaitingResults = useMemo(() => {
+    const now = new Date();
+    const scoredRaceIds = new Set(allResults.map(r => r.race_id));
+    return races.some(r => {
+      if (!r.race_date) return false;
+      const end = new Date(r.race_end_date || r.race_date);
+      return end <= now && !scoredRaceIds.has(r.id);
+    });
+  }, [races, allResults]);
+
+  const transfersAllowed = (settings?.transfer_window_open ?? false) && !deadlinePassed && !awaitingResults;
 
   const breakdown = useMemo(() => {
     if (!manager) return null;
@@ -257,9 +269,11 @@ export default function MyTeamPage() {
           <span className="text-muted-foreground">
             {transfersAllowed
               ? "Transfervinduet er åbent"
-              : deadlinePassed && settings?.transfer_window_open
-                ? "Transfervinduet er lukket (deadline passeret)"
-                : "Transfervinduet er lukket"}
+              : awaitingResults
+                ? "Transfers låst – afventer resultater fra forrige runde"
+                : deadlinePassed && settings?.transfer_window_open
+                  ? "Transfervinduet er lukket (deadline passeret)"
+                  : "Transfervinduet er lukket"}
           </span>
         </div>
 
@@ -292,7 +306,7 @@ export default function MyTeamPage() {
           <Button
             onClick={() => transfersAllowed
               ? setTransferOpen(true)
-              : toast({ title: deadlinePassed ? "Deadline passeret (24t før løb)" : "Transfervinduet er lukket" })}
+              : toast({ title: awaitingResults ? "Transfers låst indtil resultater er uploadet" : deadlinePassed ? "Deadline passeret (1t før løb)" : "Transfervinduet er lukket" })}
             disabled={!transfersAllowed}
             className="bg-accent text-accent-foreground font-display font-semibold hover:bg-accent/90"
           >
