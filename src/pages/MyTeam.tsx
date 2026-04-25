@@ -306,7 +306,7 @@ export default function MyTeamPage() {
           <Button
             onClick={() => transfersAllowed
               ? setTransferOpen(true)
-              : toast({ title: deadlinePassed ? "Deadline passeret (24t før løb)" : "Transfervinduet er lukket" })}
+              : toast({ title: awaitingResults ? "Transfers låst indtil resultater er uploadet" : deadlinePassed ? "Deadline passeret (1t før løb)" : "Transfervinduet er lukket" })}
             disabled={!transfersAllowed}
             className="bg-accent text-accent-foreground font-display font-semibold hover:bg-accent/90"
           >
