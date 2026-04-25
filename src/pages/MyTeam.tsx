@@ -269,9 +269,11 @@ export default function MyTeamPage() {
           <span className="text-muted-foreground">
             {transfersAllowed
               ? "Transfervinduet er åbent"
-              : deadlinePassed && settings?.transfer_window_open
-                ? "Transfervinduet er lukket (deadline passeret)"
-                : "Transfervinduet er lukket"}
+              : awaitingResults
+                ? "Transfers låst – afventer resultater fra forrige runde"
+                : deadlinePassed && settings?.transfer_window_open
+                  ? "Transfervinduet er lukket (deadline passeret)"
+                  : "Transfervinduet er lukket"}
           </span>
         </div>
 
