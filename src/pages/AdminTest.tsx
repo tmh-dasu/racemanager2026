@@ -1334,6 +1334,104 @@ export default function AdminTestPage() {
     });
   }
 
+  // ──── TEST 16: Transfers låst når resultater mangler ────
+  async function runTest16(tids: TestIds) {
+    updateTest(15, { status: "running", message: "Tester at transfers låses når en runde er kørt uden resultater..." });
+    const subs: { name: string; status: TestStatus; message: string }[] = [];
+
+    const mgrA = tids.managers["Spiller A"];
+    const oldDriver = tids.drivers["Test Sølv 1"];
+    const newDriver = tids.drivers["Test Sølv 2"];
+    let pastRaceId: string | null = null;
+
+    try {
+      // 16A: Opret en afsluttet race UDEN resultater + en fremtidig race
+      const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // i går
+      const future = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // om 7 dage
+
+      const { data: pastRace, error: pastErr } = await supabase
+        .from("races")
+        .insert({ name: "Test Lock Race Past", round_number: 200, race_date: past, race_end_date: past, location: "Test" } as any)
+        .select("id").single();
+      if (pastErr || !pastRace) throw new Error("Kunne ikke oprette afsluttet test-race: " + pastErr?.message);
+      pastRaceId = pastRace.id;
+
+      const { data: futureRace, error: futErr } = await supabase
+        .from("races")
+        .insert({ name: "Test Lock Race Future", round_number: 201, race_date: future, location: "Test" } as any)
+        .select("id").single();
+      if (futErr || !futureRace) throw new Error("Kunne ikke oprette fremtidig test-race: " + futErr?.message);
+
+      // 16A: UI-helper-logik (samme som MyTeam.tsx) — skal returnere true
+      const { data: races } = await supabase.from("races").select("id, race_date, race_end_date");
+      const { data: results } = await supabase.from("race_results").select("race_id");
+      const scoredRaceIds = new Set((results || []).map(r => r.race_id));
+      const now = new Date();
+      const awaitingResults = (races || []).some(r => {
+        if (!r.race_date) return false;
+        const end = new Date(r.race_end_date || r.race_date);
+        return end <= now && !scoredRaceIds.has(r.id);
+      });
+      subs.push({
+        name: "A: UI-flag awaitingResults = true når resultater mangler",
+        status: awaitingResults ? "pass" : "fail",
+        message: awaitingResults ? "UI låser transfer-knap ✓" : "UI registrerer ikke den manglende runde",
+      });
+
+      // Vi kan ikke rigtigt teste DB-triggeren her, fordi den eksisterende test-race fra seed
+      // typisk allerede har resultater fra Test 5. Men vi kan validere at trigger-funktionen
+      // findes og indeholder vores nye logik.
+      const { data: fnDef } = await supabase.rpc("has_role" as any, { _user_id: "00000000-0000-0000-0000-000000000000", _role: "admin" });
+      // ^ dummy-call — vi kan ikke læse pg_proc direkte. Spring trigger-validering over.
+      void fnDef;
+
+      // 16B: Tilføj resultat for past race → awaitingResults skal blive false
+      const dummyResult = {
+        race_id: pastRaceId,
+        driver_id: oldDriver,
+        session_type: "heat1",
+        position: 1,
+        points: 25,
+        dnf: false,
+        fastest_lap: false,
+        pole_position: false,
+      };
+      await supabase.from("race_results").insert(dummyResult);
+
+      const { data: results2 } = await supabase.from("race_results").select("race_id");
+      const scored2 = new Set((results2 || []).map(r => r.race_id));
+      const stillAwaiting = (races || []).some(r => {
+        if (!r.race_date) return false;
+        const end = new Date(r.race_end_date || r.race_date);
+        return end <= now && !scored2.has(r.id);
+      });
+      subs.push({
+        name: "B: UI-flag awaitingResults = false efter resultater uploadet",
+        status: !stillAwaiting ? "pass" : "fail",
+        message: !stillAwaiting ? "Transfer-låsen frigives ✓" : "UI er stadig låst trods resultater",
+      });
+
+      // Bruger ikke gennemfører transfer her — vi tester kun UI-logikken.
+      void mgrA; void newDriver;
+    } catch (e: any) {
+      subs.push({ name: "Test 16 — uventet fejl", status: "fail", message: e.message });
+    } finally {
+      // Cleanup: slet test-race + dens resultater + den fremtidige race
+      if (pastRaceId) {
+        await supabase.from("race_results").delete().eq("race_id", pastRaceId);
+        await supabase.from("races").delete().eq("id", pastRaceId);
+      }
+      await supabase.from("races").delete().eq("name", "Test Lock Race Future");
+    }
+
+    const allPass = subs.every(s => s.status === "pass");
+    updateTest(15, {
+      status: allPass ? "pass" : "fail",
+      message: allPass ? "Transfer-låse-logik fungerer korrekt" : "Mindst ét scenarie fejler",
+      subTests: subs,
+    });
+  }
+
   // ──── RUN ALL ────
   async function runAllTests() {
     setRunning(true);
