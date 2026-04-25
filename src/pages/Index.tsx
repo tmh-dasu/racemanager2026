@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift, MapPin, ExternalLink, Award } from "lucide-react";
-import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, type Prize } from "@/lib/api";
+import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchRaceResults, computeTransferDeadline, type Prize } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 import dslLogo from "@/assets/dsl-logo.png";
 
@@ -44,10 +44,28 @@ export default function HomePage() {
   const { data: predictionQuestions = [] } = useQuery({ queryKey: ["prediction_questions_published"], queryFn: fetchPublishedPredictionQuestions });
   const { data: sponsors = [] } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
   const { data: prizes = [] } = useQuery({ queryKey: ["prizes"], queryFn: fetchPrizes });
+  const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
 
   const now = new Date();
   const nextRace = races.find((r) => r.race_date && new Date(r.race_date) > now);
   const top5 = managers.slice(0, 5);
+
+  const transferDeadline = computeTransferDeadline(races, now);
+  const deadlinePassed = transferDeadline ? now >= transferDeadline : true;
+  const scoredRaceIds = new Set(allResults.map((r) => r.race_id));
+  const awaitingResults = races.some((r) => {
+    if (!r.race_date) return false;
+    const end = new Date(r.race_end_date || r.race_date);
+    return end <= now && !scoredRaceIds.has(r.id);
+  });
+  const transfersOpen = (settings?.transfer_window_open ?? false) && !deadlinePassed && !awaitingResults;
+  const transferLabel = transfersOpen
+    ? "Transfer åbent"
+    : awaitingResults
+      ? "Transfer låst (afventer resultater)"
+      : deadlinePassed && settings?.transfer_window_open
+        ? "Transfer lukket (deadline passeret)"
+        : "Transfer lukket";
   const registrationOpen = settings?.team_registration_open ?? false;
 
   // Check if predictions are open for next race
@@ -157,8 +175,8 @@ export default function HomePage() {
               {/* Transfer window */}
               <div className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs">
                 <ArrowLeftRight className="h-3 w-3" />
-                <span className={settings?.transfer_window_open ? "text-success" : "text-muted-foreground"}>
-                  Transfer {settings?.transfer_window_open ? "åbent" : "lukket"}
+                <span className={transfersOpen ? "text-success" : "text-muted-foreground"}>
+                  {transferLabel}
                 </span>
               </div>
 
