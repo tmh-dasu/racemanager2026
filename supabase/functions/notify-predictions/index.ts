@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
 
     const deadline = questions[0].prediction_deadline
     const deadlineStr = deadline
-      ? new Date(deadline).toLocaleString('da-DK', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+      ? new Date(deadline).toLocaleString('da-DK', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Copenhagen' })
       : 'Ikke sat'
 
     const questionList = questions.map((q: any, i: number) =>
