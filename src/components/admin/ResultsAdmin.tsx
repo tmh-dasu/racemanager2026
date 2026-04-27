@@ -188,14 +188,18 @@ export default function ResultsAdmin() {
   function downloadCSVTemplate() {
     const header = "Pos,No,Name";
     const rows = drivers.map((d) => `,${d.car_number},${d.name}`);
-    const csv = [header, ...rows].join("\n");
+    const csv = "\uFEFF" + [header, ...rows].join("\n"); // BOM for Excel
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = "resultat-skabelon.csv";
+    a.rel = "noopener";
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast({ title: `Skabelon downloadet (${drivers.length} kørere)` });
   }
 
   return (
