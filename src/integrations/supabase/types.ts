@@ -546,6 +546,42 @@ export type Database = {
         }
         Relationships: []
       }
+      result_import_log: {
+        Row: {
+          created_at: string
+          id: string
+          imported_by: string | null
+          mismatch_count: number
+          race_id: string
+          saved_rows: number
+          session_type: string
+          skipped_rows: number
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imported_by?: string | null
+          mismatch_count?: number
+          race_id: string
+          saved_rows?: number
+          session_type: string
+          skipped_rows?: number
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imported_by?: string | null
+          mismatch_count?: number
+          race_id?: string
+          saved_rows?: number
+          session_type?: string
+          skipped_rows?: number
+          source?: string
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           created_at: string
