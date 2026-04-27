@@ -25,6 +25,7 @@ export default function ResultsAdmin() {
   const [uploadSession, setUploadSession] = useState<string>(SESSION_TYPES[0]);
   const [previewRows, setPreviewRows] = useState<ParsedCSVRow[] | null>(null);
   const [previewSkipped, setPreviewSkipped] = useState(0);
+  const [gridLoading, setGridLoading] = useState(false);
   // Track stats from last CSV import to attach to next save
   const [lastCsvStats, setLastCsvStats] = useState<{ skipped: number; mismatches: number; session: string } | null>(null);
 
@@ -46,6 +47,9 @@ export default function ResultsAdmin() {
 
   const initGrid = useCallback(async (raceId: string) => {
     setSelectedRace(raceId);
+    setGridLoading(true);
+    // Reset to empty while loading to avoid showing stale data from another round
+    setGrid({});
     const init: GridData = {};
     drivers.forEach((d) => {
       init[d.id] = {};
@@ -64,6 +68,7 @@ export default function ResultsAdmin() {
       }
     });
     setGrid(init);
+    setGridLoading(false);
   }, [drivers]);
 
   function updateCell(driverId: string, session: string, field: keyof CellData, value: any) {
@@ -144,6 +149,11 @@ export default function ResultsAdmin() {
   function handleCSVUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedRace) return;
+    if (gridLoading) {
+      toast({ title: "Vent — eksisterende resultater indlæses stadig", variant: "destructive" });
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (ev) => {
