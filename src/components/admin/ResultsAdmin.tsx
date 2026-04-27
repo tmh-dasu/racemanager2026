@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Upload, CheckCircle2, AlertCircle, Mail, History } from "lucide-react";
+import { Save, Upload, CheckCircle2, AlertCircle, Mail, History, Download } from "lucide-react";
 import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, parseResultsCSV, SESSION_TYPES, SESSION_LABELS, type Driver, type Race, type ParsedCSVRow } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -185,6 +185,19 @@ export default function ResultsAdmin() {
     return Object.values(grid).filter((s) => s[session]?.position || s[session]?.dnf).length;
   };
 
+  function downloadCSVTemplate() {
+    const header = "Pos,No,Name";
+    const rows = drivers.map((d) => `,${d.car_number},${d.name}`);
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "resultat-skabelon.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="space-y-4">
       {/* Round selector with status indicators */}
@@ -225,6 +238,9 @@ export default function ResultsAdmin() {
             </select>
             <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="font-display">
               <Upload className="h-4 w-4 mr-2" />Upload CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={downloadCSVTemplate} className="font-display">
+              <Download className="h-4 w-4 mr-2" />Skabelon
             </Button>
             <Button onClick={handleSaveAll} disabled={saving} className="bg-gradient-racing text-primary-foreground font-display" size="sm">
               <Save className="h-4 w-4 mr-2" />{saving ? "Gemmer..." : "Gem alle sessioner"}
