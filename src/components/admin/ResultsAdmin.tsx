@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Upload, CheckCircle2, AlertCircle, Mail } from "lucide-react";
+import { Save, Upload, CheckCircle2, AlertCircle, Mail, History } from "lucide-react";
 import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, parseResultsCSV, SESSION_TYPES, SESSION_LABELS, type Driver, type Race, type ParsedCSVRow } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,21 @@ export default function ResultsAdmin() {
   const [uploadSession, setUploadSession] = useState<string>(SESSION_TYPES[0]);
   const [previewRows, setPreviewRows] = useState<ParsedCSVRow[] | null>(null);
   const [previewSkipped, setPreviewSkipped] = useState(0);
+  // Track stats from last CSV import to attach to next save
+  const [lastCsvStats, setLastCsvStats] = useState<{ skipped: number; mismatches: number; session: string } | null>(null);
+
+  const { data: importLog = [] } = useQuery({
+    queryKey: ["result_import_log"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("result_import_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   // Track which rounds have results
   const roundsWithResults = new Set(allResults.map(r => r.race_id));
@@ -85,8 +100,24 @@ export default function ResultsAdmin() {
         }
       }
       await recalculateManagerPoints();
+
+      // Write import log entry
+      const { data: { user } } = await supabase.auth.getUser();
+      const session = lastCsvStats?.session || uploadSession;
+      await supabase.from("result_import_log").insert({
+        race_id: selectedRace,
+        session_type: session,
+        saved_rows: count,
+        skipped_rows: lastCsvStats?.skipped || 0,
+        mismatch_count: lastCsvStats?.mismatches || 0,
+        source: lastCsvStats ? "csv" : "manual",
+        imported_by: user?.id || null,
+      });
+      setLastCsvStats(null);
+
       queryClient.invalidateQueries({ queryKey: ["race_results"] });
       queryClient.invalidateQueries({ queryKey: ["managers"] });
+      queryClient.invalidateQueries({ queryKey: ["result_import_log"] });
       toast({ title: `${count} resultater gemt for alle sessioner ✅` });
     } catch (err: any) {
       toast({ title: err.message, variant: "destructive" });
@@ -117,13 +148,14 @@ export default function ResultsAdmin() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
-      const { rows, matched, skipped } = parseResultsCSV(text, drivers);
+      const { rows, matched, skipped, mismatches } = parseResultsCSV(text, drivers);
       if (rows.length === 0 && matched === 0) {
         toast({ title: "CSV-fil er tom eller ingen matchende kørere", variant: "destructive" });
         return;
       }
       setPreviewRows(rows);
       setPreviewSkipped(skipped);
+      setLastCsvStats({ skipped, mismatches, session: uploadSession });
     };
     reader.readAsText(file);
     if (fileRef.current) fileRef.current.value = "";
@@ -314,6 +346,51 @@ export default function ResultsAdmin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Import log */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <History className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-display text-sm font-bold text-foreground">Import-log (seneste 50)</h3>
+        </div>
+        {importLog.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Ingen imports endnu.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-muted-foreground text-xs">
+                <tr className="border-b border-border">
+                  <th className="text-left px-2 py-1.5 font-display">Tidspunkt</th>
+                  <th className="text-left px-2 py-1.5 font-display">Runde</th>
+                  <th className="text-left px-2 py-1.5 font-display">Session</th>
+                  <th className="text-right px-2 py-1.5 font-display">Gemt</th>
+                  <th className="text-right px-2 py-1.5 font-display">Skipped</th>
+                  <th className="text-right px-2 py-1.5 font-display">Mismatch</th>
+                  <th className="text-left px-2 py-1.5 font-display">Kilde</th>
+                </tr>
+              </thead>
+              <tbody>
+                {importLog.map((log: any) => {
+                  const race = races.find((r) => r.id === log.race_id);
+                  return (
+                    <tr key={log.id} className="border-b border-border/50">
+                      <td className="px-2 py-1.5 text-foreground">
+                        {new Date(log.created_at).toLocaleString("da-DK", { dateStyle: "short", timeStyle: "short" })}
+                      </td>
+                      <td className="px-2 py-1.5 text-foreground">{race ? `R${race.round_number}` : "?"}</td>
+                      <td className="px-2 py-1.5 text-foreground">{SESSION_LABELS[log.session_type] || log.session_type}</td>
+                      <td className="px-2 py-1.5 text-right font-medium text-foreground">{log.saved_rows}</td>
+                      <td className={`px-2 py-1.5 text-right ${log.skipped_rows > 0 ? "text-amber-700 dark:text-amber-500" : "text-muted-foreground"}`}>{log.skipped_rows}</td>
+                      <td className={`px-2 py-1.5 text-right ${log.mismatch_count > 0 ? "text-amber-700 dark:text-amber-500" : "text-muted-foreground"}`}>{log.mismatch_count}</td>
+                      <td className="px-2 py-1.5 text-muted-foreground">{log.source}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
