@@ -335,15 +335,19 @@ export interface ParsedCSVRow {
   car_number: number;
   position: number | null;
   dnf: boolean;
+  csv_name: string;
+  system_name: string;
+  name_mismatch: boolean;
 }
 export function parseResultsCSV(
   text: string,
-  drivers: { id: string; car_number: number }[],
-): { rows: ParsedCSVRow[]; matched: number; skipped: number } {
+  drivers: { id: string; car_number: number; name?: string }[],
+): { rows: ParsedCSVRow[]; matched: number; skipped: number; mismatches: number } {
   const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return { rows: [], matched: 0, skipped: 0 };
+  if (lines.length < 2) return { rows: [], matched: 0, skipped: 0, mismatches: 0 };
   const rows: ParsedCSVRow[] = [];
   let skipped = 0;
+  let mismatches = 0;
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(/[,;\t]/).map(c => c.trim());
     if (cols.length < 2) { skipped++; continue; }
@@ -362,9 +366,21 @@ export function parseResultsCSV(
       if (isNaN(p)) { skipped++; continue; }
       position = p;
     }
-    rows.push({ driver_id: driver.id, car_number: carNum, position, dnf });
+    const csvName = (cols[2] || "").trim();
+    const systemName = driver.name || "";
+    // Loose comparison: case-insensitive, tolerate "Last, First" vs "First Last"
+    const norm = (s: string) => s.toLowerCase().replace(/[,]/g, " ").replace(/\s+/g, " ").trim();
+    const csvTokens = new Set(norm(csvName).split(" ").filter(Boolean));
+    const sysTokens = norm(systemName).split(" ").filter(Boolean);
+    const overlap = sysTokens.filter(t => csvTokens.has(t)).length;
+    const nameMismatch = csvName.length > 0 && overlap < Math.min(2, sysTokens.length);
+    if (nameMismatch) mismatches++;
+    rows.push({
+      driver_id: driver.id, car_number: carNum, position, dnf,
+      csv_name: csvName, system_name: systemName, name_mismatch: nameMismatch,
+    });
   }
-  return { rows, matched: rows.length, skipped };
+  return { rows, matched: rows.length, skipped, mismatches };
 }
 
 export async function recalculateManagerPoints() {
