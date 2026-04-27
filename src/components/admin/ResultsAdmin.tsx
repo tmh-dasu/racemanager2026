@@ -1,10 +1,11 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save, Upload, CheckCircle2, AlertCircle, Mail } from "lucide-react";
-import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, parseResultsCSV, SESSION_TYPES, SESSION_LABELS, type Driver, type Race } from "@/lib/api";
+import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, parseResultsCSV, SESSION_TYPES, SESSION_LABELS, type Driver, type Race, type ParsedCSVRow } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
 type CellData = { position: string; dnf: boolean };
@@ -22,6 +23,8 @@ export default function ResultsAdmin() {
   const [saving, setSaving] = useState(false);
   const [notifying, setNotifying] = useState(false);
   const [uploadSession, setUploadSession] = useState<string>(SESSION_TYPES[0]);
+  const [previewRows, setPreviewRows] = useState<ParsedCSVRow[] | null>(null);
+  const [previewSkipped, setPreviewSkipped] = useState(0);
 
   // Track which rounds have results
   const roundsWithResults = new Set(allResults.map(r => r.race_id));
@@ -114,27 +117,35 @@ export default function ResultsAdmin() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
-      const { rows, matched } = parseResultsCSV(text, drivers);
+      const { rows, matched, skipped } = parseResultsCSV(text, drivers);
       if (rows.length === 0 && matched === 0) {
         toast({ title: "CSV-fil er tom eller ingen matchende kørere", variant: "destructive" });
         return;
       }
-      const newGrid = { ...grid };
-      for (const r of rows) {
-        if (!newGrid[r.driver_id]) {
-          newGrid[r.driver_id] = {};
-          SESSION_TYPES.forEach(s => { newGrid[r.driver_id][s] = { position: "", dnf: false }; });
-        }
-        newGrid[r.driver_id][uploadSession] = {
-          position: r.dnf ? "" : (r.position !== null ? String(r.position) : ""),
-          dnf: r.dnf,
-        };
-      }
-      setGrid(newGrid);
-      toast({ title: `${matched} kørere indlæst til ${SESSION_LABELS[uploadSession]}` });
+      setPreviewRows(rows);
+      setPreviewSkipped(skipped);
     };
     reader.readAsText(file);
     if (fileRef.current) fileRef.current.value = "";
+  }
+
+  function confirmCSVImport() {
+    if (!previewRows) return;
+    const newGrid = { ...grid };
+    for (const r of previewRows) {
+      if (!newGrid[r.driver_id]) {
+        newGrid[r.driver_id] = {};
+        SESSION_TYPES.forEach(s => { newGrid[r.driver_id][s] = { position: "", dnf: false }; });
+      }
+      newGrid[r.driver_id][uploadSession] = {
+        position: r.dnf ? "" : (r.position !== null ? String(r.position) : ""),
+        dnf: r.dnf,
+      };
+    }
+    setGrid(newGrid);
+    toast({ title: `${previewRows.length} kørere indlæst til ${SESSION_LABELS[uploadSession]}` });
+    setPreviewRows(null);
+    setPreviewSkipped(0);
   }
 
   const sessionCount = (session: string) => {
@@ -252,6 +263,57 @@ export default function ResultsAdmin() {
           </div>
         </>
       )}
+
+      <Dialog open={!!previewRows} onOpenChange={(open) => { if (!open) { setPreviewRows(null); setPreviewSkipped(0); } }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              Bekræft CSV-import — {SESSION_LABELS[uploadSession]}
+            </DialogTitle>
+          </DialogHeader>
+          {previewRows && (
+            <>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <div>{previewRows.length} kørere matchet på bilnummer{previewSkipped > 0 && `, ${previewSkipped} linjer sprunget over`}.</div>
+                {previewRows.some(r => r.name_mismatch) && (
+                  <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-500 font-medium">
+                    <AlertCircle className="h-4 w-4" />
+                    {previewRows.filter(r => r.name_mismatch).length} navne matcher ikke — tjek venligst nedenfor
+                  </div>
+                )}
+              </div>
+              <div className="overflow-y-auto flex-1 border border-border rounded">
+                <table className="w-full text-sm">
+                  <thead className="bg-secondary sticky top-0">
+                    <tr>
+                      <th className="text-left px-2 py-1.5 font-display">Pos</th>
+                      <th className="text-left px-2 py-1.5 font-display">#</th>
+                      <th className="text-left px-2 py-1.5 font-display">Navn i CSV</th>
+                      <th className="text-left px-2 py-1.5 font-display">Navn i system</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewRows.map((r, i) => (
+                      <tr key={i} className={`border-t border-border ${r.name_mismatch ? "bg-amber-50 dark:bg-amber-950/30" : ""}`}>
+                        <td className="px-2 py-1">{r.dnf ? <span className="text-destructive font-bold">DNF</span> : r.position}</td>
+                        <td className="px-2 py-1 text-muted-foreground">#{r.car_number}</td>
+                        <td className="px-2 py-1">{r.csv_name || <span className="text-muted-foreground italic">–</span>}</td>
+                        <td className={`px-2 py-1 ${r.name_mismatch ? "text-amber-700 dark:text-amber-500 font-medium" : ""}`}>{r.system_name}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPreviewRows(null); setPreviewSkipped(0); }}>Annullér</Button>
+            <Button onClick={confirmCSVImport} className="bg-gradient-racing text-primary-foreground font-display">
+              Bekræft og indlæs
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
