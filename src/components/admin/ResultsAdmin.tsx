@@ -334,24 +334,58 @@ export default function ResultsAdmin() {
                 <table className="w-full text-sm">
                   <thead className="bg-secondary sticky top-0">
                     <tr>
+                      <th className="text-center px-2 py-1.5 font-display w-8"></th>
                       <th className="text-left px-2 py-1.5 font-display">Pos</th>
                       <th className="text-left px-2 py-1.5 font-display">#</th>
                       <th className="text-left px-2 py-1.5 font-display">Navn i CSV</th>
                       <th className="text-left px-2 py-1.5 font-display">Navn i system</th>
+                      <th className="text-left px-2 py-1.5 font-display">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {previewRows.map((r, i) => (
-                      <tr key={i} className={`border-t border-border ${r.name_mismatch ? "bg-amber-50 dark:bg-amber-950/30" : ""}`}>
+                      <tr
+                        key={i}
+                        className={`border-t border-border ${
+                          r.name_mismatch
+                            ? "bg-destructive/10 border-l-4 border-l-destructive"
+                            : ""
+                        }`}
+                      >
+                        <td className="px-2 py-1 text-center">
+                          {r.name_mismatch ? (
+                            <AlertCircle className="h-4 w-4 text-destructive inline-block" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4 text-success inline-block opacity-60" />
+                          )}
+                        </td>
                         <td className="px-2 py-1">{r.dnf ? <span className="text-destructive font-bold">DNF</span> : r.position}</td>
-                        <td className="px-2 py-1 text-muted-foreground">#{r.car_number}</td>
-                        <td className="px-2 py-1">{r.csv_name || <span className="text-muted-foreground italic">–</span>}</td>
-                        <td className={`px-2 py-1 ${r.name_mismatch ? "text-amber-700 dark:text-amber-500 font-medium" : ""}`}>{r.system_name}</td>
+                        <td className={`px-2 py-1 ${r.name_mismatch ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+                          #{r.car_number}
+                        </td>
+                        <td className={`px-2 py-1 ${r.name_mismatch ? "text-destructive font-medium" : ""}`}>
+                          {r.csv_name || <span className="text-muted-foreground italic">–</span>}
+                        </td>
+                        <td className={`px-2 py-1 ${r.name_mismatch ? "text-destructive font-medium" : ""}`}>
+                          {r.system_name}
+                        </td>
+                        <td className="px-2 py-1 text-xs">
+                          {r.name_mismatch ? (
+                            <span className="text-destructive font-bold">⚠ Tjek bilnummer</span>
+                          ) : (
+                            <span className="text-success">OK</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+              {previewRows.some(r => r.name_mismatch) && (
+                <div className="text-xs text-muted-foreground bg-destructive/5 border border-destructive/20 rounded p-2">
+                  💡 Mismatch betyder typisk at bilnummeret i CSV'en hører til en anden kører end forventet. Verificér at tidtagningen bruger korrekte bilnumre før import.
+                </div>
+              )}
             </>
           )}
           <DialogFooter>
