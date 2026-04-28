@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Save, Gift, Shuffle, Trophy, Award, Copy } from "lucide-react";
+import { Plus, Trash2, Save, Gift, Shuffle, Trophy, Award, Copy, UserCog } from "lucide-react";
 import { fetchPrizes, upsertPrize, deletePrize, fetchManagers, type Prize } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 const CATEGORY_CONFIG = {
@@ -70,13 +71,7 @@ export default function PrizeLottery() {
     const winner = eligible[Math.floor(Math.random() * eligible.length)];
     try {
       await upsertPrize({ id: prize.id, name: prize.name, winner_manager_id: winner.id, drawn_at: new Date().toISOString() });
-      const { error: notifyError } = await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: prize.id } });
-      if (notifyError) {
-        console.error("Prize winner email error:", notifyError);
-        toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"!`, description: "Email kunne ikke sendes.", variant: "destructive" });
-      } else {
-        toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"! Email sendt.` });
-      }
+      toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"!` });
       refetch();
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
     setDrawing(null);
