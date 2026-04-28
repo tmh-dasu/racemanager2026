@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift, MapPin, ExternalLink, Award } from "lucide-react";
-import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchRaceResults, computeTransferDeadline, type Prize } from "@/lib/api";
+import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchRaceResults, fetchAllCaptainSelections, fetchPredictionQuestions, computeTransferDeadline, type Prize } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
+import { supabase } from "@/integrations/supabase/client";
 import dslLogo from "@/assets/dsl-logo.png";
 
 function CountdownTimer({ deadline, label }: { deadline: string; label: string }) {
@@ -45,6 +46,22 @@ export default function HomePage() {
   const { data: sponsors = [] } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
   const { data: prizes = [] } = useQuery({ queryKey: ["prizes"], queryFn: fetchPrizes });
   const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
+  const { data: allCaptains = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
+  const { data: allMDs = [] } = useQuery({
+    queryKey: ["all_manager_drivers_public"],
+    queryFn: async () => {
+      const { data } = await supabase.from("manager_drivers").select("manager_id, driver_id");
+      return (data || []) as { manager_id: string; driver_id: string }[];
+    },
+  });
+  const { data: allPredAnswers = [] } = useQuery({
+    queryKey: ["all_prediction_answers_public"],
+    queryFn: async () => {
+      const { data } = await supabase.from("prediction_answers").select("manager_id, question_id, is_correct");
+      return (data || []) as { manager_id: string; question_id: string; is_correct: boolean | null }[];
+    },
+  });
+  const { data: allQuestions = [] } = useQuery({ queryKey: ["prediction_questions_all"], queryFn: fetchPredictionQuestions });
 
   const now = new Date();
   const nextRace = races.find((r) => r.race_date && new Date(r.race_date) > now);
@@ -257,9 +274,75 @@ export default function HomePage() {
               {/* Winners list - shown when prizes have been drawn */}
               {(() => {
                 const wonPrizes = prizes.filter((p) => p.winner_manager_id && p.drawn_at);
-                if (wonPrizes.length === 0) return null;
-                const sortedWinners = [...wonPrizes].sort(
-                  (a, b) => new Date(b.drawn_at!).getTime() - new Date(a.drawn_at!).getTime()
+
+                // Compute round top scorer for each completed round (afdelingspræmie)
+                const racesWithResults = races
+                  .filter((race) => allResults.some((r) => r.race_id === race.id))
+                  .sort((a, b) => b.round_number - a.round_number);
+
+                type RoundWinner = {
+                  key: string;
+                  prizeName: string;
+                  category: "round";
+                  drawnAt: string;
+                  managerId: string | null;
+                  total: number;
+                };
+
+                const roundWinners: RoundWinner[] = racesWithResults.map((race) => {
+                  const raceQuestionIds = new Set(
+                    allQuestions.filter((q) => q.race_id === race.id).map((q) => q.id)
+                  );
+                  let best: { managerId: string; total: number } | null = null;
+                  managers.forEach((mgr) => {
+                    const driverIds = allMDs
+                      .filter((md) => md.manager_id === mgr.id)
+                      .map((md) => md.driver_id);
+                    const racePoints = allResults
+                      .filter((r) => r.race_id === race.id && driverIds.includes(r.driver_id))
+                      .reduce((s, r) => s + r.points, 0);
+                    const captainSel = allCaptains.find(
+                      (c) => c.manager_id === mgr.id && c.race_id === race.id
+                    );
+                    let captainBonus = 0;
+                    if (captainSel) {
+                      captainBonus = allResults
+                        .filter((r) => r.race_id === race.id && r.driver_id === captainSel.driver_id)
+                        .reduce((s, r) => s + r.points, 0);
+                    }
+                    const predictionPoints =
+                      allPredAnswers.filter(
+                        (a) =>
+                          a.manager_id === mgr.id &&
+                          raceQuestionIds.has(a.question_id) &&
+                          a.is_correct === true
+                      ).length * 5;
+                    const total = racePoints + captainBonus + predictionPoints;
+                    if (!best || total > best.total) best = { managerId: mgr.id, total };
+                  });
+                  return {
+                    key: `round-top-${race.id}`,
+                    prizeName: `Runde ${race.round_number}: ${race.name} – topscorer`,
+                    category: "round" as const,
+                    drawnAt: race.race_date || new Date().toISOString(),
+                    managerId: best ? (best as { managerId: string; total: number }).managerId : null,
+                    total: best ? (best as { managerId: string; total: number }).total : 0,
+                  };
+                }).filter((w) => w.managerId !== null && w.total > 0);
+
+                if (wonPrizes.length === 0 && roundWinners.length === 0) return null;
+
+                const lotteryWinners = wonPrizes.map((p) => ({
+                  key: p.id,
+                  prizeName: p.name,
+                  category: (p.prize_category || "round") as "season" | "round" | "other",
+                  drawnAt: p.drawn_at!,
+                  managerId: p.winner_manager_id,
+                  total: null as number | null,
+                }));
+
+                const sortedWinners = [...lotteryWinners, ...roundWinners].sort(
+                  (a, b) => new Date(b.drawnAt).getTime() - new Date(a.drawnAt).getTime()
                 );
                 return (
                   <div className="mb-5 rounded-md border border-gold/30 bg-gold/5 p-3">
@@ -269,13 +352,16 @@ export default function HomePage() {
                     </div>
                     <div className="space-y-1.5">
                       {sortedWinners.map((p) => {
-                        const winner = managerMap[p.winner_manager_id!];
-                        const catLabel = CATEGORY_CONFIG[p.prize_category || "round"]?.label || "Præmie";
+                        const winner = p.managerId ? managerMap[p.managerId] : null;
+                        const catLabel = CATEGORY_CONFIG[p.category]?.label || "Præmie";
                         return (
-                          <div key={p.id} className="flex items-start justify-between gap-2 text-xs">
+                          <div key={p.key} className="flex items-start justify-between gap-2 text-xs">
                             <div className="min-w-0 flex-1">
-                              <span className="font-medium text-foreground">{p.name}</span>
+                              <span className="font-medium text-foreground">{p.prizeName}</span>
                               <span className="text-muted-foreground"> · {catLabel}</span>
+                              {p.total !== null && (
+                                <span className="text-muted-foreground"> · {p.total} point</span>
+                              )}
                             </div>
                             <div className="text-right shrink-0">
                               {winner ? (
