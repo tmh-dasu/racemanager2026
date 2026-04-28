@@ -254,6 +254,49 @@ export default function HomePage() {
                 <Gift className="h-4 w-4 text-gold" />
               </div>
 
+              {/* Winners list - shown when prizes have been drawn */}
+              {(() => {
+                const wonPrizes = prizes.filter((p) => p.winner_manager_id && p.drawn_at);
+                if (wonPrizes.length === 0) return null;
+                const sortedWinners = [...wonPrizes].sort(
+                  (a, b) => new Date(b.drawn_at!).getTime() - new Date(a.drawn_at!).getTime()
+                );
+                return (
+                  <div className="mb-5 rounded-md border border-gold/30 bg-gold/5 p-3">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Trophy className="h-4 w-4 text-gold" />
+                      <span className="text-sm font-semibold text-foreground">Vindere</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {sortedWinners.map((p) => {
+                        const winner = managerMap[p.winner_manager_id!];
+                        const catLabel = CATEGORY_CONFIG[p.prize_category || "round"]?.label || "Præmie";
+                        return (
+                          <div key={p.id} className="flex items-start justify-between gap-2 text-xs">
+                            <div className="min-w-0 flex-1">
+                              <span className="font-medium text-foreground">{p.name}</span>
+                              <span className="text-muted-foreground"> · {catLabel}</span>
+                            </div>
+                            <div className="text-right shrink-0">
+                              {winner ? (
+                                <Link
+                                  to={`/hold/${winner.slug}`}
+                                  className="font-display font-bold text-gold hover:underline"
+                                >
+                                  {winner.team_name}
+                                </Link>
+                              ) : (
+                                <span className="text-muted-foreground">Ukendt</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {(["season", "round", "other"] as const).map((cat) => {
                 const catSponsors = sponsorsByCategory[cat] || [];
                 const catPrizes = grouped[cat] || [];
