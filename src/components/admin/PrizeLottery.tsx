@@ -123,6 +123,66 @@ export default function PrizeLottery() {
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
   }
 
+  async function handleDrawThreeForRound(prize: Prize) {
+    if (!confirm(`Træk 3 vindere til "${prize.name}"? Samme hold kan ikke vinde to gange.`)) return;
+    setDrawing(prize.id + "-three");
+    try {
+      // Track winners locally so vi ikke trækker samme hold to gange i samme batch
+      const alreadyWonIds = new Set(
+        prizes.filter((p) => p.winner_manager_id).map((p) => p.winner_manager_id as string)
+      );
+
+      // Step 1: træk vinder til den eksisterende, utrukne præmie
+      let eligible = managers.filter((m) => !alreadyWonIds.has(m.id));
+      if (eligible.length === 0) {
+        toast({ title: "Ingen hold at trække fra", variant: "destructive" });
+        setDrawing(null);
+        return;
+      }
+      const w1 = eligible[Math.floor(Math.random() * eligible.length)];
+      await upsertPrize({ id: prize.id, name: prize.name, winner_manager_id: w1.id, drawn_at: new Date().toISOString() });
+      await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: prize.id } });
+      alreadyWonIds.add(w1.id);
+
+      // Step 2 & 3: opret kopi-præmier og træk vindere
+      const drawnNames: string[] = [w1.team_name];
+      for (let i = 0; i < 2; i++) {
+        eligible = managers.filter((m) => !alreadyWonIds.has(m.id));
+        if (eligible.length === 0) {
+          toast({ title: `Kun ${i + 1} vindere kunne trækkes – ikke nok hold`, variant: "destructive" });
+          break;
+        }
+        const winner = eligible[Math.floor(Math.random() * eligible.length)];
+        await upsertPrize({
+          name: prize.name,
+          description: prize.description,
+          prize_category: prize.prize_category,
+          winner_manager_id: winner.id,
+          drawn_at: new Date().toISOString(),
+        });
+        const { data: newPrizes } = await supabase
+          .from("prizes")
+          .select("*")
+          .eq("winner_manager_id", winner.id)
+          .eq("name", prize.name)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (newPrizes?.[0]) {
+          await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: newPrizes[0].id } });
+        }
+        alreadyWonIds.add(winner.id);
+        drawnNames.push(winner.team_name);
+      }
+
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ["prizes"] });
+      toast({ title: `🎉 ${drawnNames.length} vindere trukket`, description: drawnNames.join(", ") });
+    } catch (err: any) {
+      toast({ title: err.message, variant: "destructive" });
+    }
+    setDrawing(null);
+  }
+
   const managerMap = Object.fromEntries(managers.map((m) => [m.id, m]));
   const undrawnPrizes = prizes.filter((p) => !p.winner_manager_id);
   const drawnPrizes = prizes.filter((p) => p.winner_manager_id);
@@ -188,6 +248,13 @@ export default function PrizeLottery() {
                       {p.description && <p className="text-xs text-muted-foreground mt-0.5">{p.description}</p>}
                     </button>
                     <div className="flex items-center gap-2 ml-2">
+                      {cat === "round" && (
+                        <Button size="sm" onClick={() => handleDrawThreeForRound(p)} disabled={!!drawing}
+                          className="bg-gold text-background font-display">
+                          <Shuffle className={`h-4 w-4 mr-1 ${drawing === p.id + "-three" ? "animate-spin" : ""}`} />
+                          {drawing === p.id + "-three" ? "Trækker 3..." : "Træk 3 vindere"}
+                        </Button>
+                      )}
                       <Button size="sm" onClick={() => handleDraw(p)} disabled={drawing === p.id} className="bg-gradient-racing text-primary-foreground font-display">
                         <Shuffle className={`h-4 w-4 mr-1 ${drawing === p.id ? "animate-spin" : ""}`} />
                         {drawing === p.id ? "Trækker..." : "Træk vinder"}
