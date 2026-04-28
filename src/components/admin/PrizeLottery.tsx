@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Save, Gift, Shuffle, Trophy, Award, Copy } from "lucide-react";
+import { Plus, Trash2, Save, Gift, Shuffle, Trophy, Award, Copy, UserCog } from "lucide-react";
 import { fetchPrizes, upsertPrize, deletePrize, fetchManagers, type Prize } from "@/lib/api";
-import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 const CATEGORY_CONFIG = {
@@ -70,13 +70,7 @@ export default function PrizeLottery() {
     const winner = eligible[Math.floor(Math.random() * eligible.length)];
     try {
       await upsertPrize({ id: prize.id, name: prize.name, winner_manager_id: winner.id, drawn_at: new Date().toISOString() });
-      const { error: notifyError } = await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: prize.id } });
-      if (notifyError) {
-        console.error("Prize winner email error:", notifyError);
-        toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"!`, description: "Email kunne ikke sendes.", variant: "destructive" });
-      } else {
-        toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"! Email sendt.` });
-      }
+      toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"!` });
       refetch();
     } catch (err: any) { toast({ title: err.message, variant: "destructive" }); }
     setDrawing(null);
@@ -103,10 +97,6 @@ export default function PrizeLottery() {
         winner_manager_id: winner.id,
         drawn_at: new Date().toISOString(),
       });
-      const { data: newPrizes } = await supabase.from("prizes").select("*").eq("winner_manager_id", winner.id).eq("name", prize.name).order("created_at", { ascending: false }).limit(1);
-      if (newPrizes?.[0]) {
-        await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: newPrizes[0].id } });
-      }
       refetch();
       queryClient.invalidateQueries({ queryKey: ["prizes"] });
       toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"!` });
@@ -141,7 +131,6 @@ export default function PrizeLottery() {
       }
       const w1 = eligible[Math.floor(Math.random() * eligible.length)];
       await upsertPrize({ id: prize.id, name: prize.name, winner_manager_id: w1.id, drawn_at: new Date().toISOString() });
-      await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: prize.id } });
       alreadyWonIds.add(w1.id);
 
       // Step 2 & 3: opret kopi-præmier og træk vindere
@@ -160,16 +149,6 @@ export default function PrizeLottery() {
           winner_manager_id: winner.id,
           drawn_at: new Date().toISOString(),
         });
-        const { data: newPrizes } = await supabase
-          .from("prizes")
-          .select("*")
-          .eq("winner_manager_id", winner.id)
-          .eq("name", prize.name)
-          .order("created_at", { ascending: false })
-          .limit(1);
-        if (newPrizes?.[0]) {
-          await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: newPrizes[0].id } });
-        }
         alreadyWonIds.add(winner.id);
         drawnNames.push(winner.team_name);
       }
@@ -181,6 +160,23 @@ export default function PrizeLottery() {
       toast({ title: err.message, variant: "destructive" });
     }
     setDrawing(null);
+  }
+
+  async function handleOverrideWinner(prize: Prize, newManagerId: string) {
+    try {
+      await upsertPrize({
+        id: prize.id,
+        name: prize.name,
+        winner_manager_id: newManagerId,
+        drawn_at: new Date().toISOString(),
+      });
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ["prizes"] });
+      const newWinner = managers.find((m) => m.id === newManagerId);
+      toast({ title: `Vinder ændret til ${newWinner?.team_name || "valgt hold"}` });
+    } catch (err: any) {
+      toast({ title: err.message, variant: "destructive" });
+    }
   }
 
   const managerMap = Object.fromEntries(managers.map((m) => [m.id, m]));
@@ -341,6 +337,25 @@ export default function PrizeLottery() {
                       </td>
                       <td className="px-4 py-2 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <Select
+                            value={p.winner_manager_id || ""}
+                            onValueChange={(v) => handleOverrideWinner(p, v)}
+                          >
+                            <SelectTrigger className="h-7 w-[140px] text-xs bg-secondary border-border">
+                              <UserCog className="h-3 w-3 mr-1" />
+                              <SelectValue placeholder="Skift vinder" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              {managers
+                                .slice()
+                                .sort((a, b) => a.team_name.localeCompare(b.team_name))
+                                .map((m) => (
+                                  <SelectItem key={m.id} value={m.id} className="text-xs">
+                                    {m.team_name} ({m.name})
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
                           <Button size="sm" onClick={() => handleDrawAnother(p)} disabled={!!drawing}
                             className="bg-gradient-racing text-primary-foreground font-display text-xs h-7">
                             <Shuffle className={`h-3 w-3 mr-1 ${isDrawingAnother ? "animate-spin" : ""}`} />
