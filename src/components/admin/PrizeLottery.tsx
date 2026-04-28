@@ -282,6 +282,41 @@ export default function PrizeLottery() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-display text-sm font-bold text-muted-foreground uppercase">Vindere</h3>
+            <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                const winnerIds = drawnPrizes
+                  .filter((p) => p.prize_category === "round")
+                  .slice(0, 3)
+                  .map((p) => p.winner_manager_id)
+                  .filter((id): id is string => !!id);
+                if (winnerIds.length === 0) {
+                  toast({ title: "Ingen runde-vindere fundet", variant: "destructive" });
+                  return;
+                }
+                const { data, error } = await supabase
+                  .from("managers")
+                  .select("email")
+                  .in("id", winnerIds);
+                if (error || !data) {
+                  toast({ title: "Fejl ved hentning", description: error?.message, variant: "destructive" });
+                  return;
+                }
+                const emails = Array.from(new Set(data.map((m) => m.email).filter(Boolean)));
+                if (emails.length === 0) {
+                  toast({ title: "Ingen emails fundet for 1. runde", variant: "destructive" });
+                  return;
+                }
+                await navigator.clipboard.writeText(emails.join(", "));
+                toast({ title: `📋 1. runde: ${emails.length} emails kopieret`, description: emails.join(", ") });
+              }}
+              className="text-xs h-7"
+            >
+              <Copy className="h-3.5 w-3.5 mr-1" />
+              Hent 1. runde igen
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -316,6 +351,7 @@ export default function PrizeLottery() {
               <Copy className="h-3.5 w-3.5 mr-1" />
               Kopiér alle emails
             </Button>
+            </div>
           </div>
           <div className="rounded-lg border border-border overflow-hidden">
             <table className="w-full text-sm">
