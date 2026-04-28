@@ -342,7 +342,7 @@ export default function HomePage() {
                 }));
 
                 const sortedWinners = [...lotteryWinners, ...roundWinners].sort(
-                  (a, b) => new Date(b.drawn_at!).getTime() - new Date(a.drawn_at!).getTime()
+                  (a, b) => new Date(b.drawnAt).getTime() - new Date(a.drawnAt).getTime()
                 );
                 return (
                   <div className="mb-5 rounded-md border border-gold/30 bg-gold/5 p-3">
