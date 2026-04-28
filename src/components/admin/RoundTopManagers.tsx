@@ -4,6 +4,7 @@ import { fetchRaces, fetchRaceResults, fetchAllCaptainSelections, fetchPredictio
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { copyTextToClipboard } from "@/lib/clipboard";
 
 interface ManagerRoundScore {
   managerId: string;
@@ -99,18 +100,24 @@ export default function RoundTopManagers() {
             toast({ title: "Ingen vindere", variant: "destructive" });
             return;
           }
-          const { data, error } = await supabase.from("managers").select("email").in("id", ids);
-          if (error || !data) {
-            toast({ title: "Fejl ved hentning", description: error?.message, variant: "destructive" });
+          const { data, error } = await supabase.functions.invoke("get-admin-emails", {
+            body: { managerIds: ids },
+          });
+          if (error) {
+            toast({ title: "Fejl ved hentning", description: error.message, variant: "destructive" });
             return;
           }
-          const emails = Array.from(new Set(data.map(m => m.email).filter(Boolean)));
+          const emails = Array.isArray(data?.emails) ? data.emails as string[] : [];
           if (emails.length === 0) {
             toast({ title: "Ingen emails fundet", variant: "destructive" });
             return;
           }
-          await navigator.clipboard.writeText(emails.join(", "));
-          toast({ title: `📋 ${emails.length} emails kopieret`, description: emails.join(", ") });
+          const copied = await copyTextToClipboard(emails.join(", "));
+          toast({
+            title: copied ? `📋 ${emails.length} emails kopieret` : "Emails hentet – kopier manuelt",
+            description: emails.join(", "),
+            variant: copied ? undefined : "destructive",
+          });
         }
         return (
           <div key={race.id} className="rounded-lg border border-border bg-card p-4 shadow-card">

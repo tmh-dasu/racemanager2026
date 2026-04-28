@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { copyTextToClipboard } from "@/lib/clipboard";
 
 const CATEGORY_CONFIG = {
   season: { label: "Sæsonpræmier", icon: Trophy, iconClass: "text-gold" },
@@ -296,21 +297,24 @@ export default function PrizeLottery() {
                   toast({ title: "Ingen runde-vindere fundet", variant: "destructive" });
                   return;
                 }
-                const { data, error } = await supabase
-                  .from("managers")
-                  .select("email")
-                  .in("id", winnerIds);
-                if (error || !data) {
-                  toast({ title: "Fejl ved hentning", description: error?.message, variant: "destructive" });
+                const { data, error } = await supabase.functions.invoke("get-admin-emails", {
+                  body: { managerIds: winnerIds },
+                });
+                if (error) {
+                  toast({ title: "Fejl ved hentning", description: error.message, variant: "destructive" });
                   return;
                 }
-                const emails = Array.from(new Set(data.map((m) => m.email).filter(Boolean)));
+                const emails = Array.isArray(data?.emails) ? data.emails as string[] : [];
                 if (emails.length === 0) {
                   toast({ title: "Ingen emails fundet for 1. runde", variant: "destructive" });
                   return;
                 }
-                await navigator.clipboard.writeText(emails.join(", "));
-                toast({ title: `📋 1. runde: ${emails.length} emails kopieret`, description: emails.join(", ") });
+                const copied = await copyTextToClipboard(emails.join(", "));
+                toast({
+                  title: copied ? `📋 1. runde: ${emails.length} emails kopieret` : "Emails hentet – kopier manuelt",
+                  description: emails.join(", "),
+                  variant: copied ? undefined : "destructive",
+                });
               }}
               className="text-xs h-7"
             >
@@ -320,7 +324,7 @@ export default function PrizeLottery() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => {
+              onClick={async () => {
                 const emails = Array.from(
                   new Set(
                     drawnPrizes
@@ -338,12 +342,13 @@ export default function PrizeLottery() {
                   });
                   return;
                 }
-                navigator.clipboard.writeText(emails.join(", "));
+                const copied = await copyTextToClipboard(emails.join(", "));
                 toast({
-                  title: `📋 ${emails.length} emails kopieret`,
+                  title: copied ? `📋 ${emails.length} emails kopieret` : "Emails fundet – kopier manuelt",
                   description: drawnPrizes.length > emails.length
-                    ? `${drawnPrizes.length - emails.length} vinder(e) mangler email`
-                    : undefined,
+                    ? `${drawnPrizes.length - emails.length} vinder(e) mangler email. ${emails.join(", ")}`
+                    : emails.join(", "),
+                  variant: copied ? undefined : "destructive",
                 });
               }}
               className="text-xs h-7"
