@@ -337,6 +337,25 @@ export default function PrizeLottery() {
                       </td>
                       <td className="px-4 py-2 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <Select
+                            value={p.winner_manager_id || ""}
+                            onValueChange={(v) => handleOverrideWinner(p, v)}
+                          >
+                            <SelectTrigger className="h-7 w-[140px] text-xs bg-secondary border-border">
+                              <UserCog className="h-3 w-3 mr-1" />
+                              <SelectValue placeholder="Skift vinder" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              {managers
+                                .slice()
+                                .sort((a, b) => a.team_name.localeCompare(b.team_name))
+                                .map((m) => (
+                                  <SelectItem key={m.id} value={m.id} className="text-xs">
+                                    {m.team_name} ({m.name})
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
                           <Button size="sm" onClick={() => handleDrawAnother(p)} disabled={!!drawing}
                             className="bg-gradient-racing text-primary-foreground font-display text-xs h-7">
                             <Shuffle className={`h-3 w-3 mr-1 ${isDrawingAnother ? "animate-spin" : ""}`} />
