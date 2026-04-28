@@ -19,7 +19,7 @@ export default function PrizeLottery() {
   const queryClient = useQueryClient();
   const { data: prizes = [], refetch } = useQuery({ queryKey: ["prizes"], queryFn: fetchPrizes });
   const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
-  const { data: managerEmails = [] } = useQuery({
+  const { data: managerEmails = [], error: emailsError } = useQuery({
     queryKey: ["manager-emails-admin"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -294,11 +294,22 @@ export default function PrizeLottery() {
                   )
                 );
                 if (emails.length === 0) {
-                  toast({ title: "Ingen emails at kopiere", variant: "destructive" });
+                  toast({
+                    title: "Ingen emails at kopiere",
+                    description: emailsError
+                      ? `Fejl ved hentning: ${emailsError.message}`
+                      : `Hentede ${managerEmails.length} managers, ${drawnPrizes.length} vindere`,
+                    variant: "destructive",
+                  });
                   return;
                 }
                 navigator.clipboard.writeText(emails.join(", "));
-                toast({ title: `📋 ${emails.length} emails kopieret` });
+                toast({
+                  title: `📋 ${emails.length} emails kopieret`,
+                  description: drawnPrizes.length > emails.length
+                    ? `${drawnPrizes.length - emails.length} vinder(e) mangler email`
+                    : undefined,
+                });
               }}
               className="text-xs h-7"
             >
