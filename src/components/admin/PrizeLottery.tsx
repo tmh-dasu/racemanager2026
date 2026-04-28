@@ -289,7 +289,7 @@ export default function PrizeLottery() {
               variant="outline"
               onClick={async () => {
                 const { data, error } = await supabase.functions.invoke("get-admin-emails", {
-                  body: { roundNumber: 1, limit: 5 },
+                  body: { roundNumber: 1, limit: 1 },
                 });
                 if (error) {
                   toast({ title: "Fejl ved hentning", description: error.message, variant: "destructive" });
@@ -297,20 +297,21 @@ export default function PrizeLottery() {
                 }
                 const emails = Array.isArray(data?.emails) ? data.emails as string[] : [];
                 if (emails.length === 0) {
-                  toast({ title: "Ingen emails fundet for 1. runde", variant: "destructive" });
+                  toast({ title: "Ingen email fundet for vinderen af 1. runde", variant: "destructive" });
                   return;
                 }
-                const copied = await copyTextToClipboard(emails.join(", "));
+                const winnerEmail = emails[0];
+                const copied = await copyTextToClipboard(winnerEmail);
                 toast({
-                  title: copied ? `📋 1. runde: ${emails.length} emails kopieret` : "Emails hentet – kopier manuelt",
-                  description: emails.join(", "),
+                  title: copied ? `📋 Vinder af 1. runde kopieret` : "Email hentet – kopier manuelt",
+                  description: winnerEmail,
                   variant: copied ? undefined : "destructive",
                 });
               }}
               className="text-xs h-7"
             >
               <Copy className="h-3.5 w-3.5 mr-1" />
-              Hent 1. runde igen
+              Hent vinder af 1. runde
             </Button>
             <Button
               size="sm"
