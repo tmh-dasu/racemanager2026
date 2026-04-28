@@ -322,7 +322,7 @@ export default function HomePage() {
                   });
                   return {
                     key: `round-top-${race.id}`,
-                    prizeName: `Runde ${race.round_number}: ${race.name} – topscorer`,
+                    prizeName: `Vinder af ${race.round_number}. afdeling`,
                     category: "round" as const,
                     drawnAt: race.race_date || new Date().toISOString(),
                     managerId: best ? (best as { managerId: string; total: number }).managerId : null,
