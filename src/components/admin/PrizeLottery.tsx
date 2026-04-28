@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Save, Gift, Shuffle, Trophy, Award, Copy, UserCog } from "lucide-react";
 import { fetchPrizes, upsertPrize, deletePrize, fetchManagers, type Prize } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +19,16 @@ export default function PrizeLottery() {
   const queryClient = useQueryClient();
   const { data: prizes = [], refetch } = useQuery({ queryKey: ["prizes"], queryFn: fetchPrizes });
   const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+  const { data: managerEmails = [] } = useQuery({
+    queryKey: ["manager-emails-admin"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("managers")
+        .select("id, email, team_name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
   const [drawing, setDrawing] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", description: "", prize_category: "round" as "season" | "round" | "other" });
   const [editId, setEditId] = useState<string | null>(null);
@@ -180,6 +191,7 @@ export default function PrizeLottery() {
   }
 
   const managerMap = Object.fromEntries(managers.map((m) => [m.id, m]));
+  const emailMap = Object.fromEntries(managerEmails.map((m: any) => [m.id, m.email]));
   const undrawnPrizes = prizes.filter((p) => !p.winner_manager_id);
   const drawnPrizes = prizes.filter((p) => p.winner_manager_id);
   // Group drawn prizes by name for "draw another" button
@@ -277,7 +289,7 @@ export default function PrizeLottery() {
                 const emails = Array.from(
                   new Set(
                     drawnPrizes
-                      .map((p) => managerMap[p.winner_manager_id!]?.email)
+                      .map((p) => emailMap[p.winner_manager_id!])
                       .filter((e): e is string => !!e)
                   )
                 );
