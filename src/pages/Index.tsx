@@ -320,9 +320,9 @@ export default function HomePage() {
                     const total = racePoints + captainBonus + predictionPoints;
                     if (!best || total > best.total) best = { managerId: mgr.id, total };
                   });
-                  return {
-                    key: `round-top-${race.id}`,
-                    prizeName: `Vinder af ${race.round_number}. afdeling`,
+                   return {
+                     key: `round-top-${race.id}`,
+                     prizeName: `Vinder af ${race.round_number}. afdeling — 1 x koncentrationstest fra Pulskoncept`,
                     category: "round" as const,
                     drawnAt: race.race_date || new Date().toISOString(),
                     managerId: best ? (best as { managerId: string; total: number }).managerId : null,
