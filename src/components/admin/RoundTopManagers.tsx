@@ -94,14 +94,14 @@ export default function RoundTopManagers() {
     <div className="space-y-6">
       {racesWithResults.map(race => {
         const top5 = computeRoundScores(race);
-        async function copyTopEmails() {
-          const ids = top5.map(t => t.managerId);
-          if (ids.length === 0) {
-            toast({ title: "Ingen vindere", variant: "destructive" });
+        async function copyWinnerEmail() {
+          const winner = top5[0];
+          if (!winner) {
+            toast({ title: "Ingen rundevinder", variant: "destructive" });
             return;
           }
           const { data, error } = await supabase.functions.invoke("get-admin-emails", {
-            body: { managerIds: ids },
+            body: { managerIds: [winner.managerId] },
           });
           if (error) {
             toast({ title: "Fejl ved hentning", description: error.message, variant: "destructive" });
@@ -109,13 +109,14 @@ export default function RoundTopManagers() {
           }
           const emails = Array.isArray(data?.emails) ? data.emails as string[] : [];
           if (emails.length === 0) {
-            toast({ title: "Ingen emails fundet", variant: "destructive" });
+            toast({ title: "Ingen email fundet for rundevinderen", variant: "destructive" });
             return;
           }
-          const copied = await copyTextToClipboard(emails.join(", "));
+          const winnerEmail = emails[0];
+          const copied = await copyTextToClipboard(winnerEmail);
           toast({
-            title: copied ? `📋 ${emails.length} emails kopieret` : "Emails hentet – kopier manuelt",
-            description: emails.join(", "),
+            title: copied ? "📋 Rundevinder-email kopieret" : "Email hentet – kopier manuelt",
+            description: winnerEmail,
             variant: copied ? undefined : "destructive",
           });
         }
@@ -128,9 +129,9 @@ export default function RoundTopManagers() {
                   Runde {race.round_number}: {race.name}
                 </h3>
               </div>
-              <Button size="sm" variant="outline" onClick={copyTopEmails} className="text-xs h-7 shrink-0">
+              <Button size="sm" variant="outline" onClick={copyWinnerEmail} className="text-xs h-7 shrink-0">
                 <Copy className="h-3.5 w-3.5 mr-1" />
-                Kopiér top 5 emails
+                Kopiér rundevinder-email
               </Button>
             </div>
 
