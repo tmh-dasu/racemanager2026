@@ -19,7 +19,7 @@ export default function PrizeLottery() {
   const queryClient = useQueryClient();
   const { data: prizes = [], refetch } = useQuery({ queryKey: ["prizes"], queryFn: fetchPrizes });
   const { data: managers = [] } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
-  const { data: managerEmails = [] } = useQuery({
+  const { data: managerEmails = [], error: emailsError } = useQuery({
     queryKey: ["manager-emails-admin"],
     queryFn: async () => {
       const { data, error } = await supabase
