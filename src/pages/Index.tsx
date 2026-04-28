@@ -339,9 +339,11 @@ export default function HomePage() {
                   drawnAt: p.drawn_at!,
                   managerId: p.winner_manager_id,
                   total: null as number | null,
+                  isLottery: true,
                 }));
 
-                const sortedWinners = [...lotteryWinners, ...roundWinners].sort(
+                const roundWinnersTagged = roundWinners.map((w) => ({ ...w, isLottery: false }));
+                const sortedWinners = [...lotteryWinners, ...roundWinnersTagged].sort(
                   (a, b) => new Date(b.drawnAt).getTime() - new Date(a.drawnAt).getTime()
                 );
                 return (
@@ -353,7 +355,9 @@ export default function HomePage() {
                     <div className="space-y-1.5">
                       {sortedWinners.map((p) => {
                         const winner = p.managerId ? managerMap[p.managerId] : null;
-                        const catLabel = CATEGORY_CONFIG[p.category]?.label || "Præmie";
+                        const catLabel = p.isLottery
+                          ? "Lodtrækningspræmie"
+                          : CATEGORY_CONFIG[p.category]?.label || "Præmie";
                         return (
                           <div key={p.key} className="flex items-start justify-between gap-2 text-xs">
                             <div className="min-w-0 flex-1">
