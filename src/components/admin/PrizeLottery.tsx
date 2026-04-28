@@ -132,7 +132,6 @@ export default function PrizeLottery() {
       }
       const w1 = eligible[Math.floor(Math.random() * eligible.length)];
       await upsertPrize({ id: prize.id, name: prize.name, winner_manager_id: w1.id, drawn_at: new Date().toISOString() });
-      await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: prize.id } });
       alreadyWonIds.add(w1.id);
 
       // Step 2 & 3: opret kopi-præmier og træk vindere
@@ -151,16 +150,6 @@ export default function PrizeLottery() {
           winner_manager_id: winner.id,
           drawn_at: new Date().toISOString(),
         });
-        const { data: newPrizes } = await supabase
-          .from("prizes")
-          .select("*")
-          .eq("winner_manager_id", winner.id)
-          .eq("name", prize.name)
-          .order("created_at", { ascending: false })
-          .limit(1);
-        if (newPrizes?.[0]) {
-          await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: newPrizes[0].id } });
-        }
         alreadyWonIds.add(winner.id);
         drawnNames.push(winner.team_name);
       }
@@ -172,6 +161,23 @@ export default function PrizeLottery() {
       toast({ title: err.message, variant: "destructive" });
     }
     setDrawing(null);
+  }
+
+  async function handleOverrideWinner(prize: Prize, newManagerId: string) {
+    try {
+      await upsertPrize({
+        id: prize.id,
+        name: prize.name,
+        winner_manager_id: newManagerId,
+        drawn_at: new Date().toISOString(),
+      });
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ["prizes"] });
+      const newWinner = managers.find((m) => m.id === newManagerId);
+      toast({ title: `Vinder ændret til ${newWinner?.team_name || "valgt hold"}` });
+    } catch (err: any) {
+      toast({ title: err.message, variant: "destructive" });
+    }
   }
 
   const managerMap = Object.fromEntries(managers.map((m) => [m.id, m]));
