@@ -324,7 +324,7 @@ export default function PrizeLottery() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => {
+              onClick={async () => {
                 const emails = Array.from(
                   new Set(
                     drawnPrizes
