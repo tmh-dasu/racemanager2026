@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Save, Gift, Shuffle, Trophy, Award } from "lucide-react";
+import { Plus, Trash2, Save, Gift, Shuffle, Trophy, Award, Copy } from "lucide-react";
 import { fetchPrizes, upsertPrize, deletePrize, fetchManagers, type Prize } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -272,7 +272,32 @@ export default function PrizeLottery() {
       {/* Drawn prizes - winner list */}
       {drawnPrizes.length > 0 && (
         <div className="space-y-3">
-          <h3 className="font-display text-sm font-bold text-muted-foreground uppercase">Vindere</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-display text-sm font-bold text-muted-foreground uppercase">Vindere</h3>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const emails = Array.from(
+                  new Set(
+                    drawnPrizes
+                      .map((p) => managerMap[p.winner_manager_id!]?.email)
+                      .filter((e): e is string => !!e)
+                  )
+                );
+                if (emails.length === 0) {
+                  toast({ title: "Ingen emails at kopiere", variant: "destructive" });
+                  return;
+                }
+                navigator.clipboard.writeText(emails.join(", "));
+                toast({ title: `📋 ${emails.length} emails kopieret` });
+              }}
+              className="text-xs h-7"
+            >
+              <Copy className="h-3.5 w-3.5 mr-1" />
+              Kopiér alle emails
+            </Button>
+          </div>
           <div className="rounded-lg border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead>
@@ -281,6 +306,7 @@ export default function PrizeLottery() {
                   <th className="text-left px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Kategori</th>
                   <th className="text-left px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Vinder (hold)</th>
                   <th className="text-left px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Navn</th>
+                  <th className="text-left px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Email</th>
                   <th className="text-right px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Dato</th>
                   <th className="px-4 py-2"></th>
                 </tr>
@@ -298,6 +324,18 @@ export default function PrizeLottery() {
                       </td>
                       <td className="px-4 py-2 font-display font-bold text-foreground">{winner?.team_name || "Ukendt"}</td>
                       <td className="px-4 py-2 text-muted-foreground">{winner?.name || "–"}</td>
+                      <td className="px-4 py-2 text-xs">
+                        {winner?.email ? (
+                          <a
+                            href={`mailto:${winner.email}`}
+                            className="text-primary hover:underline break-all"
+                          >
+                            {winner.email}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">–</span>
+                        )}
+                      </td>
                       <td className="px-4 py-2 text-right text-xs text-muted-foreground">
                         {p.drawn_at ? new Date(p.drawn_at).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "–"}
                       </td>
