@@ -57,7 +57,76 @@ Deno.serve(async (req) => {
     })
   }
 
-  const { managerIds } = await req.json().catch(() => ({ managerIds: [] }))
+  const body = await req.json().catch(() => ({}))
+  const { managerIds, roundNumber, limit = 5 } = body
+
+  if (typeof roundNumber === 'number') {
+    const { data: race, error: raceError } = await adminClient
+      .from('races')
+      .select('id')
+      .eq('round_number', roundNumber)
+      .maybeSingle()
+
+    if (raceError || !race) {
+      return new Response(JSON.stringify({ emails: [], managers: [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const [managersRes, driversRes, resultsRes, captainsRes, questionsRes] = await Promise.all([
+      adminClient.from('managers').select('id, email, team_name, name'),
+      adminClient.from('manager_drivers').select('manager_id, driver_id'),
+      adminClient.from('race_results').select('driver_id, points').eq('race_id', race.id),
+      adminClient.from('captain_selections').select('manager_id, driver_id').eq('race_id', race.id),
+      adminClient.from('prediction_questions').select('id').eq('race_id', race.id),
+    ])
+
+    const questionIds = (questionsRes.data || []).map((q: { id: string }) => q.id)
+    const answersRes = questionIds.length > 0
+      ? await adminClient.from('prediction_answers').select('manager_id, is_correct').in('question_id', questionIds)
+      : { data: [] }
+
+    const pointsByDriver = new Map<string, number>()
+    ;(resultsRes.data || []).forEach((row: { driver_id: string; points: number }) => {
+      pointsByDriver.set(row.driver_id, (pointsByDriver.get(row.driver_id) || 0) + (row.points || 0))
+    })
+
+    const driversByManager = new Map<string, string[]>()
+    ;(driversRes.data || []).forEach((row: { manager_id: string; driver_id: string }) => {
+      driversByManager.set(row.manager_id, [...(driversByManager.get(row.manager_id) || []), row.driver_id])
+    })
+
+    const captainByManager = new Map<string, string>()
+    ;(captainsRes.data || []).forEach((row: { manager_id: string; driver_id: string }) => {
+      captainByManager.set(row.manager_id, row.driver_id)
+    })
+
+    const predictionPointsByManager = new Map<string, number>()
+    ;(answersRes.data || []).forEach((row: { manager_id: string; is_correct: boolean | null }) => {
+      if (row.is_correct === true) {
+        predictionPointsByManager.set(row.manager_id, (predictionPointsByManager.get(row.manager_id) || 0) + 5)
+      }
+    })
+
+    const topManagers = ((managersRes.data || []) as EmailRow[])
+      .map((manager) => {
+        const driverIds = driversByManager.get(manager.id) || []
+        const racePoints = driverIds.reduce((sum, driverId) => sum + (pointsByDriver.get(driverId) || 0), 0)
+        const captainId = captainByManager.get(manager.id)
+        const captainBonus = captainId ? pointsByDriver.get(captainId) || 0 : 0
+        const predictionPoints = predictionPointsByManager.get(manager.id) || 0
+        return { ...manager, total: racePoints + captainBonus + predictionPoints }
+      })
+      .sort((a, b) => b.total - a.total)
+      .slice(0, Math.max(1, Number(limit) || 5))
+
+    const emails = Array.from(new Set(topManagers.map((row) => row.email).filter((email): email is string => !!email)))
+
+    return new Response(JSON.stringify({ emails, managers: topManagers }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
   const ids = Array.isArray(managerIds)
     ? Array.from(new Set(managerIds.filter((id): id is string => typeof id === 'string' && id.length > 0)))
     : []
