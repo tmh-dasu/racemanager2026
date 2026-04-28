@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Crown } from "lucide-react";
+import { Trophy, Crown, Copy } from "lucide-react";
 import { fetchRaces, fetchRaceResults, fetchAllCaptainSelections, fetchPredictionQuestions, type Race } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface ManagerRoundScore {
   managerId: string;
@@ -14,6 +16,7 @@ interface ManagerRoundScore {
 }
 
 export default function RoundTopManagers() {
+  const { toast } = useToast();
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: managers = [] } = useQuery({ queryKey: ["managers_admin"], queryFn: async () => {
     const { data } = await supabase.from("managers").select("id, name, team_name");
@@ -90,13 +93,38 @@ export default function RoundTopManagers() {
     <div className="space-y-6">
       {racesWithResults.map(race => {
         const top5 = computeRoundScores(race);
+        async function copyTopEmails() {
+          const ids = top5.map(t => t.managerId);
+          if (ids.length === 0) {
+            toast({ title: "Ingen vindere", variant: "destructive" });
+            return;
+          }
+          const { data, error } = await supabase.from("managers").select("email").in("id", ids);
+          if (error || !data) {
+            toast({ title: "Fejl ved hentning", description: error?.message, variant: "destructive" });
+            return;
+          }
+          const emails = Array.from(new Set(data.map(m => m.email).filter(Boolean)));
+          if (emails.length === 0) {
+            toast({ title: "Ingen emails fundet", variant: "destructive" });
+            return;
+          }
+          await navigator.clipboard.writeText(emails.join(", "));
+          toast({ title: `📋 ${emails.length} emails kopieret`, description: emails.join(", ") });
+        }
         return (
           <div key={race.id} className="rounded-lg border border-border bg-card p-4 shadow-card">
-            <div className="flex items-center gap-2 mb-3">
-              <Trophy className="h-4 w-4 text-gold" />
-              <h3 className="font-display text-lg font-bold text-foreground">
-                Runde {race.round_number}: {race.name}
-              </h3>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <Trophy className="h-4 w-4 text-gold shrink-0" />
+                <h3 className="font-display text-lg font-bold text-foreground truncate">
+                  Runde {race.round_number}: {race.name}
+                </h3>
+              </div>
+              <Button size="sm" variant="outline" onClick={copyTopEmails} className="text-xs h-7 shrink-0">
+                <Copy className="h-3.5 w-3.5 mr-1" />
+                Kopiér top 5 emails
+              </Button>
             </div>
 
             {/* Header */}
