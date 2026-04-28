@@ -288,17 +288,8 @@ export default function PrizeLottery() {
               size="sm"
               variant="outline"
               onClick={async () => {
-                const winnerIds = drawnPrizes
-                  .filter((p) => p.prize_category === "round")
-                  .slice(0, 3)
-                  .map((p) => p.winner_manager_id)
-                  .filter((id): id is string => !!id);
-                if (winnerIds.length === 0) {
-                  toast({ title: "Ingen runde-vindere fundet", variant: "destructive" });
-                  return;
-                }
                 const { data, error } = await supabase.functions.invoke("get-admin-emails", {
-                  body: { managerIds: winnerIds },
+                  body: { roundNumber: 1, limit: 5 },
                 });
                 if (error) {
                   toast({ title: "Fejl ved hentning", description: error.message, variant: "destructive" });
@@ -325,13 +316,21 @@ export default function PrizeLottery() {
               size="sm"
               variant="outline"
               onClick={async () => {
-                const emails = Array.from(
-                  new Set(
-                    drawnPrizes
-                      .map((p) => emailMap[p.winner_manager_id!])
-                      .filter((e): e is string => !!e)
-                  )
+                const winnerIds = Array.from(
+                  new Set(drawnPrizes.map((p) => p.winner_manager_id).filter((id): id is string => !!id))
                 );
+                if (winnerIds.length === 0) {
+                  toast({ title: "Ingen vindere at hente emails for", variant: "destructive" });
+                  return;
+                }
+                const { data, error } = await supabase.functions.invoke("get-admin-emails", {
+                  body: { managerIds: winnerIds },
+                });
+                if (error) {
+                  toast({ title: "Fejl ved hentning", description: error.message, variant: "destructive" });
+                  return;
+                }
+                const emails = Array.isArray(data?.emails) ? data.emails as string[] : [];
                 if (emails.length === 0) {
                   toast({
                     title: "Ingen emails at kopiere",
