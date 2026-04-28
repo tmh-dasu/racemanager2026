@@ -98,10 +98,6 @@ export default function PrizeLottery() {
         winner_manager_id: winner.id,
         drawn_at: new Date().toISOString(),
       });
-      const { data: newPrizes } = await supabase.from("prizes").select("*").eq("winner_manager_id", winner.id).eq("name", prize.name).order("created_at", { ascending: false }).limit(1);
-      if (newPrizes?.[0]) {
-        await supabase.functions.invoke("notify-prize-winner", { body: { prizeId: newPrizes[0].id } });
-      }
       refetch();
       queryClient.invalidateQueries({ queryKey: ["prizes"] });
       toast({ title: `🎉 ${winner.team_name} vandt "${prize.name}"!` });
