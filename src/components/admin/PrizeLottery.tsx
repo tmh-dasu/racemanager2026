@@ -294,11 +294,22 @@ export default function PrizeLottery() {
                   )
                 );
                 if (emails.length === 0) {
-                  toast({ title: "Ingen emails at kopiere", variant: "destructive" });
+                  toast({
+                    title: "Ingen emails at kopiere",
+                    description: emailsError
+                      ? `Fejl ved hentning: ${emailsError.message}`
+                      : `Hentede ${managerEmails.length} managers, ${drawnPrizes.length} vindere`,
+                    variant: "destructive",
+                  });
                   return;
                 }
                 navigator.clipboard.writeText(emails.join(", "));
-                toast({ title: `📋 ${emails.length} emails kopieret` });
+                toast({
+                  title: `📋 ${emails.length} emails kopieret`,
+                  description: drawnPrizes.length > emails.length
+                    ? `${drawnPrizes.length - emails.length} vinder(e) mangler email`
+                    : undefined,
+                });
               }}
               className="text-xs h-7"
             >
