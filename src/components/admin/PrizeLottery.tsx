@@ -322,6 +322,7 @@ export default function PrizeLottery() {
               <tbody>
                 {drawnPrizes.map((p) => {
                   const winner = managerMap[p.winner_manager_id!];
+                  const winnerEmail = emailMap[p.winner_manager_id!];
                   const catConfig = CATEGORY_CONFIG[p.prize_category] || CATEGORY_CONFIG.round;
                   const isDrawingAnother = drawing === p.id + "-another";
                   return (
@@ -333,12 +334,12 @@ export default function PrizeLottery() {
                       <td className="px-4 py-2 font-display font-bold text-foreground">{winner?.team_name || "Ukendt"}</td>
                       <td className="px-4 py-2 text-muted-foreground">{winner?.name || "–"}</td>
                       <td className="px-4 py-2 text-xs">
-                        {winner?.email ? (
+                        {winnerEmail ? (
                           <a
-                            href={`mailto:${winner.email}`}
+                            href={`mailto:${winnerEmail}`}
                             className="text-primary hover:underline break-all"
                           >
-                            {winner.email}
+                            {winnerEmail}
                           </a>
                         ) : (
                           <span className="text-muted-foreground">–</span>
