@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift, MapPin, ExternalLink, Award } from "lucide-react";
-import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchRaceResults, computeTransferDeadline, type Prize } from "@/lib/api";
+import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchRaceResults, fetchAllCaptainSelections, fetchPredictionQuestions, computeTransferDeadline, type Prize } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
+import { supabase } from "@/integrations/supabase/client";
 import dslLogo from "@/assets/dsl-logo.png";
 
 function CountdownTimer({ deadline, label }: { deadline: string; label: string }) {
@@ -45,6 +46,22 @@ export default function HomePage() {
   const { data: sponsors = [] } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
   const { data: prizes = [] } = useQuery({ queryKey: ["prizes"], queryFn: fetchPrizes });
   const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
+  const { data: allCaptains = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
+  const { data: allMDs = [] } = useQuery({
+    queryKey: ["all_manager_drivers_public"],
+    queryFn: async () => {
+      const { data } = await supabase.from("manager_drivers").select("manager_id, driver_id");
+      return (data || []) as { manager_id: string; driver_id: string }[];
+    },
+  });
+  const { data: allPredAnswers = [] } = useQuery({
+    queryKey: ["all_prediction_answers_public"],
+    queryFn: async () => {
+      const { data } = await supabase.from("prediction_answers").select("manager_id, question_id, is_correct");
+      return (data || []) as { manager_id: string; question_id: string; is_correct: boolean | null }[];
+    },
+  });
+  const { data: allQuestions = [] } = useQuery({ queryKey: ["prediction_questions_all"], queryFn: fetchPredictionQuestions });
 
   const now = new Date();
   const nextRace = races.find((r) => r.race_date && new Date(r.race_date) > now);
