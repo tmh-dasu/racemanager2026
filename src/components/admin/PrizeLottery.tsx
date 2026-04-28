@@ -342,12 +342,13 @@ export default function PrizeLottery() {
                   });
                   return;
                 }
-                navigator.clipboard.writeText(emails.join(", "));
+                const copied = await copyTextToClipboard(emails.join(", "));
                 toast({
-                  title: `📋 ${emails.length} emails kopieret`,
+                  title: copied ? `📋 ${emails.length} emails kopieret` : "Emails fundet – kopier manuelt",
                   description: drawnPrizes.length > emails.length
-                    ? `${drawnPrizes.length - emails.length} vinder(e) mangler email`
-                    : undefined,
+                    ? `${drawnPrizes.length - emails.length} vinder(e) mangler email. ${emails.join(", ")}`
+                    : emails.join(", "),
+                  variant: copied ? undefined : "destructive",
                 });
               }}
               className="text-xs h-7"
