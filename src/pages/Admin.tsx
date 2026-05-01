@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import PageLayout from "@/components/PageLayout";
+import { isoToCphLocalInput, cphLocalInputToIso } from "@/lib/utils";
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -235,8 +236,8 @@ function RacesAdmin() {
   async function handleAdd() {
     if (!form.round_number || !form.name) { toast({ title: "Udfyld runde og navn", variant: "destructive" }); return; }
     try {
-      const raceDate = form.race_date || null;
-      const raceEndDate = form.race_end_date || null;
+      const raceDate = cphLocalInputToIso(form.race_date);
+      const raceEndDate = cphLocalInputToIso(form.race_end_date);
       const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 60 * 60 * 1000).toISOString() : null;
       const validLinks = formLinks.filter(l => l.label && l.url);
       await upsertRace({ round_number: Number(form.round_number), name: form.name, location: form.location || null, race_date: raceDate, race_end_date: raceEndDate, captain_deadline: captainDeadline, address: form.address || null, links: validLinks } as any);
@@ -252,8 +253,8 @@ function RacesAdmin() {
     setEditForm({
       name: r.name || "",
       location: r.location || "",
-      race_date: r.race_date ? new Date(r.race_date).toISOString().slice(0, 16) : "",
-      race_end_date: r.race_end_date ? new Date(r.race_end_date).toISOString().slice(0, 16) : "",
+      race_date: isoToCphLocalInput(r.race_date),
+      race_end_date: isoToCphLocalInput(r.race_end_date),
       address: r.address || "",
     });
     setEditLinks(Array.isArray(r.links) ? r.links : []);
@@ -261,8 +262,8 @@ function RacesAdmin() {
 
   async function handleSaveEdit(r: any) {
     try {
-      const raceDate = editForm.race_date || null;
-      const raceEndDate = editForm.race_end_date || null;
+      const raceDate = cphLocalInputToIso(editForm.race_date);
+      const raceEndDate = cphLocalInputToIso(editForm.race_end_date);
       const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 60 * 60 * 1000).toISOString() : null;
       const validLinks = editLinks.filter(l => l.label && l.url);
       await upsertRace({ id: r.id, round_number: r.round_number, name: editForm.name, location: editForm.location || null, race_date: raceDate, race_end_date: raceEndDate, captain_deadline: captainDeadline, address: editForm.address || null, links: validLinks } as any);
