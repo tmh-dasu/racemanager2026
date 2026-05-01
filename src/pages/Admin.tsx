@@ -426,10 +426,30 @@ function PredictionsAdmin() {
         const question = questions.find(q => q.id === id);
         if (question) {
           try {
-            await supabase.functions.invoke("notify-predictions", {
+            const { data, error: notifyErr } = await supabase.functions.invoke("notify-predictions", {
               body: { race_id: question.race_id },
             });
-            toast({ title: "Prediction-notifikation sendt til alle spillere" });
+            // Edge function returns 409 with timing_warnings when race timing looks wrong
+            if ((data as any)?.error === "timing_warnings") {
+              const warnings: string[] = (data as any).warnings || [];
+              const proceed = confirm(
+                "⚠️ Tidszone-advarsel før mail sendes:\n\n" +
+                warnings.map(w => "• " + w).join("\n") +
+                "\n\nSend mailen alligevel?"
+              );
+              if (!proceed) {
+                toast({ title: "Mail ikke sendt — ret tiderne først", variant: "destructive" });
+                return;
+              }
+              await supabase.functions.invoke("notify-predictions", {
+                body: { race_id: question.race_id, force: true },
+              });
+              toast({ title: "Prediction-notifikation sendt (med advarsler)" });
+            } else if (notifyErr) {
+              throw notifyErr;
+            } else {
+              toast({ title: "Prediction-notifikation sendt til alle spillere" });
+            }
           } catch (e) {
             console.error("Failed to send prediction notification:", e);
           }

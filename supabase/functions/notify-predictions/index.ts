@@ -53,14 +53,18 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   try {
-    const { race_id } = await req.json()
+    const { race_id, force } = await req.json()
     if (!race_id) {
       return new Response(JSON.stringify({ error: 'race_id required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const { data: race } = await supabase.from('races').select('name, round_number').eq('id', race_id).single()
+    const { data: race } = await supabase
+      .from('races')
+      .select('name, round_number, race_date, captain_deadline')
+      .eq('id', race_id)
+      .single()
     if (!race) {
       return new Response(JSON.stringify({ error: 'Race not found' }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -78,6 +82,41 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ message: 'No published questions' }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
+    }
+
+    // --- Timezone / deadline sanity check ---
+    const warnings: string[] = []
+    if (race.race_date) {
+      const raceDate = new Date(race.race_date)
+      const cphHour = parseInt(new Intl.DateTimeFormat('da-DK', {
+        hour: '2-digit', hour12: false, timeZone: 'Europe/Copenhagen',
+      }).format(raceDate), 10)
+      const cphTimeStr = raceDate.toLocaleString('da-DK', {
+        day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+        timeZone: 'Europe/Copenhagen',
+      })
+      if (cphHour < 8 || cphHour > 20) {
+        warnings.push(`Løbet starter kl. ${cphHour}:00 dansk tid (${cphTimeStr}) — ligner en tidszone-fejl.`)
+      }
+      const expected = raceDate.getTime() - 60 * 60 * 1000
+      for (const q of questions) {
+        if (!q.prediction_deadline) continue
+        const diffMin = Math.round((new Date(q.prediction_deadline).getTime() - expected) / 60000)
+        if (Math.abs(diffMin) > 1) {
+          warnings.push(`Prediction-deadline for "${q.question_text}" afviger ${diffMin} min fra "1 time før løbsstart".`)
+        }
+      }
+    } else {
+      warnings.push('Løbet har ingen race_date sat.')
+    }
+
+    if (warnings.length > 0 && !force) {
+      console.warn('notify-predictions blocked due to timing warnings:', warnings)
+      return new Response(JSON.stringify({
+        error: 'timing_warnings',
+        message: 'Tidszone-/deadline-tjek fejlede. Ret tiderne eller send med force: true for at sende alligevel.',
+        warnings,
+      }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     const { data: managers } = await supabase.from('managers').select('id, email, team_name, name')
