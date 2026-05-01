@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import PageLayout from "@/components/PageLayout";
+import { isoToCphLocalInput, cphLocalInputToIso } from "@/lib/utils";
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -235,8 +236,8 @@ function RacesAdmin() {
   async function handleAdd() {
     if (!form.round_number || !form.name) { toast({ title: "Udfyld runde og navn", variant: "destructive" }); return; }
     try {
-      const raceDate = form.race_date || null;
-      const raceEndDate = form.race_end_date || null;
+      const raceDate = cphLocalInputToIso(form.race_date);
+      const raceEndDate = cphLocalInputToIso(form.race_end_date);
       const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 60 * 60 * 1000).toISOString() : null;
       const validLinks = formLinks.filter(l => l.label && l.url);
       await upsertRace({ round_number: Number(form.round_number), name: form.name, location: form.location || null, race_date: raceDate, race_end_date: raceEndDate, captain_deadline: captainDeadline, address: form.address || null, links: validLinks } as any);
@@ -252,8 +253,8 @@ function RacesAdmin() {
     setEditForm({
       name: r.name || "",
       location: r.location || "",
-      race_date: r.race_date ? new Date(r.race_date).toISOString().slice(0, 16) : "",
-      race_end_date: r.race_end_date ? new Date(r.race_end_date).toISOString().slice(0, 16) : "",
+      race_date: isoToCphLocalInput(r.race_date),
+      race_end_date: isoToCphLocalInput(r.race_end_date),
       address: r.address || "",
     });
     setEditLinks(Array.isArray(r.links) ? r.links : []);
@@ -261,8 +262,8 @@ function RacesAdmin() {
 
   async function handleSaveEdit(r: any) {
     try {
-      const raceDate = editForm.race_date || null;
-      const raceEndDate = editForm.race_end_date || null;
+      const raceDate = cphLocalInputToIso(editForm.race_date);
+      const raceEndDate = cphLocalInputToIso(editForm.race_end_date);
       const captainDeadline = raceDate ? new Date(new Date(raceDate).getTime() - 60 * 60 * 1000).toISOString() : null;
       const validLinks = editLinks.filter(l => l.label && l.url);
       await upsertRace({ id: r.id, round_number: r.round_number, name: editForm.name, location: editForm.location || null, race_date: raceDate, race_end_date: raceEndDate, captain_deadline: captainDeadline, address: editForm.address || null, links: validLinks } as any);
@@ -297,16 +298,18 @@ function RacesAdmin() {
         <div>
           <label className="text-xs text-muted-foreground">Løbsdato & tid</label>
           <Input type="datetime-local" value={form.race_date} onChange={(e) => setForm({ ...form, race_date: e.target.value })} className="bg-secondary border-border" />
+          <p className="text-[10px] text-muted-foreground mt-0.5">Dansk tid (CEST/CET)</p>
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Slutter (åbner transfer igen)</label>
           <Input type="datetime-local" value={form.race_end_date} onChange={(e) => setForm({ ...form, race_end_date: e.target.value })} className="bg-secondary border-border" />
+          <p className="text-[10px] text-muted-foreground mt-0.5">Dansk tid (CEST/CET)</p>
         </div>
       </div>
       <Input placeholder="Adresse (f.eks. Bøgelundvej 42, 6330 Padborg)" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="bg-secondary border-border" />
       <LinksEditor links={formLinks} setLinks={setFormLinks} />
       {form.race_date && (
-        <p className="text-xs text-muted-foreground">⏰ Deadline (captain + transfer) lukker automatisk: <strong className="text-foreground">{new Date(new Date(form.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong></p>
+        <p className="text-xs text-muted-foreground">⏰ Deadline (captain + transfer) lukker automatisk: <strong className="text-foreground">{new Date(new Date(cphLocalInputToIso(form.race_date) || form.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" })}</strong> (dansk tid)</p>
       )}
       <Button onClick={handleAdd} className="bg-gradient-racing text-primary-foreground font-display"><Plus className="h-4 w-4 mr-1" />Tilføj løb</Button>
       <div className="space-y-2">
@@ -330,7 +333,7 @@ function RacesAdmin() {
                 <Input placeholder="Adresse" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="bg-card border-border" />
                 <LinksEditor links={editLinks} setLinks={setEditLinks} />
                 {editForm.race_date && (
-                  <p className="text-xs text-muted-foreground">⏰ Deadline lukker: <strong className="text-foreground">{new Date(new Date(editForm.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong></p>
+                  <p className="text-xs text-muted-foreground">⏰ Deadline lukker: <strong className="text-foreground">{new Date(new Date(cphLocalInputToIso(editForm.race_date) || editForm.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" })}</strong> (dansk tid)</p>
                 )}
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => handleSaveEdit(r)} className="bg-success text-success-foreground"><Save className="h-3 w-3 mr-1" />Gem</Button>
@@ -344,8 +347,8 @@ function RacesAdmin() {
                   {r.location && <span className="text-muted-foreground"> – {r.location}</span>}
                   {r.race_date && (
                     <span className="text-muted-foreground ml-2">
-                      • {new Date(r.race_date).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                      <span className="text-xs ml-1">(DL: {new Date(new Date(r.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})</span>
+                      • {new Date(r.race_date).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" })}
+                      <span className="text-xs ml-1">(DL: {new Date(new Date(r.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" })})</span>
                     </span>
                   )}
                   {r.address && <div className="text-xs text-muted-foreground mt-0.5">📍 {r.address}</div>}
@@ -404,7 +407,7 @@ function PredictionsAdmin() {
         question_text: form.question_text,
         option_a: isDuel ? `driver:${form.option_a}` : (form.option_a || null),
         option_b: isDuel ? `driver:${form.option_b}` : (form.option_b || null),
-        prediction_deadline: form.prediction_deadline || null,
+        prediction_deadline: cphLocalInputToIso(form.prediction_deadline),
       });
       setForm({ race_id: "", question_type: "", question_text: "", option_a: "", option_b: "", prediction_deadline: "" });
       refetch();
@@ -587,6 +590,7 @@ function PredictionsAdmin() {
           <div>
             <label className="text-xs text-muted-foreground">Deadline</label>
             <Input type="datetime-local" value={form.prediction_deadline} onChange={(e) => setForm({ ...form, prediction_deadline: e.target.value })} className="bg-secondary border-border" />
+            <p className="text-[10px] text-muted-foreground mt-0.5">Tidspunktet fortolkes som dansk tid (CEST/CET)</p>
           </div>
         </div>
         <Input placeholder="Spørgsmålstekst *" value={form.question_text} onChange={(e) => setForm({ ...form, question_text: e.target.value })} className="bg-secondary border-border" />
