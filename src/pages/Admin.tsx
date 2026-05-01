@@ -405,7 +405,7 @@ function PredictionsAdmin() {
         question_text: form.question_text,
         option_a: isDuel ? `driver:${form.option_a}` : (form.option_a || null),
         option_b: isDuel ? `driver:${form.option_b}` : (form.option_b || null),
-        prediction_deadline: form.prediction_deadline || null,
+        prediction_deadline: cphLocalInputToIso(form.prediction_deadline),
       });
       setForm({ race_id: "", question_type: "", question_text: "", option_a: "", option_b: "", prediction_deadline: "" });
       refetch();
@@ -588,6 +588,7 @@ function PredictionsAdmin() {
           <div>
             <label className="text-xs text-muted-foreground">Deadline</label>
             <Input type="datetime-local" value={form.prediction_deadline} onChange={(e) => setForm({ ...form, prediction_deadline: e.target.value })} className="bg-secondary border-border" />
+            <p className="text-[10px] text-muted-foreground mt-0.5">Tidspunktet fortolkes som dansk tid (CEST/CET)</p>
           </div>
         </div>
         <Input placeholder="Spørgsmålstekst *" value={form.question_text} onChange={(e) => setForm({ ...form, question_text: e.target.value })} className="bg-secondary border-border" />
