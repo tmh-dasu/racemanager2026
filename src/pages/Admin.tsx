@@ -307,7 +307,7 @@ function RacesAdmin() {
       <Input placeholder="Adresse (f.eks. Bøgelundvej 42, 6330 Padborg)" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="bg-secondary border-border" />
       <LinksEditor links={formLinks} setLinks={setFormLinks} />
       {form.race_date && (
-        <p className="text-xs text-muted-foreground">⏰ Deadline (captain + transfer) lukker automatisk: <strong className="text-foreground">{new Date(new Date(form.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong></p>
+        <p className="text-xs text-muted-foreground">⏰ Deadline (captain + transfer) lukker automatisk: <strong className="text-foreground">{new Date(new Date(cphLocalInputToIso(form.race_date) || form.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" })}</strong> (dansk tid)</p>
       )}
       <Button onClick={handleAdd} className="bg-gradient-racing text-primary-foreground font-display"><Plus className="h-4 w-4 mr-1" />Tilføj løb</Button>
       <div className="space-y-2">
@@ -331,7 +331,7 @@ function RacesAdmin() {
                 <Input placeholder="Adresse" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="bg-card border-border" />
                 <LinksEditor links={editLinks} setLinks={setEditLinks} />
                 {editForm.race_date && (
-                  <p className="text-xs text-muted-foreground">⏰ Deadline lukker: <strong className="text-foreground">{new Date(new Date(editForm.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong></p>
+                  <p className="text-xs text-muted-foreground">⏰ Deadline lukker: <strong className="text-foreground">{new Date(new Date(cphLocalInputToIso(editForm.race_date) || editForm.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" })}</strong> (dansk tid)</p>
                 )}
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => handleSaveEdit(r)} className="bg-success text-success-foreground"><Save className="h-3 w-3 mr-1" />Gem</Button>
@@ -345,8 +345,8 @@ function RacesAdmin() {
                   {r.location && <span className="text-muted-foreground"> – {r.location}</span>}
                   {r.race_date && (
                     <span className="text-muted-foreground ml-2">
-                      • {new Date(r.race_date).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                      <span className="text-xs ml-1">(DL: {new Date(new Date(r.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})</span>
+                      • {new Date(r.race_date).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" })}
+                      <span className="text-xs ml-1">(DL: {new Date(new Date(r.race_date).getTime() - 60 * 60 * 1000).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" })})</span>
                     </span>
                   )}
                   {r.address && <div className="text-xs text-muted-foreground mt-0.5">📍 {r.address}</div>}
