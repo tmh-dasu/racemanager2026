@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { data: managers } = await supabase.from('managers').select('id, email, team_name')
+    const { data: managers } = await supabase.from('managers').select('id, email, team_name, name')
     if (!managers || managers.length === 0) {
       return new Response(JSON.stringify({ message: 'No managers' }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -102,14 +102,15 @@ Deno.serve(async (req) => {
     let sentCount = 0
 
     for (const mgr of managers) {
+      const firstName = (mgr.name || '').trim().split(/\s+/)[0] || mgr.team_name
       const html = `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e4e4e7;">
           <div style="background:#dc2626;padding:20px 24px;">
             <h2 style="margin:0;color:#fff;font-size:20px;">🔮 Nye predictions: ${race.name}</h2>
           </div>
           <div style="padding:20px 24px;">
-            <p style="color:#18181b;">Hej <strong>${mgr.team_name}</strong>,</p>
-            <p style="color:#52525b;">Der er ${questions.length} nye prediction-spørgsmål klar til Runde ${race.round_number}. Hvert korrekt svar giver 5 bonuspoint!</p>
+            <p style="color:#18181b;">Hej <strong>${firstName}</strong>,</p>
+            <p style="color:#52525b;">Der er ${questions.length} nye prediction-spørgsmål klar til Runde ${race.round_number} (${race.name}). Hvert korrekt svar giver 5 bonuspoint!</p>
             
             <ul style="list-style:none;padding:0;margin:16px 0;">
               ${questionList}
