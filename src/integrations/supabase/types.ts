@@ -242,6 +242,48 @@ export type Database = {
           },
         ]
       }
+      manager_round_points: {
+        Row: {
+          captain_bonus: number
+          captain_driver_id: string | null
+          computed_at: string
+          id: string
+          manager_id: string
+          prediction_points: number
+          race_id: string
+          race_points: number
+          team_snapshot: string[]
+          total: number
+          transfer_costs: number
+        }
+        Insert: {
+          captain_bonus?: number
+          captain_driver_id?: string | null
+          computed_at?: string
+          id?: string
+          manager_id: string
+          prediction_points?: number
+          race_id: string
+          race_points?: number
+          team_snapshot?: string[]
+          total?: number
+          transfer_costs?: number
+        }
+        Update: {
+          captain_bonus?: number
+          captain_driver_id?: string | null
+          computed_at?: string
+          id?: string
+          manager_id?: string
+          prediction_points?: number
+          race_id?: string
+          race_points?: number
+          team_snapshot?: string[]
+          total?: number
+          transfer_costs?: number
+        }
+        Relationships: []
+      }
       managers: {
         Row: {
           budget_remaining: number
@@ -903,6 +945,18 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      recompute_manager_all_rounds: {
+        Args: { p_manager_id: string }
+        Returns: undefined
+      }
+      recompute_manager_round: {
+        Args: { p_manager_id: string; p_race_id: string }
+        Returns: undefined
+      }
+      recompute_race_all_managers: {
+        Args: { p_race_id: string }
+        Returns: undefined
       }
     }
     Enums: {
