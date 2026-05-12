@@ -6,6 +6,7 @@ import { fetchDrivers, fetchRaces, fetchSettings, fetchManagers, upsertDriver, d
 import PrizeLottery from "@/components/admin/PrizeLottery";
 import RoundTopManagers from "@/components/admin/RoundTopManagers";
 import AuditLog from "@/components/admin/AuditLog";
+import Reconciliation from "@/components/admin/Reconciliation";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -79,6 +80,7 @@ export default function AdminPage() {
             <TabsTrigger value="lottery" className="font-display">Lodtrækning</TabsTrigger>
             <TabsTrigger value="round-top" className="font-display">Runde-top</TabsTrigger>
             <TabsTrigger value="audit" className="font-display">Audit-log</TabsTrigger>
+            <TabsTrigger value="reconciliation" className="font-display">Afstemning</TabsTrigger>
             <TabsTrigger value="settings" className="font-display">Indstillinger</TabsTrigger>
           </TabsList>
 
@@ -92,6 +94,7 @@ export default function AdminPage() {
           <TabsContent value="lottery"><PrizeLottery /></TabsContent>
           <TabsContent value="round-top"><RoundTopManagers /></TabsContent>
           <TabsContent value="audit"><AuditLog /></TabsContent>
+          <TabsContent value="reconciliation"><Reconciliation /></TabsContent>
           <TabsContent value="settings"><SettingsAdmin /></TabsContent>
         </Tabs>
       </div>
