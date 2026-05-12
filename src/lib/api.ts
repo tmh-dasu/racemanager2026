@@ -394,7 +394,7 @@ export async function recalculateManagerPoints() {
   const { data: allMDs } = await supabase.from("manager_drivers").select("manager_id, driver_id");
   const { data: allCaptains } = await supabase.from("captain_selections").select("manager_id, race_id, driver_id");
   const { data: allPredAnswers } = await supabase.from("prediction_answers").select("manager_id, is_correct");
-  const { data: allTransfers } = await supabase.from("transfers").select("manager_id, point_cost");
+  const { data: allTransfers } = await supabase.from("transfers").select("manager_id, point_cost, old_driver_id, new_driver_id, created_at");
   const { data: allRaces } = await supabase.from("races").select("id, race_date");
 
   // Build map: race_id -> eligibility cutoff (race_date - 1h). Managers must be created BEFORE this to score.
@@ -413,20 +413,42 @@ export async function recalculateManagerPoints() {
       return mgrCreated <= cutoff;
     };
 
-    const driverIds = (allMDs || []).filter((md: any) => md.manager_id === mgr.id).map((md: any) => md.driver_id);
-    if (driverIds.length === 0) {
+    const currentDriverIds = new Set<string>(
+      (allMDs || []).filter((md: any) => md.manager_id === mgr.id).map((md: any) => md.driver_id)
+    );
+    if (currentDriverIds.size === 0) {
       await supabase.from("managers").update({ total_points: 0 }).eq("id", mgr.id);
       continue;
     }
+
+    // Reconstruct historical team per race using the transfer log
+    const mgrTransfers = (allTransfers || [])
+      .filter((t: any) => t.manager_id === mgr.id && t.old_driver_id && t.new_driver_id && t.created_at)
+      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const raceDateMap = new Map<string, string | null>();
+    (allRaces || []).forEach((r: any) => raceDateMap.set(r.id, r.race_date));
+    const teamForRace = (raceId: string): Set<string> => {
+      const raceDate = raceDateMap.get(raceId);
+      if (!raceDate) return currentDriverIds;
+      const raceTime = new Date(raceDate).getTime();
+      const team = new Set(currentDriverIds);
+      for (const t of mgrTransfers) {
+        if (new Date(t.created_at).getTime() > raceTime) {
+          team.delete(t.new_driver_id);
+          team.add(t.old_driver_id);
+        }
+      }
+      return team;
+    };
 
     const captainMap = new Map<string, string>();
     (allCaptains || []).filter((c: any) => c.manager_id === mgr.id).forEach((c: any) => {
       captainMap.set(c.race_id, c.driver_id);
     });
 
-    // Base race points from current team drivers — only for races the manager was eligible for
+    // Base race points from the team the manager had at race time — only for eligible races
     const basePoints = (allResults || [])
-      .filter((r: any) => driverIds.includes(r.driver_id) && isEligibleForRace(r.race_id))
+      .filter((r: any) => isEligibleForRace(r.race_id) && teamForRace(r.race_id).has(r.driver_id))
       .reduce((sum: number, r: any) => sum + (r.points || 0), 0);
 
     // Captain bonus: only counts for eligible races
@@ -470,12 +492,38 @@ export function computePointBreakdown(
   allResults: { driver_id: string; points: number; race_id: string }[],
   allCaptains: { manager_id: string; race_id: string; driver_id: string }[],
   allPredAnswers: { manager_id: string; is_correct: boolean | null }[],
-  allTransfers: { manager_id: string; point_cost: number }[],
+  allTransfers: { manager_id: string; point_cost: number; old_driver_id?: string; new_driver_id?: string; created_at?: string }[],
   completedRounds: number,
   managerCreatedAt?: string | null,
   races?: { id: string; race_date: string | null }[],
 ): PointBreakdown {
-  const driverIds = allMDs.filter((md) => md.manager_id === managerId).map((md) => md.driver_id);
+  const currentDriverIds = new Set(
+    allMDs.filter((md) => md.manager_id === managerId).map((md) => md.driver_id)
+  );
+
+  // Manager's transfers, newest first — used to "undo" transfers when reconstructing
+  // the historical team for a past race.
+  const mgrTransfers = allTransfers
+    .filter((t) => t.manager_id === managerId && t.old_driver_id && t.new_driver_id && t.created_at)
+    .sort((a, b) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime());
+
+  const teamCache = new Map<string, Set<string>>();
+  function teamForRace(raceId: string, raceDate: string | null): Set<string> {
+    if (!raceDate) return currentDriverIds;
+    if (teamCache.has(raceId)) return teamCache.get(raceId)!;
+    const raceTime = new Date(raceDate).getTime();
+    const team = new Set(currentDriverIds);
+    for (const t of mgrTransfers) {
+      const tTime = new Date(t.created_at!).getTime();
+      if (tTime > raceTime) {
+        // Undo this transfer: the new driver wasn't on the team yet, the old one was.
+        team.delete(t.new_driver_id!);
+        team.add(t.old_driver_id!);
+      }
+    }
+    teamCache.set(raceId, team);
+    return team;
+  }
 
   const captainMap = new Map<string, string>();
   allCaptains.filter((c) => c.manager_id === managerId).forEach((c) => {
@@ -485,7 +533,9 @@ export function computePointBreakdown(
   // Eligibility: manager must be created at or before (race_date - 1h) to score
   const mgrCreated = managerCreatedAt ? new Date(managerCreatedAt).getTime() : 0;
   const cutoffs = new Map<string, number>();
+  const raceDateMap = new Map<string, string | null>();
   (races || []).forEach((r) => {
+    raceDateMap.set(r.id, r.race_date);
     if (r.race_date) cutoffs.set(r.id, new Date(r.race_date).getTime() - 60 * 60 * 1000);
   });
   const isEligible = (raceId: string) => {
@@ -495,9 +545,9 @@ export function computePointBreakdown(
     return mgrCreated <= c;
   };
 
-  // Base race points from current team drivers — only for eligible races
+  // Base race points from the team the manager actually had at race time
   const baseTotal = allResults
-    .filter((r) => driverIds.includes(r.driver_id) && isEligible(r.race_id))
+    .filter((r) => isEligible(r.race_id) && teamForRace(r.race_id, raceDateMap.get(r.race_id) ?? null).has(r.driver_id))
     .reduce((sum, r) => sum + (r.points || 0), 0);
 
   // Captain bonus: only for eligible races
