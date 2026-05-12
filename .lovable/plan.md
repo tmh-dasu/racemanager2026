@@ -1,47 +1,61 @@
 
+# Persistér pr-løb breakdown
 
-Brugeren har lige fået bekræftet at payment-gaten virker og spørger nu hvilke andre vigtige flows vi bør teste end-to-end. Sikkerhedsscanneren viser ingen åbne issues (alle er enten fixed eller bevidst ignoreret), så fokus bør være på funktionelle/forretningskritiske flows.
+Opret en låst historik over hvert holds point pr. løb, så totalerne ikke længere skal genberegnes ad-hoc og ikke kan glide ved senere ændringer.
 
-Jeg laver en kort, prioriteret testplan med de mest kritiske flows der involverer penge, point, deadlines og rettigheder.
+## Hvad bygges
 
-## Forslag: End-to-end testplan
+### 1. Ny tabel `manager_round_points`
+Én række pr. (manager, race) med fuldt breakdown:
+- `race_points` — sum af pointene fra de 3 førere holdet havde på løbsdagen
+- `captain_bonus` — captain-førerens point i løbet (eller 0)
+- `prediction_points` — 5 × antal korrekte predictions for det løb
+- `transfer_costs` — sum af `point_cost` for transfers lavet i transfer-vinduet før løbet
+- `team_snapshot` — array af de 3 driver_ids holdet havde på løbsdagen (audit-trail)
+- `captain_driver_id` — hvem var captain
+- `computed_at` — hvornår beregnet
 
-Her er de mest kritiske flows at teste, prioriteret efter forretningsrisiko:
+Unik constraint på (manager_id, race_id). Kun admin/service kan skrive. Alle kan læse.
 
-### 1. Pointintegritet (HØJEST prioritet)
-- **Cheat-forsøg**: Prøv som almindelig bruger at opdatere `total_points` direkte via Supabase-klienten — triggeren `trg_protect_manager_fields` skal blokere det.
-- **Transfer-bypass**: Prøv at indsætte en transfer med `is_free=true, point_cost=0` — triggeren `enforce_transfer_values` skal overskrive værdierne baseret på kørerens kategori (Guld 15 / Sølv 10 / Bronze 5).
-- **Holdkaptajn-grænse**: Vælg samme kategori som kaptajn 3 gange — `enforce_captain_limit` skal afvise det 3. valg.
+### 2. Recompute-funktion `recompute_manager_round(manager_id, race_id)`
+SECURITY DEFINER funktion der:
+- Rekonstruerer holdet på løbsdagen ved at undo alle transfers efter `race_date`
+- Beregner alle 4 felter
+- UPSERTER én række i `manager_round_points`
+- Opdaterer `managers.total_points` = SUM af alle rækker for den manager
 
-### 2. Deadlines (24h-låsen)
-- **Holdkaptajn**: Forsøg at ændre kaptajn <24h før race_date — skal afvises (ikke-admin).
-- **Transfer**: Samme test for transfers.
-- **Predictions**: Samme test for prediction_answers.
-- Verificér at admin kan bypasse alle tre.
+### 3. Auto-opdatering via triggers
+Triggers på følgende tabeller kalder recompute for berørte (manager, race):
+- `race_results` (INSERT/UPDATE/DELETE) → recompute alle managers for det race
+- `transfers` (INSERT/DELETE) → recompute den manager for alle løb (transferen påvirker historik bagud)
+- `captain_selections` (INSERT/UPDATE/DELETE) → recompute den ene (manager, race)
+- `prediction_answers` (UPDATE af is_correct) → recompute den ene (manager, race)
+- `races` (UPDATE af race_date) → recompute alle managers for det race
 
-### 3. Betalingsflow
-- **Ny bruger uden betaling**: Bekræft at `/vaelg-hold` viser "Betaling påkrævet"-skærmen og at evt. direkte API-kald til at oprette manager fejler på RLS.
-- **Verify-payment**: Test at `verify-payment` edge function kun registrerer betalinger med `payment_status === "paid"` fra Stripe.
-- **Voucher**: Test at en gyldig voucherkode opretter `user_payments`-record uden Stripe.
+### 4. Initial backfill
+Kør recompute for alle eksisterende (manager, race)-kombinationer én gang som del af migrationen.
 
-### 4. Holdregler
-- **Max 3 kørere**: Forsøg at tilføje en 4. kører — `enforce_max_drivers` skal afvise.
-- **Slug-kollision**: Opret hold med samme navn som eksisterende — skal vise dansk fejlbesked.
-- **Tilbagetrukken kører**: Marker en kører som withdrawn og test at gratis transfer (`is_free=true`, `point_cost=0`) automatisk sættes.
+### 5. Frontend
+`src/lib/api.ts` får ny `fetchManagerRoundPoints()` som henter fra den persisterede tabel.
+`computePointBreakdown()` beholdes som fallback men markeres deprecated.
+`Leaderboard.tsx` og `Index.tsx` (vinder pr. runde) bruger den persisterede data → hurtigere og garanteret konsistent med DB-totalerne.
 
-### 5. Rettigheder & data
-- **Admin-check**: Login som ikke-admin og kald `/admin` — skal redirecte/blokere.
-- **Predictions-svar**: Bekræft at andre brugeres svar er skjulte indtil deadline er passeret (ny RLS).
-- **Egen data**: Bekræft at man kun kan se sin egen `user_payments`-række.
+## Tekniske detaljer
 
-### 6. Email-flow
-- **Holdoprettelse**: Bekræft at `send-team-confirmation` sender mail.
-- **Betalingsbekræftelse**: Bekræft at `verify-payment` sender kvittering.
-- **Auth-emails**: Test password-reset flow.
+- Recompute-funktionen bruger `SECURITY DEFINER` + omgår `protect_manager_fields` ved selv at opdatere `managers.total_points` direkte (eller midlertidig disable-trigger inde i funktionen).
+- Triggers er `AFTER` triggers så de ser endelig data.
+- For at undgå rekursion: triggeren der opdaterer `managers` deaktiveres ikke andre triggers — `protect_manager_fields` skal ændres så den tillader opdateringer fra vores recompute-funktion (fx via `SET LOCAL app.recompute_in_progress = true` flag).
+- Performance: ~86 managers × ~5 løb = ~430 rækker. Trigger-genberegninger er per-event så ingen N+N kompleksitet.
 
-### Foreslået rækkefølge
+## Migrationer
 
-Start med **#1 (pointintegritet)** og **#3 (betaling)** — det er der hvor cheat eller fejl gør mest skade. Resten kan testes løbende.
+1. `CREATE TABLE manager_round_points` + RLS + indexes
+2. `CREATE FUNCTION recompute_manager_round(...)` og hjælpefunktion `recompute_all()`  
+3. `CREATE TRIGGER`s på de 5 tabeller
+4. Tilpas `protect_manager_fields` så recompute kan opdatere total_points
+5. Initial backfill: `SELECT recompute_all();`
 
-Det automatiserede testpanel ligger allerede på `/admin/test` — det dækker en del af #3 og #4. Vil du have mig til at udvide testpanelet med de manglende cheat-forsøg under #1, så du kan køre det hele med ét klik?
+## Risici
 
+- Triggers kan gøre admin-CSV-import af resultater langsommere (mange events). Kan optimeres ved batch-mode flag der suspenderer trigger og kører ét recompute til sidst.
+- Hvis ny logik introduceres senere (fx ekstra bonusser), skal recompute-funktionen opdateres.
