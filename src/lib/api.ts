@@ -30,6 +30,28 @@ export interface Race {
   links: RaceLink[];
 }
 
+export interface ManagerRoundPoints {
+  id: string;
+  manager_id: string;
+  race_id: string;
+  race_points: number;
+  captain_bonus: number;
+  prediction_points: number;
+  transfer_costs: number;
+  total: number;
+  team_snapshot: string[];
+  captain_driver_id: string | null;
+  computed_at: string;
+}
+
+/** Fetch persisted per-round point breakdown. Source of truth for manager_round_points table. */
+export async function fetchManagerRoundPoints(managerId?: string): Promise<ManagerRoundPoints[]> {
+  let q = supabase.from("manager_round_points").select("*");
+  if (managerId) q = q.eq("manager_id", managerId);
+  const { data } = await q;
+  return (data || []) as ManagerRoundPoints[];
+}
+
 /** Derive the effective deadline (1h before race_date). Falls back to captain_deadline for legacy data. */
 export function getEffectiveDeadline(race: Race): Date | null {
   if (race.race_date) {
