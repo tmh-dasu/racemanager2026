@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, Crown, Copy } from "lucide-react";
-import { fetchRaces, fetchRaceResults, fetchAllCaptainSelections, fetchPredictionQuestions, type Race } from "@/lib/api";
+import { fetchRaces, fetchRaceResults, fetchAllCaptainSelections, fetchPredictionQuestions, fetchAllTransfers, type Race } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,7 @@ export default function RoundTopManagers() {
     const { data } = await supabase.from("manager_drivers").select("manager_id, driver_id");
     return (data || []) as { manager_id: string; driver_id: string }[];
   }});
+  const { data: allTransfers = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
   const { data: allPredAnswers = [] } = useQuery({ queryKey: ["all_prediction_answers"], queryFn: async () => {
     const { data } = await supabase.from("prediction_answers").select("manager_id, question_id, is_correct");
     return (data || []) as { manager_id: string; question_id: string; is_correct: boolean | null }[];
@@ -45,15 +46,28 @@ export default function RoundTopManagers() {
     const raceQuestionIds = new Set(
       allQuestions.filter(q => q.race_id === race.id).map(q => q.id)
     );
+    const raceTime = race.race_date ? new Date(race.race_date).getTime() : null;
 
     return managers.map(mgr => {
-      const driverIds = allMDs
-        .filter(md => md.manager_id === mgr.id)
-        .map(md => md.driver_id);
+      // Reconstruct the team the manager actually had at the time of this race
+      const team = new Set(
+        allMDs.filter(md => md.manager_id === mgr.id).map(md => md.driver_id)
+      );
+      if (raceTime !== null) {
+        const mgrTransfers = allTransfers
+          .filter(t => t.manager_id === mgr.id)
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        for (const t of mgrTransfers) {
+          if (new Date(t.created_at).getTime() > raceTime) {
+            team.delete(t.new_driver_id);
+            team.add(t.old_driver_id);
+          }
+        }
+      }
 
       // Race points from team drivers in this round
       const racePoints = allResults
-        .filter(r => r.race_id === race.id && driverIds.includes(r.driver_id))
+        .filter(r => r.race_id === race.id && team.has(r.driver_id))
         .reduce((sum, r) => sum + r.points, 0);
 
       // Captain bonus for this round
