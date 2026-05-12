@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Upload, CheckCircle2, AlertCircle, Mail, History, Download } from "lucide-react";
+import { Save, Upload, CheckCircle2, AlertCircle, Mail, History, Download, Calculator } from "lucide-react";
 import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, parseResultsCSV, SESSION_TYPES, SESSION_LABELS, type Driver, type Race, type ParsedCSVRow } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export default function ResultsAdmin() {
   const [grid, setGrid] = useState<GridData>({});
   const [saving, setSaving] = useState(false);
   const [notifying, setNotifying] = useState(false);
+  const [recalculating, setRecalculating] = useState(false);
   const [uploadSession, setUploadSession] = useState<string>(SESSION_TYPES[0]);
   const [previewRows, setPreviewRows] = useState<ParsedCSVRow[] | null>(null);
   const [previewSkipped, setPreviewSkipped] = useState(0);
@@ -146,6 +147,19 @@ export default function ResultsAdmin() {
     setNotifying(false);
   }
 
+  async function handleRecalculate() {
+    if (!confirm("Genberegn total_points for alle managers? Bruges hvis nogen har lavet transfers efter et løb og sæsontotalen ser forkert ud.")) return;
+    setRecalculating(true);
+    try {
+      await recalculateManagerPoints();
+      queryClient.invalidateQueries({ queryKey: ["managers"] });
+      toast({ title: "Alle points er genberegnet ✅" });
+    } catch (err: any) {
+      toast({ title: "Fejl: " + err.message, variant: "destructive" });
+    }
+    setRecalculating(false);
+  }
+
   function handleCSVUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedRace) return;
@@ -264,6 +278,9 @@ export default function ResultsAdmin() {
                 <Mail className="h-4 w-4 mr-2" />{notifying ? "Sender..." : "Send resultat-email"}
               </Button>
             )}
+            <Button onClick={handleRecalculate} disabled={recalculating} variant="outline" size="sm" className="font-display">
+              <Calculator className="h-4 w-4 mr-2" />{recalculating ? "Genberegner..." : "Genberegn alle points"}
+            </Button>
             <span className="text-xs text-muted-foreground ml-auto">
               CSV-format: Pos, No., Name, ... (standardformat fra tidtagning)
             </span>
