@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift, MapPin, ExternalLink, Award } from "lucide-react";
-import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchRaceResults, fetchAllCaptainSelections, fetchPredictionQuestions, computeTransferDeadline, type Prize } from "@/lib/api";
+import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchRaceResults, fetchAllCaptainSelections, fetchPredictionQuestions, fetchAllTransfers, computeTransferDeadline, type Prize } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 import { supabase } from "@/integrations/supabase/client";
 import dslLogo from "@/assets/dsl-logo.png";
@@ -62,6 +62,7 @@ export default function HomePage() {
     },
   });
   const { data: allQuestions = [] } = useQuery({ queryKey: ["prediction_questions_all"], queryFn: fetchPredictionQuestions });
+  const { data: allTransfers = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
 
   const now = new Date();
   const nextRace = races.find((r) => r.race_date && new Date(r.race_date) > now);
@@ -293,13 +294,26 @@ export default function HomePage() {
                   const raceQuestionIds = new Set(
                     allQuestions.filter((q) => q.race_id === race.id).map((q) => q.id)
                   );
+                  const raceTime = race.race_date ? new Date(race.race_date).getTime() : null;
                   let best: { managerId: string; total: number } | null = null;
                   managers.forEach((mgr) => {
-                    const driverIds = allMDs
-                      .filter((md) => md.manager_id === mgr.id)
-                      .map((md) => md.driver_id);
+                    // Reconstruct historical team using transfer log
+                    const team = new Set(
+                      allMDs.filter((md) => md.manager_id === mgr.id).map((md) => md.driver_id)
+                    );
+                    if (raceTime !== null) {
+                      const mgrTransfers = allTransfers
+                        .filter((t: any) => t.manager_id === mgr.id)
+                        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                      for (const t of mgrTransfers) {
+                        if (new Date((t as any).created_at).getTime() > raceTime) {
+                          team.delete((t as any).new_driver_id);
+                          team.add((t as any).old_driver_id);
+                        }
+                      }
+                    }
                     const racePoints = allResults
-                      .filter((r) => r.race_id === race.id && driverIds.includes(r.driver_id))
+                      .filter((r) => r.race_id === race.id && team.has(r.driver_id))
                       .reduce((s, r) => s + r.points, 0);
                     const captainSel = allCaptains.find(
                       (c) => c.manager_id === mgr.id && c.race_id === race.id
