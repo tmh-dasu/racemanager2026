@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift, MapPin, ExternalLink, Award } from "lucide-react";
-import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchRaceResults, fetchAllCaptainSelections, fetchPredictionQuestions, fetchAllTransfers, computeTransferDeadline, type Prize } from "@/lib/api";
+import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchRaceResults, fetchAllCaptainSelections, fetchAllTransfers, computeTransferDeadline, type Prize } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 import { supabase } from "@/integrations/supabase/client";
 import dslLogo from "@/assets/dsl-logo.png";
@@ -61,7 +61,7 @@ export default function HomePage() {
       return (data || []) as { manager_id: string; question_id: string; is_correct: boolean | null }[];
     },
   });
-  const { data: allQuestions = [] } = useQuery({ queryKey: ["prediction_questions_all"], queryFn: fetchPredictionQuestions });
+  const { data: allQuestions = [] } = useQuery({ queryKey: ["prediction_questions_all"], queryFn: fetchPublishedPredictionQuestions });
   const { data: allTransfers = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
 
   const now = new Date();
