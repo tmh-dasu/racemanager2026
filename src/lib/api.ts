@@ -52,6 +52,74 @@ export async function fetchManagerRoundPoints(managerId?: string): Promise<Manag
   return (data || []) as ManagerRoundPoints[];
 }
 
+export interface RoundPointsLite {
+  manager_id: string;
+  race_id: string;
+  race_points: number;
+  captain_bonus: number;
+  prediction_points: number;
+  total: number;
+}
+
+/**
+ * Lightweight fetch of all persisted round points (no snapshots/timestamps).
+ * Replaces pulling entire race_results / prediction_answers / manager_drivers tables
+ * into the browser just to recompute what the database already stores.
+ */
+export async function fetchAllRoundPointsLite(): Promise<RoundPointsLite[]> {
+  const { data } = await supabase
+    .from("manager_round_points")
+    .select("manager_id, race_id, race_points, captain_bonus, prediction_points, total");
+  return (data || []) as RoundPointsLite[];
+}
+
+/** Ids of races that have results uploaded — cheap, single-column read. */
+export async function fetchScoredRaceIds(): Promise<Set<string>> {
+  const { data } = await supabase.from("race_results").select("race_id");
+  return new Set(((data || []) as { race_id: string }[]).map((r) => r.race_id));
+}
+
+/** Aggregate persisted round points (+ transfer costs) into per-manager breakdowns. */
+export function aggregateBreakdowns(
+  rounds: RoundPointsLite[],
+  transfers: { manager_id: string; point_cost: number }[],
+): Map<string, PointBreakdown> {
+  const map = new Map<string, PointBreakdown>();
+  const get = (id: string) => {
+    let b = map.get(id);
+    if (!b) {
+      b = { racePoints: 0, captainBonus: 0, predictionPoints: 0, transferCosts: 0, total: 0 };
+      map.set(id, b);
+    }
+    return b;
+  };
+  for (const r of rounds) {
+    const b = get(r.manager_id);
+    b.racePoints += r.race_points;
+    b.captainBonus += r.captain_bonus;
+    b.predictionPoints += r.prediction_points;
+    b.total += r.total;
+  }
+  for (const t of transfers) {
+    const b = get(t.manager_id);
+    b.transferCosts += t.point_cost || 0;
+  }
+  for (const b of map.values()) b.total -= b.transferCosts;
+  return map;
+}
+
+/** Winner (highest round total) per race, straight from the persisted round points. */
+export function roundWinnersFromRoundPoints(
+  rounds: RoundPointsLite[],
+): Map<string, { managerId: string; total: number }> {
+  const best = new Map<string, { managerId: string; total: number }>();
+  for (const r of rounds) {
+    const cur = best.get(r.race_id);
+    if (!cur || r.total > cur.total) best.set(r.race_id, { managerId: r.manager_id, total: r.total });
+  }
+  return best;
+}
+
 /** Derive the effective deadline (1h before race_date). Falls back to captain_deadline for legacy data. */
 export function getEffectiveDeadline(race: Race): Date | null {
   if (race.race_date) {
