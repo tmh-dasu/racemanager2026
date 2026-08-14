@@ -262,7 +262,7 @@ export default function HomePage() {
 
                 // Compute round top scorer for each completed round (afdelingspræmie)
                 const racesWithResults = races
-                  .filter((race) => allResults.some((r) => r.race_id === race.id))
+                  .filter((race) => scoredRaceIds.has(race.id))
                   .sort((a, b) => b.round_number - a.round_number);
 
                 type RoundWinner = {
@@ -274,57 +274,18 @@ export default function HomePage() {
                   total: number;
                 };
 
+                // Winners come from the persisted per-round table — already frozen per race.
+                const winnerByRace = roundWinnersFromRoundPoints(roundPoints);
+
                 const roundWinners: RoundWinner[] = racesWithResults.map((race) => {
-                  const raceQuestionIds = new Set(
-                    allQuestions.filter((q) => q.race_id === race.id).map((q) => q.id)
-                  );
-                  const raceTime = race.race_date ? new Date(race.race_date).getTime() : null;
-                  let best: { managerId: string; total: number } | null = null;
-                  managers.forEach((mgr) => {
-                    // Reconstruct historical team using transfer log
-                    const team = new Set(
-                      allMDs.filter((md) => md.manager_id === mgr.id).map((md) => md.driver_id)
-                    );
-                    if (raceTime !== null) {
-                      const mgrTransfers = allTransfers
-                        .filter((t: any) => t.manager_id === mgr.id)
-                        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-                      for (const t of mgrTransfers) {
-                        if (new Date((t as any).created_at).getTime() > raceTime) {
-                          team.delete((t as any).new_driver_id);
-                          team.add((t as any).old_driver_id);
-                        }
-                      }
-                    }
-                    const racePoints = allResults
-                      .filter((r) => r.race_id === race.id && team.has(r.driver_id))
-                      .reduce((s, r) => s + r.points, 0);
-                    const captainSel = allCaptains.find(
-                      (c) => c.manager_id === mgr.id && c.race_id === race.id
-                    );
-                    let captainBonus = 0;
-                    if (captainSel) {
-                      captainBonus = allResults
-                        .filter((r) => r.race_id === race.id && r.driver_id === captainSel.driver_id)
-                        .reduce((s, r) => s + r.points, 0);
-                    }
-                    const predictionPoints =
-                      allPredAnswers.filter(
-                        (a) =>
-                          a.manager_id === mgr.id &&
-                          raceQuestionIds.has(a.question_id) &&
-                          a.is_correct === true
-                      ).length * 5;
-                    const total = racePoints + captainBonus + predictionPoints;
-                    if (!best || total > best.total) best = { managerId: mgr.id, total };
-                  });
-                   return {
+                  const best = winnerByRace.get(race.id) || null;
+                  return {
                      key: `round-top-${race.id}`,
                      prizeName: `Vinder af ${race.round_number}. afdeling — 1 x koncentrationstest fra Pulskoncept`,
                     category: "round" as const,
                     drawnAt: race.race_date || new Date().toISOString(),
-                    managerId: best ? (best as { managerId: string; total: number }).managerId : null,
-                    total: best ? (best as { managerId: string; total: number }).total : 0,
+                    managerId: best ? best.managerId : null,
+                    total: best ? best.total : 0,
                   };
                 }).filter((w) => w.managerId !== null && w.total > 0);
 
