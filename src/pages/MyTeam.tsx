@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, AlertTriangle, LogOut, ShieldAlert, History } from "lucide-react";
-import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers, fetchAllCaptainSelections, fetchAllPredictionAnswers, fetchAllTransfers, computePointBreakdown, getTransferCostForTier, computeTransferDeadline } from "@/lib/api";
+import { fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchSettings, fetchManagers, performTransfer, performEmergencyTransfer, fetchManagerByUserId, fetchTransfers, fetchManagerRoundPoints, aggregateBreakdowns, getTransferCostForTier, computeTransferDeadline } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -39,9 +39,12 @@ export default function MyTeamPage() {
     queryFn: () => fetchTransfers(manager!.id),
     enabled: !!manager,
   });
-  const { data: captainSelections = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
-  const { data: predAnswers = [] } = useQuery({ queryKey: ["all_prediction_answers"], queryFn: fetchAllPredictionAnswers });
-  const { data: allTransfersData = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
+  // Own persisted round points — no need to load every manager's captains/predictions/transfers.
+  const { data: myRoundPoints = [] } = useQuery({
+    queryKey: ["round_points", manager?.id],
+    queryFn: () => fetchManagerRoundPoints(manager!.id),
+    enabled: !!manager,
+  });
 
   const completedRounds = useMemo(() => new Set(allResults.map(r => r.race_id)).size, [allResults]);
 
@@ -64,16 +67,18 @@ export default function MyTeamPage() {
 
   const breakdown = useMemo(() => {
     if (!manager) return null;
-    return computePointBreakdown(
-      manager.id,
-      managerDrivers.map(md => ({ manager_id: md.manager_id, driver_id: md.driver_id })),
-      allResults,
-      captainSelections,
-      predAnswers,
-      allTransfersData,
-      completedRounds,
-    );
-  }, [manager, managerDrivers, allResults, captainSelections, predAnswers, allTransfersData, completedRounds]);
+    return aggregateBreakdowns(
+      myRoundPoints.map(r => ({
+        manager_id: r.manager_id,
+        race_id: r.race_id,
+        race_points: r.race_points,
+        captain_bonus: r.captain_bonus,
+        prediction_points: r.prediction_points,
+        total: r.total,
+      })),
+      myTransfers.map(t => ({ manager_id: t.manager_id, point_cost: t.point_cost })),
+    ).get(manager.id) ?? { racePoints: 0, captainBonus: 0, predictionPoints: 0, transferCosts: 0, total: 0 };
+  }, [manager, myRoundPoints, myTransfers]);
 
   const myRank = manager ? allManagers.findIndex((m) => m.id === manager.id) + 1 : null;
 

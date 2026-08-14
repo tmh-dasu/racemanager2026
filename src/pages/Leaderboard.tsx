@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, Crown, ArrowLeftRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { fetchManagers, fetchManagerDrivers, fetchManagerByUserId, fetchDrivers, fetchRaceResults, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, fetchAllPredictionAnswers, computePointBreakdown, getFirstEligibleRace, type Manager, type Driver, type CaptainSelection, type Race, type Transfer, type PointBreakdown } from "@/lib/api";
+import { fetchManagers, fetchManagerDrivers, fetchManagerByUserId, fetchDrivers, fetchAllCaptainSelections, fetchRaces, fetchAllTransfers, fetchAllRoundPointsLite, aggregateBreakdowns, getFirstEligibleRace, type Manager, type Driver, type CaptainSelection, type Race, type Transfer, type PointBreakdown } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 import { Badge } from "@/components/ui/badge";
@@ -173,33 +173,16 @@ export default function LeaderboardPage() {
     queryFn: () => fetchManagerByUserId(user!.id),
     enabled: !!user,
   });
-  const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
   const { data: allDrivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
   const { data: captainSelections = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: transfers = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
-  const { data: predAnswers = [] } = useQuery({ queryKey: ["all_prediction_answers"], queryFn: fetchAllPredictionAnswers });
 
-  // We need all manager_drivers for breakdown computation
-  // Fetch them in bulk via a single query isn't possible with current API, so we compute from what we have
-  // Actually we need this data. Let's fetch it.
-  const { data: allMDs = [] } = useQuery({
-    queryKey: ["all_manager_drivers"],
-    queryFn: async () => {
-      const { data } = await (await import("@/integrations/supabase/client")).supabase.from("manager_drivers").select("manager_id, driver_id");
-      return (data || []) as { manager_id: string; driver_id: string }[];
-    },
-  });
+  // Breakdowns come straight from the persisted per-round table (manager_round_points)
+  // instead of re-deriving them from full result/prediction/roster tables in the browser.
+  const { data: roundPoints = [] } = useQuery({ queryKey: ["round_points_lite"], queryFn: fetchAllRoundPointsLite });
 
-  const completedRounds = useMemo(() => new Set(allResults.map(r => r.race_id)).size, [allResults]);
-
-  const breakdowns = useMemo(() => {
-    const map = new Map<string, PointBreakdown>();
-    for (const m of managers) {
-      map.set(m.id, computePointBreakdown(m.id, allMDs, allResults, captainSelections, predAnswers, transfers, completedRounds, m.created_at, races));
-    }
-    return map;
-  }, [managers, allMDs, allResults, captainSelections, predAnswers, transfers, completedRounds, races]);
+  const breakdowns = useMemo(() => aggregateBreakdowns(roundPoints, transfers), [roundPoints, transfers]);
 
   return (
     <PageLayout>

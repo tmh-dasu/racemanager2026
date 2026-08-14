@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Trophy, Clock, ChevronRight, Flag, ArrowLeftRight, HelpCircle, Gift, MapPin, ExternalLink, Award } from "lucide-react";
-import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchRaceResults, fetchAllCaptainSelections, fetchAllTransfers, computeTransferDeadline, type Prize } from "@/lib/api";
+import { fetchManagers, fetchRaces, fetchSettings, fetchPublishedPredictionQuestions, fetchSponsors, fetchPrizes, fetchScoredRaceIds, fetchAllRoundPointsLite, roundWinnersFromRoundPoints, computeTransferDeadline, type Prize } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
-import { supabase } from "@/integrations/supabase/client";
 import dslLogo from "@/assets/dsl-logo.png";
 
 function CountdownTimer({ deadline, label }: { deadline: string; label: string }) {
@@ -45,24 +44,10 @@ export default function HomePage() {
   const { data: predictionQuestions = [] } = useQuery({ queryKey: ["prediction_questions_published"], queryFn: fetchPublishedPredictionQuestions });
   const { data: sponsors = [] } = useQuery({ queryKey: ["sponsors"], queryFn: fetchSponsors });
   const { data: prizes = [] } = useQuery({ queryKey: ["prizes"], queryFn: fetchPrizes });
-  const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
-  const { data: allCaptains = [] } = useQuery({ queryKey: ["all_captain_selections"], queryFn: fetchAllCaptainSelections });
-  const { data: allMDs = [] } = useQuery({
-    queryKey: ["all_manager_drivers_public"],
-    queryFn: async () => {
-      const { data } = await supabase.from("manager_drivers").select("manager_id, driver_id");
-      return (data || []) as { manager_id: string; driver_id: string }[];
-    },
-  });
-  const { data: allPredAnswers = [] } = useQuery({
-    queryKey: ["all_prediction_answers_public"],
-    queryFn: async () => {
-      const { data } = await supabase.from("prediction_answers").select("manager_id, question_id, is_correct");
-      return (data || []) as { manager_id: string; question_id: string; is_correct: boolean | null }[];
-    },
-  });
-  const { data: allQuestions = [] } = useQuery({ queryKey: ["prediction_questions_all"], queryFn: fetchPublishedPredictionQuestions });
-  const { data: allTransfers = [] } = useQuery({ queryKey: ["all_transfers"], queryFn: fetchAllTransfers });
+  // Only the ids of scored races + the persisted round points are needed here —
+  // no full result/roster/prediction tables in the browser.
+  const { data: scoredRaceIds = new Set<string>() } = useQuery({ queryKey: ["scored_race_ids"], queryFn: fetchScoredRaceIds });
+  const { data: roundPoints = [] } = useQuery({ queryKey: ["round_points_lite"], queryFn: fetchAllRoundPointsLite });
 
   const now = new Date();
   const nextRace = races.find((r) => r.race_date && new Date(r.race_date) > now);
@@ -70,7 +55,6 @@ export default function HomePage() {
 
   const transferDeadline = computeTransferDeadline(races, now);
   const deadlinePassed = transferDeadline ? now >= transferDeadline : true;
-  const scoredRaceIds = new Set(allResults.map((r) => r.race_id));
   const awaitingResults = races.some((r) => {
     if (!r.race_date) return false;
     const end = new Date(r.race_end_date || r.race_date);
@@ -278,7 +262,7 @@ export default function HomePage() {
 
                 // Compute round top scorer for each completed round (afdelingspræmie)
                 const racesWithResults = races
-                  .filter((race) => allResults.some((r) => r.race_id === race.id))
+                  .filter((race) => scoredRaceIds.has(race.id))
                   .sort((a, b) => b.round_number - a.round_number);
 
                 type RoundWinner = {
@@ -290,57 +274,18 @@ export default function HomePage() {
                   total: number;
                 };
 
+                // Winners come from the persisted per-round table — already frozen per race.
+                const winnerByRace = roundWinnersFromRoundPoints(roundPoints);
+
                 const roundWinners: RoundWinner[] = racesWithResults.map((race) => {
-                  const raceQuestionIds = new Set(
-                    allQuestions.filter((q) => q.race_id === race.id).map((q) => q.id)
-                  );
-                  const raceTime = race.race_date ? new Date(race.race_date).getTime() : null;
-                  let best: { managerId: string; total: number } | null = null;
-                  managers.forEach((mgr) => {
-                    // Reconstruct historical team using transfer log
-                    const team = new Set(
-                      allMDs.filter((md) => md.manager_id === mgr.id).map((md) => md.driver_id)
-                    );
-                    if (raceTime !== null) {
-                      const mgrTransfers = allTransfers
-                        .filter((t: any) => t.manager_id === mgr.id)
-                        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-                      for (const t of mgrTransfers) {
-                        if (new Date((t as any).created_at).getTime() > raceTime) {
-                          team.delete((t as any).new_driver_id);
-                          team.add((t as any).old_driver_id);
-                        }
-                      }
-                    }
-                    const racePoints = allResults
-                      .filter((r) => r.race_id === race.id && team.has(r.driver_id))
-                      .reduce((s, r) => s + r.points, 0);
-                    const captainSel = allCaptains.find(
-                      (c) => c.manager_id === mgr.id && c.race_id === race.id
-                    );
-                    let captainBonus = 0;
-                    if (captainSel) {
-                      captainBonus = allResults
-                        .filter((r) => r.race_id === race.id && r.driver_id === captainSel.driver_id)
-                        .reduce((s, r) => s + r.points, 0);
-                    }
-                    const predictionPoints =
-                      allPredAnswers.filter(
-                        (a) =>
-                          a.manager_id === mgr.id &&
-                          raceQuestionIds.has(a.question_id) &&
-                          a.is_correct === true
-                      ).length * 5;
-                    const total = racePoints + captainBonus + predictionPoints;
-                    if (!best || total > best.total) best = { managerId: mgr.id, total };
-                  });
-                   return {
+                  const best = winnerByRace.get(race.id) || null;
+                  return {
                      key: `round-top-${race.id}`,
                      prizeName: `Vinder af ${race.round_number}. afdeling — 1 x koncentrationstest fra Pulskoncept`,
                     category: "round" as const,
                     drawnAt: race.race_date || new Date().toISOString(),
-                    managerId: best ? (best as { managerId: string; total: number }).managerId : null,
-                    total: best ? (best as { managerId: string; total: number }).total : 0,
+                    managerId: best ? best.managerId : null,
+                    total: best ? best.total : 0,
                   };
                 }).filter((w) => w.managerId !== null && w.total > 0);
 
