@@ -51,11 +51,13 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   try {
-    // Deadline = race_date - 1h. We send reminders up to ~48h before deadline (= ~49h before race).
-    // Find races where race_date is between now+1h and now+49h (so deadline is 0-48h away).
+    const body = await req.json().catch(() => ({}))
+    const windowHours = Number((body as { windowHours?: number })?.windowHours) || 168 // 7 days
+
+    // Deadline = race_date - 1h. Reminders go out from `windowHours` before the deadline.
     const now = new Date()
     const minRaceDate = new Date(now.getTime() + 60 * 60 * 1000) // deadline = now
-    const maxRaceDate = new Date(now.getTime() + 49 * 60 * 60 * 1000) // deadline ~48h away
+    const maxRaceDate = new Date(now.getTime() + (windowHours + 1) * 60 * 60 * 1000)
 
     const { data: races } = await supabase
       .from('races')
@@ -99,10 +101,25 @@ Deno.serve(async (req) => {
     const predSet = new Set((existingPreds || []).map(s => `${s.manager_id}_${s.question_id}`))
 
     let sentCount = 0
+    let skippedCount = 0
+    let failedCount = 0
+    const errors: string[] = []
     const siteUrl = 'https://dasuracemanager.lovable.app'
 
     for (const race of races) {
       const deadline = new Date(new Date(race.race_date!).getTime() - 60 * 60 * 1000)
+      const hoursLeft = (deadline.getTime() - now.getTime()) / (60 * 60 * 1000)
+      // One reminder per stage: 7 days out, 48h out, 24h out.
+      const stage = hoursLeft <= 24 ? '24h' : hoursLeft <= 48 ? '48h' : '7d'
+
+      const { data: alreadySent } = await supabase
+        .from('reminder_send_log')
+        .select('manager_id')
+        .eq('race_id', race.id)
+        .eq('stage', stage)
+        .eq('status', 'sent')
+      const sentSet = new Set((alreadySent || []).map(r => r.manager_id))
+
       const deadlineStr = deadline.toLocaleString('da-DK', {
         day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
         timeZone: 'Europe/Copenhagen',
@@ -116,6 +133,7 @@ Deno.serve(async (req) => {
 
         // Only send if something is missing
         if (!needsCaptain && !needsPrediction) continue
+        if (sentSet.has(mgr.id)) { skippedCount++; continue }
 
         let reminderItems = ''
         if (needsCaptain) {
@@ -149,7 +167,7 @@ Deno.serve(async (req) => {
         `
 
         try {
-          await fetch('https://api.resend.com/emails', {
+          const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${resendApiKey}`,
@@ -162,14 +180,37 @@ Deno.serve(async (req) => {
               html,
             }),
           })
+          const resBody = await res.text()
+          if (!res.ok) {
+            failedCount++
+            if (errors.length < 5) errors.push(`[${res.status}] ${resBody}`)
+            console.error(`Resend error for ${mgr.email} [${res.status}]: ${resBody}`)
+            await supabase.from('reminder_send_log').upsert({
+              manager_id: mgr.id, race_id: race.id, stage, status: 'failed', error_message: `[${res.status}] ${resBody}`.slice(0, 500),
+            }, { onConflict: 'manager_id,race_id,stage' })
+            continue
+          }
           sentCount++
+          await supabase.from('reminder_send_log').upsert({
+            manager_id: mgr.id, race_id: race.id, stage, status: 'sent', error_message: null,
+          }, { onConflict: 'manager_id,race_id,stage' })
         } catch (e) {
-          console.error(`Failed to send to ${mgr.email}:`, e)
+          failedCount++
+          const msg = e instanceof Error ? e.message : String(e)
+          if (errors.length < 5) errors.push(msg)
+          console.error(`Failed to send to ${mgr.email}:`, msg)
         }
       }
     }
 
-    return new Response(JSON.stringify({ success: true, sent: sentCount }), {
+    return new Response(JSON.stringify({
+      success: true,
+      sent: sentCount,
+      skipped: skippedCount,
+      failed: failedCount,
+      errors,
+      message: `${sentCount} sendt, ${skippedCount} sprunget over (allerede påmindet), ${failedCount} fejlet.`,
+    }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
