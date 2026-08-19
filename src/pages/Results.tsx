@@ -11,6 +11,25 @@ const SESSION_SHORT: Record<string, string> = {
   heat3: "H3",
 };
 
+const TIER_STYLE: Record<string, { label: string; short: string; className: string }> = {
+  gold: { label: "Guld", short: "G", className: "bg-gold/20 text-gold border-gold/40" },
+  silver: { label: "Sølv", short: "S", className: "bg-silver/20 text-silver border-silver/40" },
+  bronze: { label: "Bronze", short: "B", className: "bg-bronze/20 text-bronze border-bronze/40" },
+};
+
+function TierBadge({ tier, showLabel = false }: { tier: string; showLabel?: boolean }) {
+  const t = TIER_STYLE[tier];
+  if (!t) return null;
+  return (
+    <span
+      title={t.label}
+      className={`inline-flex shrink-0 items-center justify-center rounded border px-1 font-display text-[10px] font-bold leading-4 ${t.className}`}
+    >
+      {showLabel ? t.label : t.short}
+    </span>
+  );
+}
+
 export default function ResultsPage() {
   const { data: races = [] } = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const { data: allResults = [] } = useQuery({ queryKey: ["race_results"], queryFn: () => fetchRaceResults() });
@@ -27,6 +46,10 @@ export default function ResultsPage() {
 
   function driverTeam(id: string) {
     return drivers.find((d) => d.id === id)?.team || "";
+  }
+
+  function driverTier(id: string) {
+    return drivers.find((d) => d.id === id)?.tier || "";
   }
 
   // Count how many managers have this driver as captain for a given race
@@ -127,7 +150,10 @@ export default function ResultsPage() {
                       return (
                         <div key={driverId} className="grid gap-1 items-center rounded bg-secondary/50 px-2 py-1.5 text-sm" style={{ gridTemplateColumns: "1.5rem 1fr repeat(4, 1.5rem) 2.5rem 1.5rem" }}>
                           <span className="text-[10px] text-muted-foreground font-display">{idx + 1}</span>
-                          <span className="font-medium text-foreground truncate text-xs">{driverName(driverId)}</span>
+                          <span className="flex min-w-0 items-center gap-1">
+                            <TierBadge tier={driverTier(driverId)} />
+                            <span className="font-medium text-foreground truncate text-xs">{driverName(driverId)}</span>
+                          </span>
                           {SESSION_TYPES.map((s) => {
                             const r = sessions[s];
                             return (
@@ -184,7 +210,10 @@ export default function ResultsPage() {
                           {i + 1}
                         </span>
                         <div className="min-w-0">
-                          <span className="font-medium text-foreground truncate block">{driverName(driverId)}</span>
+                          <span className="flex items-center gap-1 min-w-0">
+                            <TierBadge tier={driverTier(driverId)} />
+                            <span className="font-medium text-foreground truncate">{driverName(driverId)}</span>
+                          </span>
                           <span className="text-xs text-muted-foreground truncate block">{driverTeam(driverId)}</span>
                         </div>
                         {races.map((race) => {
