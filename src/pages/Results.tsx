@@ -29,6 +29,10 @@ export default function ResultsPage() {
     return drivers.find((d) => d.id === id)?.team || "";
   }
 
+  function driverTier(id: string) {
+    return drivers.find((d) => d.id === id)?.tier || "";
+  }
+
   // Count how many managers have this driver as captain for a given race
   function captainCount(driverId: string, raceId: string): number {
     return captainSelections.filter((c) => c.driver_id === driverId && c.race_id === raceId).length;
