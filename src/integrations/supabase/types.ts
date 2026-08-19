@@ -624,6 +624,36 @@ export type Database = {
         }
         Relationships: []
       }
+      reminder_send_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          manager_id: string
+          race_id: string
+          stage: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          manager_id: string
+          race_id: string
+          stage: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          manager_id?: string
+          race_id?: string
+          stage?: string
+          status?: string
+        }
+        Relationships: []
+      }
       result_import_log: {
         Row: {
           created_at: string
