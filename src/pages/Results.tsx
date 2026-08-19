@@ -150,7 +150,10 @@ export default function ResultsPage() {
                       return (
                         <div key={driverId} className="grid gap-1 items-center rounded bg-secondary/50 px-2 py-1.5 text-sm" style={{ gridTemplateColumns: "1.5rem 1fr repeat(4, 1.5rem) 2.5rem 1.5rem" }}>
                           <span className="text-[10px] text-muted-foreground font-display">{idx + 1}</span>
-                          <span className="font-medium text-foreground truncate text-xs">{driverName(driverId)}</span>
+                          <span className="flex min-w-0 items-center gap-1">
+                            <TierBadge tier={driverTier(driverId)} />
+                            <span className="font-medium text-foreground truncate text-xs">{driverName(driverId)}</span>
+                          </span>
                           {SESSION_TYPES.map((s) => {
                             const r = sessions[s];
                             return (
@@ -207,7 +210,10 @@ export default function ResultsPage() {
                           {i + 1}
                         </span>
                         <div className="min-w-0">
-                          <span className="font-medium text-foreground truncate block">{driverName(driverId)}</span>
+                          <span className="flex items-center gap-1 min-w-0">
+                            <TierBadge tier={driverTier(driverId)} />
+                            <span className="font-medium text-foreground truncate">{driverName(driverId)}</span>
+                          </span>
                           <span className="text-xs text-muted-foreground truncate block">{driverTeam(driverId)}</span>
                         </div>
                         {races.map((race) => {
