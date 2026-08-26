@@ -624,6 +624,36 @@ export type Database = {
         }
         Relationships: []
       }
+      reminder_job_state: {
+        Row: {
+          created_at: string
+          id: string
+          last_error: string | null
+          last_run_at: string | null
+          lock_expires_at: string | null
+          paused: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          lock_expires_at?: string | null
+          paused?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          lock_expires_at?: string | null
+          paused?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reminder_send_log: {
         Row: {
           created_at: string
