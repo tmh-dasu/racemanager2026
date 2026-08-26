@@ -50,9 +50,54 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+  const JOB_ID = 'captain_reminder'
+  const LEASE_MINUTES = 5
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+  let lockAcquired = false
+
+  const releaseLock = async (lastError: string | null) => {
+    if (!lockAcquired) return
+    await supabase.from('reminder_job_state')
+      .update({ lock_expires_at: null, last_run_at: new Date().toISOString(), last_error: lastError, updated_at: new Date().toISOString() })
+      .eq('id', JOB_ID)
+  }
+
   try {
     const body = await req.json().catch(() => ({}))
     const windowHours = Number((body as { windowHours?: number })?.windowHours) || 168 // 7 days
+    // Bounded work per run: never send more than this many emails in one invocation.
+    const maxEmails = Math.min(Math.max(Number((body as { maxEmails?: number })?.maxEmails) || 30, 1), 100)
+    // Throttle: pause between each Resend call to keep DB + API load flat.
+    const throttleMs = Math.min(Math.max(Number((body as { throttleMs?: number })?.throttleMs) ?? 400, 0), 5000)
+    const LOG_BATCH_SIZE = 10
+
+    // --- Single-flight lock (lease with expiry) ---
+    const { data: state } = await supabase
+      .from('reminder_job_state')
+      .select('paused, lock_expires_at')
+      .eq('id', JOB_ID)
+      .maybeSingle()
+
+    if (state?.paused) {
+      return new Response(JSON.stringify({ message: 'Job er sat på pause', paused: true }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const nowIso = new Date().toISOString()
+    const leaseUntil = new Date(Date.now() + LEASE_MINUTES * 60 * 1000).toISOString()
+    const { data: locked } = await supabase
+      .from('reminder_job_state')
+      .update({ lock_expires_at: leaseUntil, updated_at: nowIso })
+      .eq('id', JOB_ID)
+      .or(`lock_expires_at.is.null,lock_expires_at.lt.${nowIso}`)
+      .select('id')
+    if (!locked || locked.length === 0) {
+      return new Response(JSON.stringify({ message: 'Jobbet kører allerede — sprunget over' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    lockAcquired = true
 
     // Deadline = race_date - 1h. Reminders go out from `windowHours` before the deadline.
     const now = new Date()
@@ -66,6 +111,7 @@ Deno.serve(async (req) => {
       .lte('race_date', maxRaceDate.toISOString())
 
     if (!races || races.length === 0) {
+      await releaseLock(null)
       return new Response(JSON.stringify({ message: 'No upcoming deadlines' }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -73,6 +119,7 @@ Deno.serve(async (req) => {
 
     const { data: managers } = await supabase.from('managers').select('id, email, team_name')
     if (!managers || managers.length === 0) {
+      await releaseLock(null)
       return new Response(JSON.stringify({ message: 'No managers found' }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -103,10 +150,25 @@ Deno.serve(async (req) => {
     let sentCount = 0
     let skippedCount = 0
     let failedCount = 0
+    let attempted = 0
+    let capped = false
     const errors: string[] = []
     const siteUrl = 'https://dasuracemanager.lovable.app'
 
+    // Buffer log rows and write them in batches instead of one round-trip per email.
+    type LogRow = { manager_id: string; race_id: string; stage: string; status: string; error_message: string | null }
+    let logBuffer: LogRow[] = []
+    const flushLogs = async () => {
+      if (logBuffer.length === 0) return
+      const rows = logBuffer
+      logBuffer = []
+      const { error } = await supabase.from('reminder_send_log')
+        .upsert(rows, { onConflict: 'manager_id,race_id,stage' })
+      if (error) console.error('Log flush error:', error.message)
+    }
+
     for (const race of races) {
+      if (capped) break
       const deadline = new Date(new Date(race.race_date!).getTime() - 60 * 60 * 1000)
       const hoursLeft = (deadline.getTime() - now.getTime()) / (60 * 60 * 1000)
       // One reminder per stage: 7 days out, 48h out, 24h out.
@@ -128,6 +190,7 @@ Deno.serve(async (req) => {
       const raceQuestion = (predQuestions || []).find(q => q.race_id === race.id)
 
       for (const mgr of managers) {
+        if (attempted >= maxEmails) { capped = true; break }
         const needsCaptain = !captainSet.has(`${mgr.id}_${race.id}`)
         const needsPrediction = raceQuestion && !predSet.has(`${mgr.id}_${raceQuestion.id}`)
 
@@ -167,6 +230,8 @@ Deno.serve(async (req) => {
         `
 
         try {
+          attempted++
+          if (throttleMs > 0) await sleep(throttleMs)
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -185,36 +250,43 @@ Deno.serve(async (req) => {
             failedCount++
             if (errors.length < 5) errors.push(`[${res.status}] ${resBody}`)
             console.error(`Resend error for ${mgr.email} [${res.status}]: ${resBody}`)
-            await supabase.from('reminder_send_log').upsert({
-              manager_id: mgr.id, race_id: race.id, stage, status: 'failed', error_message: `[${res.status}] ${resBody}`.slice(0, 500),
-            }, { onConflict: 'manager_id,race_id,stage' })
+            logBuffer.push({ manager_id: mgr.id, race_id: race.id, stage, status: 'failed', error_message: `[${res.status}] ${resBody}`.slice(0, 500) })
+            if (logBuffer.length >= LOG_BATCH_SIZE) await flushLogs()
+            // Rate limited or upstream failure: stop this run, next run continues.
+            if (res.status === 429 || res.status >= 500) { capped = true; break }
             continue
           }
           sentCount++
-          await supabase.from('reminder_send_log').upsert({
-            manager_id: mgr.id, race_id: race.id, stage, status: 'sent', error_message: null,
-          }, { onConflict: 'manager_id,race_id,stage' })
+          logBuffer.push({ manager_id: mgr.id, race_id: race.id, stage, status: 'sent', error_message: null })
+          if (logBuffer.length >= LOG_BATCH_SIZE) await flushLogs()
         } catch (e) {
           failedCount++
           const msg = e instanceof Error ? e.message : String(e)
           if (errors.length < 5) errors.push(msg)
           console.error(`Failed to send to ${mgr.email}:`, msg)
+          logBuffer.push({ manager_id: mgr.id, race_id: race.id, stage, status: 'failed', error_message: msg.slice(0, 500) })
+          if (logBuffer.length >= LOG_BATCH_SIZE) await flushLogs()
         }
       }
     }
+
+    await flushLogs()
+    await releaseLock(errors[0] ?? null)
 
     return new Response(JSON.stringify({
       success: true,
       sent: sentCount,
       skipped: skippedCount,
       failed: failedCount,
+      remainingWork: capped,
       errors,
-      message: `${sentCount} sendt, ${skippedCount} sprunget over (allerede påmindet), ${failedCount} fejlet.`,
+      message: `${sentCount} sendt, ${skippedCount} sprunget over (allerede påmindet), ${failedCount} fejlet.${capped ? ' Resten sendes ved næste kørsel.' : ''}`,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
     console.error('Reminder error:', error)
+    await releaseLock(error instanceof Error ? error.message.slice(0, 500) : 'Unknown error')
     return new Response(JSON.stringify({ error: 'Internal error' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
