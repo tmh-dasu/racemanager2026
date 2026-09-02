@@ -369,4 +369,8 @@ Deno.serve(async (req) => {
     JSON.stringify({ processed: totalProcessed }),
     { headers: { 'Content-Type': 'application/json' } }
   )
+  } finally {
+    await releaseLock()
+  }
 })
+
