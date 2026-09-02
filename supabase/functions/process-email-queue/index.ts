@@ -78,6 +78,31 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+  // Single-flight lock: a second concurrent run exits instead of piling up on
+  // the database. The lease expires on its own if a run dies mid-way.
+  const { data: gotLock, error: lockError } = await supabase.rpc('email_queue_try_lock', {
+    p_lease_seconds: 120,
+  })
+  if (lockError) {
+    console.error('Failed to acquire email queue lock', lockError)
+    return new Response(
+      JSON.stringify({ error: 'lock_failed' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+  if (gotLock !== true) {
+    return new Response(
+      JSON.stringify({ skipped: true, reason: 'already_running' }),
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  const releaseLock = async () => {
+    const { error } = await supabase.rpc('email_queue_release_lock')
+    if (error) console.error('Failed to release email queue lock', error)
+  }
+
+  try {
   // 1. Check rate-limit cooldown and read queue config
   const { data: state } = await supabase
     .from('email_send_state')
@@ -90,6 +115,7 @@ Deno.serve(async (req) => {
       { headers: { 'Content-Type': 'application/json' } }
     )
   }
+
 
   const batchSize = state?.batch_size ?? DEFAULT_BATCH_SIZE
   const sendDelayMs = state?.send_delay_ms ?? DEFAULT_SEND_DELAY_MS
