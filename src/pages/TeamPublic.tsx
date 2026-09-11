@@ -35,6 +35,11 @@ export default function TeamPublicPage() {
     queryFn: () => fetchTransfers(manager!.id),
     enabled: !!manager,
   });
+  const { data: roundPoints = [] } = useQuery({
+    queryKey: ["round_points", manager?.id],
+    queryFn: () => fetchManagerRoundPoints(manager!.id),
+    enabled: !!manager,
+  });
 
   const myRank = manager ? allManagers.findIndex((m) => m.id === manager.id) + 1 : null;
   const myDriverIds = managerDrivers.map((md) => md.driver_id);
@@ -101,6 +106,9 @@ export default function TeamPublicPage() {
             )}
           </div>
         </div>
+
+        {/* Captain bonus per round */}
+        <CaptainBreakdown roundPoints={roundPoints} races={races} drivers={drivers} />
 
         {/* Drivers */}
         <div className="space-y-3">
