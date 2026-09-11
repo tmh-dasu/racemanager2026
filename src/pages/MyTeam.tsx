@@ -12,6 +12,7 @@ import ShareTeamCard from "@/components/ShareTeamCard";
 import CaptainSelector from "@/components/CaptainSelector";
 import PredictionPanel from "@/components/PredictionPanel";
 import TransferConfirmContent from "@/components/TransferConfirmContent";
+import CaptainBreakdown from "@/components/CaptainBreakdown";
 
 export default function MyTeamPage() {
   const { toast } = useToast();
@@ -255,6 +256,10 @@ export default function MyTeamPage() {
             </div>
           </div>
         )}
+
+        {/* Captain bonus per round */}
+        <CaptainBreakdown roundPoints={myRoundPoints} races={races} drivers={drivers} />
+
 
         {/* Share */}
         <ShareTeamCard

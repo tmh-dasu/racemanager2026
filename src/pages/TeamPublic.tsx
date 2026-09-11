@@ -1,9 +1,10 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, Users, Crown, ArrowLeftRight, History } from "lucide-react";
-import { fetchManagerBySlug, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchManagers, fetchAllCaptainSelections, fetchTransfers, type Manager } from "@/lib/api";
+import { fetchManagerBySlug, fetchManagerDrivers, fetchDrivers, fetchRaceResults, fetchRaces, fetchManagers, fetchAllCaptainSelections, fetchTransfers, fetchManagerRoundPoints, type Manager } from "@/lib/api";
 import PageLayout from "@/components/PageLayout";
 import { Badge } from "@/components/ui/badge";
+import CaptainBreakdown from "@/components/CaptainBreakdown";
 
 const TIER_BADGE: Record<string, { label: string; className: string }> = {
   gold: { label: "Guld", className: "bg-gold/20 text-gold border-gold/40" },
@@ -32,6 +33,11 @@ export default function TeamPublicPage() {
   const { data: myTransfers = [] } = useQuery({
     queryKey: ["transfers", manager?.id],
     queryFn: () => fetchTransfers(manager!.id),
+    enabled: !!manager,
+  });
+  const { data: roundPoints = [] } = useQuery({
+    queryKey: ["round_points", manager?.id],
+    queryFn: () => fetchManagerRoundPoints(manager!.id),
     enabled: !!manager,
   });
 
@@ -100,6 +106,9 @@ export default function TeamPublicPage() {
             )}
           </div>
         </div>
+
+        {/* Captain bonus per round */}
+        <CaptainBreakdown roundPoints={roundPoints} races={races} drivers={drivers} />
 
         {/* Drivers */}
         <div className="space-y-3">
