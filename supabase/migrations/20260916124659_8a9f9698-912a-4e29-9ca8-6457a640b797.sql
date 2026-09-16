@@ -1,0 +1,2 @@
+GRANT SELECT (id, race_id, question_type, question_text, created_at, published, prediction_deadline, option_a, option_b) ON public.prediction_questions TO anon, authenticated;
+CREATE POLICY "Anyone can read published prediction_questions" ON public.prediction_questions FOR SELECT TO anon, authenticated USING (published = true);
