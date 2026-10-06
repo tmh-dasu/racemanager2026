@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save, Upload, CheckCircle2, AlertCircle, Mail, History, Download, Calculator } from "lucide-react";
-import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, parseResultsCSV, SESSION_TYPES, SESSION_LABELS, type Driver, type Race, type ParsedCSVRow } from "@/lib/api";
+import { fetchDrivers, fetchRaces, fetchRaceResults, upsertRaceResult, recalculateManagerPoints, parseResultsCSV, calculatePoints, fetchManagers, fetchManagerRoundPoints, SESSION_TYPES, SESSION_LABELS, type Driver, type Race, type ParsedCSVRow } from "@/lib/api";
+import ResultsSavePreview, { type PendingResult } from "./ResultsSavePreview";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,9 @@ export default function ResultsAdmin() {
   const [gridLoading, setGridLoading] = useState(false);
   // Track stats from last CSV import to attach to next save
   const [lastCsvStats, setLastCsvStats] = useState<{ skipped: number; mismatches: number; session: string } | null>(null);
+  const [previewPending, setPreviewPending] = useState<PendingResult[] | null>(null);
+  const { data: previewManagers = [], refetch: refetchManagers } = useQuery({ queryKey: ["managers"], queryFn: fetchManagers });
+  const { data: previewRoundPoints = [], refetch: refetchRoundPoints } = useQuery({ queryKey: ["preview_round_points"], queryFn: () => fetchManagerRoundPoints() });
 
   const { data: importLog = [] } = useQuery({
     queryKey: ["result_import_log"],
@@ -86,6 +90,28 @@ export default function ResultsAdmin() {
     }));
   }
 
+  function buildPending(): PendingResult[] {
+    const out: PendingResult[] = [];
+    for (const [driverId, sessions] of Object.entries(grid)) {
+      for (const [session, data] of Object.entries(sessions)) {
+        if (!data.position && !data.dnf) continue;
+        out.push({
+          driver_id: driverId,
+          session_type: session,
+          points: calculatePoints(data.dnf ? null : Number(data.position) || null, data.dnf),
+        });
+      }
+    }
+    return out;
+  }
+
+  function openPreview() {
+    if (!selectedRace) return;
+    setPreviewPending(buildPending());
+    refetchRoundPoints();
+    refetchManagers();
+  }
+
   async function handleSaveAll() {
     if (!selectedRace) return;
     setSaving(true);
@@ -120,10 +146,12 @@ export default function ResultsAdmin() {
         imported_by: user?.id || null,
       });
       setLastCsvStats(null);
+      setPreviewPending(null);
 
       queryClient.invalidateQueries({ queryKey: ["race_results"] });
       queryClient.invalidateQueries({ queryKey: ["managers"] });
       queryClient.invalidateQueries({ queryKey: ["result_import_log"] });
+      queryClient.invalidateQueries({ queryKey: ["preview_round_points"] });
       toast({ title: `${count} resultater gemt for alle sessioner ✅` });
     } catch (err: any) {
       toast({ title: err.message, variant: "destructive" });
@@ -270,7 +298,7 @@ export default function ResultsAdmin() {
             <Button variant="outline" size="sm" onClick={downloadCSVTemplate} className="font-display">
               <Download className="h-4 w-4 mr-2" />Skabelon
             </Button>
-            <Button onClick={handleSaveAll} disabled={saving} className="bg-gradient-racing text-primary-foreground font-display" size="sm">
+            <Button onClick={openPreview} disabled={saving} className="bg-gradient-racing text-primary-foreground font-display" size="sm">
               <Save className="h-4 w-4 mr-2" />{saving ? "Gemmer..." : "Gem alle sessioner"}
             </Button>
             {roundsWithResults.has(selectedRace) && (
@@ -342,6 +370,20 @@ export default function ResultsAdmin() {
           </div>
         </>
       )}
+
+      <ResultsSavePreview
+        open={!!previewPending}
+        onCancel={() => setPreviewPending(null)}
+        onConfirm={handleSaveAll}
+        saving={saving}
+        raceId={selectedRace}
+        raceLabel={(() => { const r = races.find((x) => x.id === selectedRace); return r ? `R${r.round_number} ${r.name}` : ""; })()}
+        pending={previewPending || []}
+        existing={allResults.filter((r) => r.race_id === selectedRace)}
+        drivers={drivers}
+        managers={previewManagers}
+        roundPoints={previewRoundPoints}
+      />
 
       <Dialog open={!!previewRows} onOpenChange={(open) => { if (!open) { setPreviewRows(null); setPreviewSkipped(0); } }}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
