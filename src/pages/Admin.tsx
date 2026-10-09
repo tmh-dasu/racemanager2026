@@ -910,9 +910,9 @@ function SponsorSettings({ queryClient }: { settings: any; refetch: () => void; 
         </div>
         {form.prize_category === "season" && (
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Præmieplacering (1., 2. eller 3. præmie)</label>
+            <label className="text-xs text-muted-foreground">Præmieplacering (1.–4. præmie)</label>
             <div className="flex gap-1">
-              {[1, 2, 3].map((n) => (
+              {[1, 2, 3, 4].map((n) => (
                 <Button
                   key={n}
                   type="button"
